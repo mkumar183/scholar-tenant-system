@@ -34,7 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         
         if (session?.user) {
@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .from('users')
                 .select('*')
                 .eq('id', session.user.id)
-                .single();
+                .maybeSingle();
               
               if (error) {
                 console.error('Error fetching user profile:', error);
@@ -83,11 +83,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .from('users')
             .select('*')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
           
-          if (error) throw error;
-          
-          if (profile) {
+          if (error) {
+            console.error('Error fetching user profile:', error);
+          } else if (profile) {
             setUser({
               id: session.user.id,
               email: session.user.email || '',
@@ -140,7 +140,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Step 1: Sign up the user with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({ 
         email, 
-        password
+        password,
+        options: {
+          data: {
+            name: name
+          }
+        }
       });
       
       if (authError) throw authError;
@@ -157,10 +162,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           ]);
         
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Error creating user profile:', profileError);
+          toast.error('Account created but profile setup failed. Please contact support.');
+        } else {
+          toast.success('Registration successful! Please check your email to confirm your account.');
+        }
       }
-      
-      toast.success('Registration successful! Please check your email to confirm your account.');
     } catch (error: any) {
       toast.error('Registration failed: ' + error.message);
       throw error;
