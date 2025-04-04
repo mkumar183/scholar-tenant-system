@@ -1,0 +1,85 @@
+
+export type Tenant = {
+  id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  admin_name: string | null;
+  admin_email: string | null;
+};
+
+export type School = {
+  id: string;
+  tenant_id: string;
+  name: string;
+  address: string | null;
+  type: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Profile = {
+  id: string;
+  name: string | null;
+  role: 'admin' | 'school_admin' | 'teacher' | 'student';
+  tenant_id: string | null;
+  school_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Class = {
+  id: string;
+  school_id: string;
+  name: string;
+  description: string | null;
+  subject: string | null;
+  grade_level: string | null;
+  school_year: string | null;
+  teacher_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Enrollment = {
+  id: string;
+  student_id: string;
+  class_id: string;
+  status: 'active' | 'completed' | 'dropped';
+  enrollment_date: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Database = {
+  public: {
+    Tables: {
+      tenants: {
+        Row: Tenant;
+        Insert: Omit<Tenant, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Tenant, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      schools: {
+        Row: School;
+        Insert: Omit<School, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<School, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      profiles: {
+        Row: Profile;
+        Insert: Omit<Profile, 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      classes: {
+        Row: Class;
+        Insert: Omit<Class, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Class, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      enrollments: {
+        Row: Enrollment;
+        Insert: Omit<Enrollment, 'id' | 'created_at' | 'updated_at' | 'enrollment_date'>;
+        Update: Partial<Omit<Enrollment, 'id' | 'created_at' | 'updated_at' | 'enrollment_date'>>;
+      };
+    };
+  };
+};
