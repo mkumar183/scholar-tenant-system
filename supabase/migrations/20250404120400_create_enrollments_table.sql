@@ -2,7 +2,7 @@
 -- Create enrollments table to connect students with classes
 CREATE TABLE IF NOT EXISTS public.enrollments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  student_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  student_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   class_id UUID NOT NULL REFERENCES public.classes(id) ON DELETE CASCADE,
   status TEXT DEFAULT 'active' CHECK (status IN ('active', 'completed', 'dropped')),
   enrollment_date TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.enrollments (
   
   CONSTRAINT fk_student
     FOREIGN KEY(student_id)
-    REFERENCES profiles(id)
+    REFERENCES users(id)
     ON DELETE CASCADE,
     
   CONSTRAINT fk_class

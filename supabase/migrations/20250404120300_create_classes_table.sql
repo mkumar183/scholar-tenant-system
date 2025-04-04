@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS public.classes (
   subject TEXT,
   grade_level TEXT,
   school_year TEXT,
-  teacher_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  teacher_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
   
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS public.classes (
     
   CONSTRAINT fk_teacher
     FOREIGN KEY(teacher_id)
-    REFERENCES profiles(id)
+    REFERENCES users(id)
     ON DELETE SET NULL
 );
 

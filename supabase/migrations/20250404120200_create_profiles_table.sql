@@ -1,6 +1,6 @@
 
--- Create profiles table to extend auth.users
-CREATE TABLE IF NOT EXISTS public.profiles (
+-- Create users table to extend auth.users
+CREATE TABLE IF NOT EXISTS public.users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT,
   role TEXT NOT NULL CHECK (role IN ('admin', 'school_admin', 'teacher', 'student')),
@@ -21,27 +21,27 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 );
 
 -- Create indexes
-CREATE INDEX profiles_tenant_id_idx ON public.profiles(tenant_id);
-CREATE INDEX profiles_school_id_idx ON public.profiles(school_id);
+CREATE INDEX users_tenant_id_idx ON public.users(tenant_id);
+CREATE INDEX users_school_id_idx ON public.users(school_id);
 
 -- Enable RLS
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies
 -- Users can see their own profile
-CREATE POLICY "Users can see their own profile" ON public.profiles
+CREATE POLICY "Users can see their own profile" ON public.users
   FOR SELECT
   TO authenticated
   USING (id = auth.uid());
 
 -- Admins can see all profiles
-CREATE POLICY "Admins can see all profiles" ON public.profiles
+CREATE POLICY "Admins can see all profiles" ON public.users
   FOR SELECT
   TO authenticated
   USING (auth.jwt() ->> 'role' = 'admin');
 
 -- School admins can see profiles in their tenant
-CREATE POLICY "School admins can see profiles in their tenant" ON public.profiles
+CREATE POLICY "School admins can see profiles in their tenant" ON public.users
   FOR SELECT
   TO authenticated
   USING (
@@ -50,7 +50,7 @@ CREATE POLICY "School admins can see profiles in their tenant" ON public.profile
   );
 
 -- Teachers can see student profiles in their school
-CREATE POLICY "Teachers can see profiles in their school" ON public.profiles
+CREATE POLICY "Teachers can see profiles in their school" ON public.users
   FOR SELECT
   TO authenticated
   USING (
@@ -59,20 +59,20 @@ CREATE POLICY "Teachers can see profiles in their school" ON public.profiles
   );
 
 -- Users can update their own profile
-CREATE POLICY "Users can update their own profile" ON public.profiles
+CREATE POLICY "Users can update their own profile" ON public.users
   FOR UPDATE
   TO authenticated
   USING (id = auth.uid())
-  WITH CHECK (id = auth.uid() AND (role = (SELECT role FROM public.profiles WHERE id = auth.uid())));
+  WITH CHECK (id = auth.uid() AND (role = (SELECT role FROM public.users WHERE id = auth.uid())));
 
 -- Admins can update any profile
-CREATE POLICY "Admins can update any profile" ON public.profiles
+CREATE POLICY "Admins can update any profile" ON public.users
   FOR UPDATE
   TO authenticated
   USING (auth.jwt() ->> 'role' = 'admin');
 
 -- Create a trigger to set app_metadata when profile changes
-CREATE OR REPLACE FUNCTION public.handle_profile_update()
+CREATE OR REPLACE FUNCTION public.handle_user_update()
 RETURNS TRIGGER AS $$
 BEGIN
   -- Update user's metadata in auth.users
@@ -90,7 +90,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Create trigger for handling profile updates
-CREATE TRIGGER on_profile_update
-  AFTER INSERT OR UPDATE ON public.profiles
+CREATE TRIGGER on_user_update
+  AFTER INSERT OR UPDATE ON public.users
   FOR EACH ROW
-  EXECUTE PROCEDURE public.handle_profile_update();
+  EXECUTE PROCEDURE public.handle_user_update();

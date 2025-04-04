@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { Profile } from '@/types/database.types';
+import { User } from '@/types/database.types';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
-  const [user, setUser] = useState<{ id: string; profile?: Profile | null } | null>(null);
+  const [user, setUser] = useState<{ id: string; profile?: User | null } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -33,8 +33,8 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
         }
 
         // User is authenticated, get their profile
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
+        const { data: userProfile, error: profileError } = await supabase
+          .from('users')
           .select('*')
           .eq('id', session.user.id)
           .single();
@@ -46,7 +46,7 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
 
         setUser({
           id: session.user.id,
-          profile: profile || null
+          profile: userProfile || null
         });
       } catch (error) {
         console.error('Error checking authentication:', error);

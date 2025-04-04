@@ -19,7 +19,7 @@ export type School = {
   updated_at: string;
 };
 
-export type Profile = {
+export type User = {
   id: string;
   name: string | null;
   role: 'admin' | 'school_admin' | 'teacher' | 'student';
@@ -65,10 +65,10 @@ export type Database = {
         Insert: Omit<School, 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Omit<School, 'id' | 'created_at' | 'updated_at'>>;
       };
-      profiles: {
-        Row: Profile;
-        Insert: Omit<Profile, 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>>;
+      users: {
+        Row: User;
+        Insert: Omit<User, 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<User, 'id' | 'created_at' | 'updated_at'>>;
       };
       classes: {
         Row: Class;
