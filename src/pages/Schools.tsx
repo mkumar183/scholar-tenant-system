@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, School, Users, Search, BookOpen, MapPin } from 'lucide-react';
+import { Plus, School as SchoolIcon, Users, Search, BookOpen, MapPin, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -22,58 +21,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSchoolsData } from '@/hooks/useSchoolsData';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
-// Mock data
-const MOCK_SCHOOLS = [
-  {
-    id: 'school-1',
-    name: 'Lincoln High School',
-    address: '123 Education St, Metropolis',
-    tenantId: 'tenant-1',
-    tenantName: 'City School District',
-    type: 'High School',
-    teacherCount: 45,
-    studentCount: 850,
-  },
-  {
-    id: 'school-2',
-    name: 'Washington Middle School',
-    address: '456 Learning Ave, Metropolis',
-    tenantId: 'tenant-1',
-    tenantName: 'City School District',
-    type: 'Middle School',
-    teacherCount: 32,
-    studentCount: 560,
-  },
-  {
-    id: 'school-3',
-    name: 'Roosevelt Elementary',
-    address: '789 Knowledge Rd, Metropolis',
-    tenantId: 'tenant-1',
-    tenantName: 'City School District',
-    type: 'Elementary School',
-    teacherCount: 28,
-    studentCount: 420,
-  },
-  {
-    id: 'school-4',
-    name: 'Edison Academy',
-    address: '321 Innovation Blvd, Techville',
-    tenantId: 'tenant-3',
-    tenantName: 'Private Academy Group',
-    type: 'Private School',
-    teacherCount: 22,
-    studentCount: 300,
-  },
-];
-
-const MOCK_TENANTS = [
-  { id: 'tenant-1', name: 'City School District' },
-  { id: 'tenant-2', name: 'County Education Board' },
-  { id: 'tenant-3', name: 'Private Academy Group' },
-  { id: 'tenant-4', name: 'Charter Schools Alliance' },
-];
-
+// School types for dropdown
 const SCHOOL_TYPES = [
   'Elementary School',
   'Middle School',
@@ -84,43 +36,59 @@ const SCHOOL_TYPES = [
 ];
 
 const Schools = () => {
+  const { user } = useAuth();
+  const { schools, isLoading } = useSchoolsData();
   const [searchTerm, setSearchTerm] = useState('');
-  const [schools, setSchools] = useState(MOCK_SCHOOLS);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newSchool, setNewSchool] = useState({
     name: '',
     address: '',
-    tenantId: '',
     type: '',
   });
 
   const filteredSchools = schools.filter(school => 
     school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    school.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    school.type.toLowerCase().includes(searchTerm.toLowerCase())
+    (school.address && school.address.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (school.type && school.type.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const handleAddSchool = () => {
-    const id = `school-${schools.length + 1}`;
-    const tenantName = MOCK_TENANTS.find(t => t.id === newSchool.tenantId)?.name || '';
-    
-    const newSchoolData = {
-      ...newSchool,
-      id,
-      tenantName,
-      teacherCount: 0,
-      studentCount: 0,
-    };
-    
-    setSchools([...schools, newSchoolData]);
-    setNewSchool({
-      name: '',
-      address: '',
-      tenantId: '',
-      type: '',
-    });
-    setIsAddDialogOpen(false);
-    toast.success('School added successfully');
+  const handleAddSchool = async () => {
+    try {
+      if (!user?.tenantId) {
+        toast.error('No tenant ID found');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('schools')
+        .insert([
+          {
+            name: newSchool.name,
+            address: newSchool.address,
+            type: newSchool.type,
+            tenant_id: user.tenantId,
+          }
+        ])
+        .select();
+
+      if (error) throw error;
+
+      toast.success('School added successfully');
+      setIsAddDialogOpen(false);
+      
+      // Reset form
+      setNewSchool({
+        name: '',
+        address: '',
+        type: '',
+      });
+      
+      // Refresh data - hacky but works
+      window.location.reload();
+    } catch (error) {
+      console.error('Error adding school:', error);
+      toast.error('Failed to add school');
+    }
   };
 
   return (
@@ -169,24 +137,6 @@ const Schools = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="school-tenant">Tenant</Label>
-                <Select 
-                  value={newSchool.tenantId} 
-                  onValueChange={(value) => setNewSchool({...newSchool, tenantId: value})}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select tenant" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MOCK_TENANTS.map((tenant) => (
-                      <SelectItem key={tenant.id} value={tenant.id}>
-                        {tenant.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
                 <Label htmlFor="school-type">School Type</Label>
                 <Select 
                   value={newSchool.type} 
@@ -215,50 +165,53 @@ const Schools = () => {
         </Dialog>
       </div>
       
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {filteredSchools.map((school) => (
-          <Card key={school.id} className="overflow-hidden">
-            <CardHeader className="pb-0">
-              <CardTitle className="text-xl">{school.name}</CardTitle>
-              <CardDescription className="flex items-center text-xs">
-                <MapPin className="mr-1 h-3 w-3" />
-                {school.address}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="mb-4">
-                <div className="text-xs text-muted-foreground">Tenant</div>
-                <div className="text-sm font-medium">{school.tenantName}</div>
-              </div>
-              <div className="mb-4">
-                <div className="text-xs text-muted-foreground">Type</div>
-                <div className="text-sm font-medium">{school.type}</div>
-              </div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center text-sm">
-                  <Users className="mr-1 h-4 w-4 text-muted-foreground" />
-                  <span>{school.teacherCount} Teachers</span>
-                </div>
-                <div className="flex items-center text-sm">
-                  <BookOpen className="mr-1 h-4 w-4 text-muted-foreground" />
-                  <span>{school.studentCount} Students</span>
-                </div>
-              </div>
-              <div className="mt-4 flex items-center justify-end gap-2">
-                <Button variant="outline" size="sm">View</Button>
-                <Button size="sm">Manage</Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      
-      {filteredSchools.length === 0 && (
-        <div className="text-center py-12">
-          <School className="mx-auto h-12 w-12 text-muted-foreground/50" />
-          <h3 className="mt-4 text-lg font-semibold">No schools found</h3>
-          <p className="text-muted-foreground">Try adjusting your search or add a new school.</p>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
+      ) : (
+        <>
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {filteredSchools.map((school) => (
+              <Card key={school.id} className="overflow-hidden">
+                <CardHeader className="pb-0">
+                  <CardTitle className="text-xl">{school.name}</CardTitle>
+                  <CardDescription className="flex items-center text-xs">
+                    <MapPin className="mr-1 h-3 w-3" />
+                    {school.address || 'No address provided'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="mb-4">
+                    <div className="text-xs text-muted-foreground">Type</div>
+                    <div className="text-sm font-medium">{school.type || 'Not specified'}</div>
+                  </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center text-sm">
+                      <Users className="mr-1 h-4 w-4 text-muted-foreground" />
+                      <span>{school.teacherCount} Teachers</span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <BookOpen className="mr-1 h-4 w-4 text-muted-foreground" />
+                      <span>{school.studentCount} Students</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center justify-end gap-2">
+                    <Button size="sm">Manage</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          {filteredSchools.length === 0 && (
+            <div className="text-center py-12">
+              <SchoolIcon className="mx-auto h-12 w-12 text-muted-foreground/50" />
+              <h3 className="mt-4 text-lg font-semibold">No schools found</h3>
+              <p className="text-muted-foreground">Try adjusting your search or add a new school.</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
