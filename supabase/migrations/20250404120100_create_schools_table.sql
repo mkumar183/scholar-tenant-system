@@ -1,4 +1,3 @@
-
 -- Create schools table
 CREATE TABLE IF NOT EXISTS public.schools (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
