@@ -1,4 +1,3 @@
-
 -- Create users table to extend auth.users
 CREATE TABLE IF NOT EXISTS public.users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -27,7 +26,12 @@ CREATE INDEX users_school_id_idx ON public.users(school_id);
 -- Enable RLS
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policies
+-- Allow profile creation during registration
+CREATE POLICY "Allow profile creation during registration" ON public.users
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
 -- Users can see their own profile
 CREATE POLICY "Users can see their own profile" ON public.users
   FOR SELECT
@@ -70,6 +74,12 @@ CREATE POLICY "Admins can update any profile" ON public.users
   FOR UPDATE
   TO authenticated
   USING (auth.jwt() ->> 'role' = 'admin');
+
+-- Users can insert their own profile
+CREATE POLICY "Users can insert their own profile" ON public.users
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (id = auth.uid());
 
 -- Create a trigger to set app_metadata when profile changes
 CREATE OR REPLACE FUNCTION public.handle_user_update()

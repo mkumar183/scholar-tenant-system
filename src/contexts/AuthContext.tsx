@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -124,8 +123,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) throw error;
 
+      if (data.user) {
+        // Fetch user profile after successful login
+        const { data: profile, error: profileError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', data.user.id)
+          .maybeSingle();
+        
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+          throw profileError;
+        }
+        
+        if (profile) {
+          const userData = {
+            id: data.user.id,
+            email: data.user.email || '',
+            name: profile.name || '',
+            role: profile.role || 'student', // Default to student if no role
+            tenantId: profile.tenant_id,
+            schoolId: profile.school_id
+          };
+          
+          setUser(userData);
+          console.log('User logged in:', userData);
+        } else {
+          console.error('No profile found for user');
+          throw new Error('User profile not found');
+        }
+      }
+
       toast.success('Logged in successfully');
     } catch (error: any) {
+      console.error('Login error:', error);
       toast.error('Login failed: ' + error.message);
       throw error;
     } finally {
@@ -148,11 +179,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
       
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Auth signup error:', authError);
+        throw authError;
+      }
       
       if (authData.user) {
+        console.log('Auth user created:', authData.user);
+        
         // Step 2: Create a user profile (users table entry)
-        const { error: profileError } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('users')
           .insert([
             { 
@@ -160,16 +196,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               name: name,
               role: 'student', // Default role
             }
-          ]);
+          ])
+          .select();
         
         if (profileError) {
-          console.error('Error creating user profile:', profileError);
+          console.error('Profile creation error:', profileError);
           toast.error('Account created but profile setup failed. Please contact support.');
         } else {
+          console.log('Profile created:', profileData);
           toast.success('Registration successful! Please check your email to confirm your account.');
         }
       }
     } catch (error: any) {
+      console.error('Registration error:', error);
       toast.error('Registration failed: ' + error.message);
       throw error;
     } finally {

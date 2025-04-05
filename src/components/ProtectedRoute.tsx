@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,6 +16,9 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
       if (!user) {
         // Redirect to login if no user
         navigate('/login');
+      } else if (!user.role) {
+        // If user exists but has no role, redirect to settings to complete profile
+        navigate('/settings');
       } else if (requiredRole && user.role !== requiredRole) {
         // Redirect to dashboard if user doesn't have required role
         navigate('/dashboard');
