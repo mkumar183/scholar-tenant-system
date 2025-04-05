@@ -52,7 +52,7 @@ const Tenants = () => {
   };
 
   const handleTenantDeleted = () => {
-    fetchTenants();
+    // No-op function (removed delete functionality)
   };
 
   if (user?.role !== 'superadmin') {

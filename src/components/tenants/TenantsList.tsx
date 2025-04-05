@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { School, Users } from 'lucide-react';
 import { TenantType } from '@/types/tenant.types';
-import DeleteTenantDialog from './DeleteTenantDialog';
 import { useNavigate } from 'react-router-dom';
 
 interface TenantsListProps {
@@ -72,11 +71,7 @@ const TenantsList = ({ isLoading, tenants, searchTerm, onTenantDeleted }: Tenant
                 View
               </Button>
               <Button size="sm">Manage</Button>
-              <DeleteTenantDialog 
-                tenantId={tenant.id} 
-                tenantName={tenant.name} 
-                onTenantDeleted={onTenantDeleted} 
-              />
+              {/* Delete button removed as requested */}
             </div>
           </CardContent>
         </Card>
