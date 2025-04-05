@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,8 +21,15 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
         // If user exists but has no role, redirect to settings to complete profile
         navigate('/settings');
       } else if (requiredRole && user.role !== requiredRole) {
-        // Redirect to dashboard if user doesn't have required role
-        navigate('/dashboard');
+        // Check if role is admin and the required role is privileged (school_admin, teacher, or student)
+        const isAdminAccessingPrivilegedRole = 
+          user.role === 'admin' && 
+          ['school_admin', 'teacher', 'student'].includes(requiredRole);
+        
+        // If not admin accessing privileged role, redirect to dashboard
+        if (!isAdminAccessingPrivilegedRole) {
+          navigate('/dashboard');
+        }
       }
     }
   }, [user, isLoading, navigate, requiredRole]);
@@ -30,8 +38,14 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
-  // Only render children if user exists and has required role or no specific role is required
-  if (user && (!requiredRole || user.role === requiredRole)) {
+  // Render children if:
+  // 1. User exists and has the required role, OR
+  // 2. User is admin (can access any role's routes)
+  if (user && (
+    !requiredRole || 
+    user.role === requiredRole || 
+    (user.role === 'admin' && ['school_admin', 'teacher', 'student'].includes(requiredRole))
+  )) {
     return <>{children}</>;
   }
 
