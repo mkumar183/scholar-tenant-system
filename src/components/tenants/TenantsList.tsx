@@ -64,14 +64,11 @@ const TenantsList = ({ isLoading, tenants, searchTerm, onTenantDeleted }: Tenant
             </div>
             <div className="mt-4 flex items-center justify-end gap-2">
               <Button 
-                variant="outline" 
                 size="sm"
                 onClick={() => navigate(`/tenants/${tenant.id}`)}
               >
-                View
+                Manage
               </Button>
-              <Button size="sm">Manage</Button>
-              {/* Delete button removed as requested */}
             </div>
           </CardContent>
         </Card>
