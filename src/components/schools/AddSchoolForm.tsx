@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -77,36 +77,46 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
     try {
       setIsSubmitting(true);
       
-      console.log('Adding new school with values:', values);
-      console.log('Using tenant ID:', tenantId);
+      // Log the submission attempt with detailed information
+      console.log('Adding new school:', { 
+        values,
+        tenantId,
+        userRole: user?.role,
+        userId: user?.id
+      });
       
-      // Check user's role for debugging
-      console.log('Current user role:', user?.role);
+      // Construct the school data
+      const schoolData = {
+        name: values.name,
+        address: values.address || null,
+        type: values.type || null,
+        tenant_id: tenantId,
+      };
       
-      // Perform the insert operation with explicit tenant_id
+      // Perform the insert operation
       const { data, error } = await supabase
         .from('schools')
-        .insert([
-          {
-            name: values.name,
-            address: values.address || null,
-            type: values.type || null,
-            tenant_id: tenantId,
-          }
-        ])
+        .insert([schoolData])
         .select();
 
       if (error) {
         console.error('Error adding school:', error);
-        throw error;
+        if (error.code === '42501') {
+          toast.error('Permission denied. You do not have the required permissions to add a school.');
+        } else if (error.message.includes('tenant_id')) {
+          toast.error('Invalid tenant information. Please contact support.');
+        } else {
+          toast.error(`Failed to add school: ${error.message}`);
+        }
+        return;
       }
 
       console.log('School added successfully:', data);
       toast.success('School added successfully');
       onSuccess();
     } catch (error: any) {
-      console.error('Failed to add school:', error);
-      toast.error(`Failed to add school: ${error.message || 'Unknown error'}`);
+      console.error('Exception adding school:', error);
+      toast.error(`Unexpected error: ${error.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
