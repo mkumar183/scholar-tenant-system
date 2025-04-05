@@ -7,9 +7,11 @@ import { createTenant, NewTenantForm } from '@/services/tenantsService';
 import TenantsList from '@/components/tenants/TenantsList';
 import TenantSearch from '@/components/tenants/TenantSearch';
 import AddTenantDialog from '@/components/tenants/AddTenantDialog';
+import { useNavigate } from 'react-router-dom';
 
 const Tenants = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const { tenants, setTenants, isLoading, fetchTenants } = useTenantsData();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -35,6 +37,9 @@ const Tenants = () => {
         adminEmail: '',
         adminPassword: '',
       });
+      
+      // Stay on the dashboard page after tenant creation
+      navigate('/dashboard');
     }
   };
 

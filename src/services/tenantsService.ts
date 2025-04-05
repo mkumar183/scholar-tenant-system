@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { TenantType } from '@/types/tenant.types';
@@ -34,18 +33,17 @@ export const createTenant = async (newTenant: NewTenantForm): Promise<TenantType
     }
     console.log('Tenant created successfully:', tenantData);
 
-    // 2. Create the tenant admin user
+    // 2. Create the tenant admin user - Modified to avoid auto login
     console.log('Creating tenant admin user...');
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: newTenant.adminEmail,
       password: newTenant.adminPassword,
-      options: {
-        data: {
-          name: newTenant.adminName,
-          role: 'tenant_admin',
-          tenant_id: tenantData.id,
-        },
-      },
+      email_confirm: true,
+      user_metadata: {
+        name: newTenant.adminName,
+        role: 'tenant_admin',
+        tenant_id: tenantData.id,
+      }
     });
 
     if (authError) {
