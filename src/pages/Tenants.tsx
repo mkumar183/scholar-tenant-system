@@ -71,7 +71,10 @@ const Tenants = () => {
 
   const handleAddTenant = async () => {
     try {
+      console.log('Starting tenant creation process...');
+      
       // 1. Create the tenant
+      console.log('Creating tenant record...');
       const { data: tenantData, error: tenantError } = await supabase
         .from('tenants')
         .insert({
@@ -83,9 +86,14 @@ const Tenants = () => {
         .select()
         .single();
 
-      if (tenantError) throw tenantError;
+      if (tenantError) {
+        console.error('Error creating tenant:', tenantError);
+        throw tenantError;
+      }
+      console.log('Tenant created successfully:', tenantData);
 
       // 2. Create the tenant admin user
+      console.log('Creating tenant admin user...');
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newTenant.adminEmail,
         password: newTenant.adminPassword,
@@ -98,28 +106,42 @@ const Tenants = () => {
         },
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Error creating auth user:', authError);
+        throw authError;
+      }
+      console.log('Auth user created successfully:', authData);
 
-      // 3. Create the user profile
+      // 3. Create the user profile - updated to match the correct table structure
+      console.log('Creating user profile...');
       const { error: profileError } = await supabase
         .from('users')
         .insert({
           id: authData.user.id,
           name: newTenant.adminName,
-          email: newTenant.adminEmail,
           role: 'tenant_admin',
           tenant_id: tenantData.id,
+          // Remove email field as it's not in the table structure
         });
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Error creating user profile:', profileError);
+        throw profileError;
+      }
+      console.log('User profile created successfully');
 
       // 4. Update the tenant with the admin user ID
+      console.log('Updating tenant with admin ID...');
       const { error: updateError } = await supabase
         .from('tenants')
         .update({ admin_id: authData.user.id })
         .eq('id', tenantData.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating tenant with admin ID:', updateError);
+        throw updateError;
+      }
+      console.log('Tenant updated with admin ID successfully');
 
       toast.success('Tenant created successfully');
       setIsAddDialogOpen(false);
@@ -132,6 +154,7 @@ const Tenants = () => {
       });
 
       // Refresh the tenants list
+      console.log('Refreshing tenants list...');
       const { data: updatedTenants, error: fetchError } = await supabase
         .from('tenants')
         .select(`
@@ -139,7 +162,11 @@ const Tenants = () => {
           schools:schools(count)
         `);
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Error fetching updated tenants:', fetchError);
+        throw fetchError;
+      }
+      console.log('Tenants list refreshed successfully');
 
       setTenants(updatedTenants.map(tenant => ({
         id: tenant.id,
@@ -150,8 +177,8 @@ const Tenants = () => {
         adminEmail: tenant.admin_email
       })));
     } catch (error) {
-      console.error('Error creating tenant:', error);
-      toast.error('Failed to create tenant');
+      console.error('Error in tenant creation process:', error);
+      toast.error('Failed to create tenant. Check console for details.');
     }
   };
 
