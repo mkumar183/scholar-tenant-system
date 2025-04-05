@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -53,7 +52,6 @@ interface AddSchoolFormProps {
 const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [tenantId, setTenantId] = useState<string | null>(null);
   
   // Initialize the form with validation
   const form = useForm<SchoolFormValues>({
@@ -65,15 +63,8 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
     },
   });
 
-  // Ensure tenant ID is available
-  useEffect(() => {
-    if (user?.tenantId) {
-      setTenantId(user.tenantId);
-      console.log("Tenant ID found:", user.tenantId);
-    } else {
-      console.error("No tenant ID found in user object:", user);
-    }
-  }, [user]);
+  // Ensure tenant ID is available before allowing submission
+  const tenantId = user?.tenantId;
 
   const handleSubmit = async (values: SchoolFormValues) => {
     // Verify tenant ID is available before proceeding
@@ -89,6 +80,10 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
       console.log('Adding new school with values:', values);
       console.log('Using tenant ID:', tenantId);
       
+      // Check user's role for debugging
+      console.log('Current user role:', user?.role);
+      
+      // Perform the insert operation with explicit tenant_id
       const { data, error } = await supabase
         .from('schools')
         .insert([
