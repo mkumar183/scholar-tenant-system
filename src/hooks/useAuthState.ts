@@ -19,6 +19,7 @@ export const useAuthState = () => {
         if (session?.user) {
           // Fetch user profile on auth state change
           try {
+            // First get the user's role and basic info
             const { data: profile, error } = await supabase
               .from('users')
               .select('*')
@@ -31,13 +32,45 @@ export const useAuthState = () => {
             }
             
             if (profile) {
+              let tenantId = profile.tenant_id;
+              
+              // If no tenant_id but user is tenant_admin, try to find their tenant
+              if (!tenantId && profile.role === 'tenant_admin') {
+                console.log('Tenant admin found but no tenant ID, looking for tenant');
+                
+                const { data: tenantData, error: tenantError } = await supabase
+                  .from('tenants')
+                  .select('id')
+                  .eq('admin_id', session.user.id)
+                  .maybeSingle();
+                
+                if (tenantError) {
+                  console.error('Error fetching tenant:', tenantError);
+                } else if (tenantData) {
+                  console.log('Found tenant for admin:', tenantData.id);
+                  tenantId = tenantData.id;
+                  
+                  // Update the user record with the found tenant_id
+                  const { error: updateError } = await supabase
+                    .from('users')
+                    .update({ tenant_id: tenantId })
+                    .eq('id', session.user.id);
+                  
+                  if (updateError) {
+                    console.error('Error updating user with tenant_id:', updateError);
+                  } else {
+                    console.log('Updated user with tenant_id:', tenantId);
+                  }
+                }
+              }
+              
               // Set user with profile data
               setUser({
                 id: session.user.id,
                 email: session.user.email || '',
                 name: profile.name || '',
                 role: profile.role,
-                tenantId: profile.tenant_id,
+                tenantId: tenantId,
                 schoolId: profile.school_id
               });
             }
@@ -67,13 +100,43 @@ export const useAuthState = () => {
           if (error) {
             console.error('Error fetching user profile:', error);
           } else if (profile) {
+            let tenantId = profile.tenant_id;
+            
+            // If no tenant_id but user is tenant_admin, try to find their tenant
+            if (!tenantId && profile.role === 'tenant_admin') {
+              console.log('Tenant admin found but no tenant ID, looking for tenant');
+              
+              const { data: tenantData, error: tenantError } = await supabase
+                .from('tenants')
+                .select('id')
+                .eq('admin_id', session.user.id)
+                .maybeSingle();
+              
+              if (tenantError) {
+                console.error('Error fetching tenant:', tenantError);
+              } else if (tenantData) {
+                console.log('Found tenant for admin:', tenantData.id);
+                tenantId = tenantData.id;
+                
+                // Update the user record with the found tenant_id
+                const { error: updateError } = await supabase
+                  .from('users')
+                  .update({ tenant_id: tenantId })
+                  .eq('id', session.user.id);
+                
+                if (updateError) {
+                  console.error('Error updating user with tenant_id:', updateError);
+                }
+              }
+            }
+            
             // Set user with profile data
             setUser({
               id: session.user.id,
               email: session.user.email || '',
               name: profile.name || '',
               role: profile.role,
-              tenantId: profile.tenant_id,
+              tenantId: tenantId,
               schoolId: profile.school_id
             });
           }
