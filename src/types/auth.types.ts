@@ -1,11 +1,10 @@
-
 import { Session } from '@supabase/supabase-js';
 
 export type User = {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'school_admin' | 'teacher' | 'student';
+  role: 'superadmin' | 'tenant_admin' | 'school_admin' | 'teacher' | 'staff' | 'student' | 'parent';
   tenantId?: string;
   schoolId?: string;
 };

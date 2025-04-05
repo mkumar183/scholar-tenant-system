@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -43,7 +42,7 @@ const Layout = ({ children }: LayoutProps) => {
             Dashboard
           </Button>
 
-          {(user.role === 'admin' || user.role === 'school_admin') && (
+          {user.role === 'superadmin' && (
             <Button 
               variant="ghost" 
               className="w-full justify-start text-primary-foreground hover:text-primary-foreground hover:bg-primary/80"
@@ -54,7 +53,7 @@ const Layout = ({ children }: LayoutProps) => {
             </Button>
           )}
 
-          {(user.role === 'admin' || user.role === 'school_admin') && (
+          {(user.role === 'superadmin' || user.role === 'tenant_admin') && (
             <Button 
               variant="ghost" 
               className="w-full justify-start text-primary-foreground hover:text-primary-foreground hover:bg-primary/80"

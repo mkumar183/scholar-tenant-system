@@ -1,12 +1,70 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { School, Users, User, BookOpen, ChevronUp, LineChart, CalendarRange } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const [stats, setStats] = useState({
+    totalTenants: 0,
+    totalSchools: 0,
+    totalUsers: 0,
+    totalStudents: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
-  const AdminDashboard = () => (
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Fetch total tenants
+        const { count: tenantsCount, error: tenantsError } = await supabase
+          .from('tenants')
+          .select('*', { count: 'exact', head: true });
+
+        if (tenantsError) throw tenantsError;
+
+        // Fetch total schools
+        const { count: schoolsCount, error: schoolsError } = await supabase
+          .from('schools')
+          .select('*', { count: 'exact', head: true });
+
+        if (schoolsError) throw schoolsError;
+
+        // Fetch total users
+        const { count: usersCount, error: usersError } = await supabase
+          .from('users')
+          .select('*', { count: 'exact', head: true });
+
+        if (usersError) throw usersError;
+
+        // Fetch total students
+        const { count: studentsCount, error: studentsError } = await supabase
+          .from('users')
+          .select('*', { count: 'exact', head: true })
+          .eq('role', 'student');
+
+        if (studentsError) throw studentsError;
+
+        setStats({
+          totalTenants: tenantsCount || 0,
+          totalSchools: schoolsCount || 0,
+          totalUsers: usersCount || 0,
+          totalStudents: studentsCount || 0,
+        });
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+        toast.error('Failed to fetch dashboard statistics');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  const SuperadminDashboard = () => (
     <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -14,9 +72,9 @@ const Dashboard = () => {
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">5</div>
+          <div className="text-2xl font-bold">{stats.totalTenants}</div>
           <p className="text-xs text-muted-foreground">
-            +2 from last month
+            {stats.totalTenants > 0 ? 'Active tenants' : 'No tenants yet'}
           </p>
         </CardContent>
       </Card>
@@ -27,9 +85,9 @@ const Dashboard = () => {
           <School className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">28</div>
+          <div className="text-2xl font-bold">{stats.totalSchools}</div>
           <p className="text-xs text-muted-foreground">
-            +4 from last month
+            {stats.totalSchools > 0 ? 'Active schools' : 'No schools yet'}
           </p>
         </CardContent>
       </Card>
@@ -40,9 +98,9 @@ const Dashboard = () => {
           <User className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">1,245</div>
+          <div className="text-2xl font-bold">{stats.totalUsers}</div>
           <p className="text-xs text-muted-foreground">
-            +18% from last month
+            {stats.totalUsers > 0 ? 'Total system users' : 'No users yet'}
           </p>
         </CardContent>
       </Card>
@@ -61,7 +119,7 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm font-medium">Tenants</p>
-              <p className="text-2xl font-bold">5</p>
+              <p className="text-2xl font-bold">{stats.totalTenants}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -70,7 +128,7 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm font-medium">Schools</p>
-              <p className="text-2xl font-bold">28</p>
+              <p className="text-2xl font-bold">{stats.totalSchools}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -78,8 +136,8 @@ const Dashboard = () => {
               <User className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-medium">Teachers</p>
-              <p className="text-2xl font-bold">156</p>
+              <p className="text-sm font-medium">Total Users</p>
+              <p className="text-2xl font-bold">{stats.totalUsers}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -88,7 +146,7 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm font-medium">Students</p>
-              <p className="text-2xl font-bold">1,089</p>
+              <p className="text-2xl font-bold">{stats.totalStudents}</p>
             </div>
           </div>
         </CardContent>
@@ -349,9 +407,18 @@ const Dashboard = () => {
     </div>
   );
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div>
-      {user?.role === 'admin' && <AdminDashboard />}
+      {user?.role === 'superadmin' && <SuperadminDashboard />}
+      {user?.role === 'tenant_admin' && <SchoolAdminDashboard />}
       {user?.role === 'school_admin' && <SchoolAdminDashboard />}
       {user?.role === 'teacher' && <TeacherDashboard />}
       {user?.role === 'student' && <StudentDashboard />}

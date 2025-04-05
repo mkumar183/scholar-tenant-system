@@ -1,31 +1,41 @@
--- Create users table to extend auth.users
-CREATE TABLE IF NOT EXISTS public.users (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  name TEXT,
-  role TEXT NOT NULL CHECK (role IN ('superadmin', 'tenant_admin', 'school_admin', 'teacher', 'staff', 'student', 'parent')),
-  tenant_id UUID REFERENCES public.tenants(id) ON DELETE SET NULL,
-  school_id UUID REFERENCES public.schools(id) ON DELETE SET NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-  
-  CONSTRAINT fk_tenant
-    FOREIGN KEY(tenant_id)
-    REFERENCES tenants(id)
-    ON DELETE SET NULL,
-    
-  CONSTRAINT fk_school
-    FOREIGN KEY(school_id)
-    REFERENCES schools(id)
-    ON DELETE SET NULL
-);
+-- First, drop ALL existing policies
+DO $$ 
+DECLARE 
+    pol record;
+BEGIN 
+    FOR pol IN SELECT policyname 
+               FROM pg_policies 
+               WHERE schemaname = 'public' 
+               AND tablename = 'users' 
+    LOOP
+        EXECUTE format('DROP POLICY IF EXISTS %I ON public.users', pol.policyname);
+    END LOOP;
+END $$;
 
--- Create indexes
-CREATE INDEX users_tenant_id_idx ON public.users(tenant_id);
-CREATE INDEX users_school_id_idx ON public.users(school_id);
+-- First, update any existing roles to match the new schema
+UPDATE public.users
+SET role = 'tenant_admin'
+WHERE role = 'school_admin';
 
--- Enable RLS
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+-- Drop the trigger and function
+DROP TRIGGER IF EXISTS on_user_update ON public.users;
+DROP FUNCTION IF EXISTS public.handle_user_update();
 
+-- Alter the role column to include new roles
+ALTER TABLE public.users 
+  DROP CONSTRAINT IF EXISTS users_role_check;
+
+-- Update any null or invalid roles to a default value
+UPDATE public.users
+SET role = 'student'
+WHERE role IS NULL OR role NOT IN ('superadmin', 'tenant_admin', 'school_admin', 'teacher', 'staff', 'student', 'parent');
+
+-- Now add the constraint
+ALTER TABLE public.users 
+  ADD CONSTRAINT users_role_check 
+  CHECK (role IN ('superadmin', 'tenant_admin', 'school_admin', 'teacher', 'staff', 'student', 'parent'));
+
+-- Recreate policies with new role names
 -- Allow profile creation during registration
 CREATE POLICY "Allow profile creation during registration" ON public.users
   FOR INSERT
@@ -62,7 +72,7 @@ CREATE POLICY "School admins can see profiles in their school" ON public.users
     school_id = (auth.jwt() -> 'app_metadata' ->> 'school_id')::UUID
   );
 
--- Teachers can see student profiles in their school
+-- Teachers can see profiles in their school
 CREATE POLICY "Teachers can see profiles in their school" ON public.users
   FOR SELECT
   TO authenticated
@@ -78,18 +88,6 @@ CREATE POLICY "Staff can see profiles in their school" ON public.users
   USING (
     auth.jwt() ->> 'role' = 'staff' AND 
     school_id = (auth.jwt() -> 'app_metadata' ->> 'school_id')::UUID
-  );
-
--- Parents can see their children's profiles
-CREATE POLICY "Parents can see their children's profiles" ON public.users
-  FOR SELECT
-  TO authenticated
-  USING (
-    auth.jwt() ->> 'role' = 'parent' AND 
-    id IN (
-      SELECT student_id FROM public.parent_student_relationships 
-      WHERE parent_id = auth.uid()
-    )
   );
 
 -- Users can update their own profile
@@ -111,7 +109,7 @@ CREATE POLICY "Users can insert their own profile" ON public.users
   TO authenticated
   WITH CHECK (id = auth.uid());
 
--- Create a trigger to set app_metadata when profile changes
+-- Recreate the trigger function
 CREATE OR REPLACE FUNCTION public.handle_user_update()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -129,8 +127,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Create trigger for handling profile updates
+-- Recreate the trigger
 CREATE TRIGGER on_user_update
   AFTER INSERT OR UPDATE ON public.users
   FOR EACH ROW
-  EXECUTE PROCEDURE public.handle_user_update();
+  EXECUTE PROCEDURE public.handle_user_update(); 
