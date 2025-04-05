@@ -6,6 +6,7 @@ import { School as SchoolIcon, Users, Search, BookOpen, MapPin, Loader2 } from '
 import { useSchoolsData } from '@/hooks/useSchoolsData';
 import { useAuth } from '@/contexts/AuthContext';
 import AddSchoolDialog from '@/components/schools/AddSchoolDialog';
+import { Button } from '@/components/ui/button'; // Added missing import
 
 const Schools = () => {
   const { user } = useAuth();
