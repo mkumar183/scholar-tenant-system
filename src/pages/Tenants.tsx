@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,23 +42,41 @@ const Tenants = () => {
   useEffect(() => {
     const fetchTenants = async () => {
       try {
-        const { data, error } = await supabase
+        // First fetch the tenants
+        const { data: tenantsData, error: tenantsError } = await supabase
           .from('tenants')
-          .select(`
-            *,
-            schools:schools(count)
-          `);
+          .select('*');
 
-        if (error) throw error;
+        if (tenantsError) throw tenantsError;
 
-        setTenants(data.map(tenant => ({
-          id: tenant.id,
-          name: tenant.name,
-          description: tenant.description,
-          schoolCount: tenant.schools[0].count,
-          adminName: tenant.admin_name,
-          adminEmail: tenant.admin_email
-        })));
+        // Then fetch the schools count for each tenant
+        const tenantsWithSchoolCounts = await Promise.all(
+          tenantsData.map(async (tenant) => {
+            const { count, error: schoolsError } = await supabase
+              .from('schools')
+              .select('*', { count: 'exact', head: true })
+              .eq('tenant_id', tenant.id);
+
+            if (schoolsError) {
+              console.error('Error fetching schools count:', schoolsError);
+              return {
+                ...tenant,
+                schoolCount: 0
+              };
+            }
+
+            return {
+              id: tenant.id,
+              name: tenant.name,
+              description: tenant.description,
+              schoolCount: count || 0,
+              adminName: tenant.admin_name,
+              adminEmail: tenant.admin_email
+            };
+          })
+        );
+
+        setTenants(tenantsWithSchoolCounts);
       } catch (error) {
         console.error('Error fetching tenants:', error);
         toast.error('Failed to fetch tenants');

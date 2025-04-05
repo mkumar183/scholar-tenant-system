@@ -1,3 +1,4 @@
+
 -- 1. Drop all existing policies
 DO $$ 
 DECLARE
@@ -17,13 +18,9 @@ ALTER TABLE public.tenants ENABLE ROW LEVEL SECURITY;
 
 -- 3. Create new policies
 
--- Allow all users to read tenants (for dropdowns, etc.)
-CREATE POLICY "tenants_select_policy" ON public.tenants
-    FOR SELECT USING (true);
-
--- Allow superadmins full access
-CREATE POLICY "tenants_superadmin_policy" ON public.tenants
-    FOR ALL USING (
+-- Allow superadmins to view all tenants
+CREATE POLICY "superadmins_select_policy" ON public.tenants
+    FOR SELECT USING (
         EXISTS (
             SELECT 1 FROM public.users
             WHERE id = auth.uid()
@@ -31,14 +28,42 @@ CREATE POLICY "tenants_superadmin_policy" ON public.tenants
         )
     );
 
--- Allow tenant admins to read their own tenant
-CREATE POLICY "tenants_tenant_admin_policy" ON public.tenants
+-- Allow tenant admins to view their own tenant
+CREATE POLICY "tenant_admins_select_policy" ON public.tenants
     FOR SELECT USING (
         EXISTS (
             SELECT 1 FROM public.users
             WHERE id = auth.uid()
             AND role = 'tenant_admin'
             AND tenant_id = tenants.id
+        )
+    );
+
+-- Allow superadmins to insert/update/delete tenants
+CREATE POLICY "superadmins_insert_policy" ON public.tenants
+    FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.users
+            WHERE id = auth.uid()
+            AND role = 'superadmin'
+        )
+    );
+
+CREATE POLICY "superadmins_update_policy" ON public.tenants
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM public.users
+            WHERE id = auth.uid()
+            AND role = 'superadmin'
+        )
+    );
+
+CREATE POLICY "superadmins_delete_policy" ON public.tenants
+    FOR DELETE USING (
+        EXISTS (
+            SELECT 1 FROM public.users
+            WHERE id = auth.uid()
+            AND role = 'superadmin'
         )
     );
 
