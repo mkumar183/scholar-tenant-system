@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -8,6 +7,7 @@ import TenantsList from '@/components/tenants/TenantsList';
 import TenantSearch from '@/components/tenants/TenantSearch';
 import AddTenantDialog from '@/components/tenants/AddTenantDialog';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 
 const Tenants = () => {
   const { user } = useAuth();
@@ -24,6 +24,9 @@ const Tenants = () => {
   });
 
   const handleAddTenant = async () => {
+    // Store the current auth session to restore it after tenant creation
+    const { data: currentSession } = await supabase.auth.getSession();
+    
     const createdTenant = await createTenant(newTenant);
     
     if (createdTenant) {
@@ -37,6 +40,11 @@ const Tenants = () => {
         adminEmail: '',
         adminPassword: '',
       });
+      
+      // If the session was changed, restore the original session
+      if (currentSession?.session) {
+        await supabase.auth.setSession(currentSession.session);
+      }
       
       // Stay on the dashboard page after tenant creation
       navigate('/dashboard');
