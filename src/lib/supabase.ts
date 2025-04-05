@@ -19,13 +19,15 @@ export const supabase = createClient<Database>(
       flowType: 'implicit'
     },
     global: {
-      fetch: (...args) => {
+      fetch: (url, options) => {
         // Custom fetch with timeout to better handle connectivity issues
         const controller = new AbortController();
         const { signal } = controller;
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
         
-        return fetch(...args, { signal })
+        const fetchOptions = { ...options, signal };
+        
+        return fetch(url, fetchOptions)
           .then(response => {
             clearTimeout(timeoutId);
             return response;

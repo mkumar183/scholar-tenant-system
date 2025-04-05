@@ -1,95 +1,22 @@
+
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Plus, School as SchoolIcon, Users, Search, BookOpen, MapPin, Loader2 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { School as SchoolIcon, Users, Search, BookOpen, MapPin, Loader2 } from 'lucide-react';
 import { useSchoolsData } from '@/hooks/useSchoolsData';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
-
-// School types for dropdown
-const SCHOOL_TYPES = [
-  'Elementary School',
-  'Middle School',
-  'High School',
-  'Private School',
-  'Charter School',
-  'Alternative School',
-];
+import AddSchoolDialog from '@/components/schools/AddSchoolDialog';
 
 const Schools = () => {
   const { user } = useAuth();
-  const { schools, isLoading } = useSchoolsData();
+  const { schools, isLoading, refreshSchools } = useSchoolsData();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newSchool, setNewSchool] = useState({
-    name: '',
-    address: '',
-    type: '',
-  });
 
   const filteredSchools = schools.filter(school => 
     school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (school.address && school.address.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (school.type && school.type.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-
-  const handleAddSchool = async () => {
-    try {
-      if (!user?.tenantId) {
-        toast.error('No tenant ID found');
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('schools')
-        .insert([
-          {
-            name: newSchool.name,
-            address: newSchool.address,
-            type: newSchool.type,
-            tenant_id: user.tenantId,
-          }
-        ])
-        .select();
-
-      if (error) throw error;
-
-      toast.success('School added successfully');
-      setIsAddDialogOpen(false);
-      
-      // Reset form
-      setNewSchool({
-        name: '',
-        address: '',
-        type: '',
-      });
-      
-      // Refresh data - hacky but works
-      window.location.reload();
-    } catch (error) {
-      console.error('Error adding school:', error);
-      toast.error('Failed to add school');
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -104,65 +31,9 @@ const Schools = () => {
           />
         </div>
         
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Add School
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New School</DialogTitle>
-              <DialogDescription>
-                Register a new school in the system
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div>
-                <Label htmlFor="school-name">School Name</Label>
-                <Input
-                  id="school-name"
-                  value={newSchool.name}
-                  onChange={(e) => setNewSchool({...newSchool, name: e.target.value})}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="school-address">Address</Label>
-                <Input
-                  id="school-address"
-                  value={newSchool.address}
-                  onChange={(e) => setNewSchool({...newSchool, address: e.target.value})}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="school-type">School Type</Label>
-                <Select 
-                  value={newSchool.type} 
-                  onValueChange={(value) => setNewSchool({...newSchool, type: value})}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SCHOOL_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddSchool}>Create School</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {(user?.role === 'tenant_admin' || user?.role === 'school_admin') && (
+          <AddSchoolDialog onSchoolAdded={refreshSchools} />
+        )}
       </div>
       
       {isLoading ? (
