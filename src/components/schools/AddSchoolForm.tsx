@@ -63,11 +63,11 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
     },
   });
   
-  // Ensure tenant ID is available before allowing submission
+  // Get tenant ID from user context
   const tenantId = user?.tenantId;
 
   const handleSubmit = async (values: SchoolFormValues) => {
-    // Verify tenant ID is available before proceeding
+    // Verify tenant ID is available
     if (!tenantId) {
       toast.error('No tenant ID found. Please refresh the page or log in again.');
       console.error("Missing tenant ID during form submission. User object:", user);
@@ -77,7 +77,7 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
     try {
       setIsSubmitting(true);
       
-      // Create the school data object
+      // Prepare school data
       const schoolData = {
         name: values.name,
         address: values.address || null,
@@ -85,23 +85,23 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
         tenant_id: tenantId,
       };
       
-      console.log('Attempting to insert school with data:', schoolData);
+      console.log('Submitting school data:', schoolData);
       
-      // Simple direct table insert
-      const { data: insertData, error: insertError } = await supabase
+      // Insert school into database
+      const { data, error } = await supabase
         .from('schools')
         .insert([schoolData])
         .select();
 
-      if (insertError) {
-        console.error('School insertion failed:', insertError);
-        toast.error(`Failed to add school: ${insertError.message}`);
+      if (error) {
+        console.error('School insertion failed:', error);
+        toast.error(`Failed to add school: ${error.message}`);
         return;
       }
       
-      console.log('School added successfully:', insertData);
+      console.log('School added successfully:', data);
       toast.success('School added successfully');
-      onSuccess();
+      onSuccess(); // Notify parent component
     } catch (error: any) {
       console.error('Exception adding school:', error);
       toast.error(`Unexpected error: ${error.message || 'Unknown error'}`);
