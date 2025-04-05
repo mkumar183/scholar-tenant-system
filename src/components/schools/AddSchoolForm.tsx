@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -53,6 +53,7 @@ interface AddSchoolFormProps {
 const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tenantId, setTenantId] = useState<string | null>(null);
   
   // Initialize the form with validation
   const form = useForm<SchoolFormValues>({
@@ -64,9 +65,21 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
     },
   });
 
+  // Ensure tenant ID is available
+  useEffect(() => {
+    if (user?.tenantId) {
+      setTenantId(user.tenantId);
+      console.log("Tenant ID found:", user.tenantId);
+    } else {
+      console.error("No tenant ID found in user object:", user);
+    }
+  }, [user]);
+
   const handleSubmit = async (values: SchoolFormValues) => {
-    if (!user?.tenantId) {
+    // Verify tenant ID is available before proceeding
+    if (!tenantId) {
       toast.error('No tenant ID found. Please refresh the page or log in again.');
+      console.error("Missing tenant ID during form submission. User object:", user);
       return;
     }
 
@@ -74,6 +87,7 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
       setIsSubmitting(true);
       
       console.log('Adding new school with values:', values);
+      console.log('Using tenant ID:', tenantId);
       
       const { data, error } = await supabase
         .from('schools')
@@ -82,7 +96,7 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
             name: values.name,
             address: values.address || null,
             type: values.type || null,
-            tenant_id: user.tenantId,
+            tenant_id: tenantId,
           }
         ])
         .select();
@@ -106,6 +120,11 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        {!tenantId && (
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-2 rounded mb-4">
+            No tenant ID available. Please refresh the page.
+          </div>
+        )}
         <FormField
           control={form.control}
           name="name"
@@ -166,7 +185,7 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting || !tenantId}>
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
