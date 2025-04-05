@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { School, Users } from 'lucide-react';
 import { TenantType } from '@/types/tenant.types';
 import DeleteTenantDialog from './DeleteTenantDialog';
+import { useNavigate } from 'react-router-dom';
 
 interface TenantsListProps {
   isLoading: boolean;
@@ -13,6 +14,7 @@ interface TenantsListProps {
 }
 
 const TenantsList = ({ isLoading, tenants, searchTerm, onTenantDeleted }: TenantsListProps) => {
+  const navigate = useNavigate();
   const filteredTenants = tenants.filter(tenant =>
     tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     tenant.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -62,7 +64,13 @@ const TenantsList = ({ isLoading, tenants, searchTerm, onTenantDeleted }: Tenant
               <p className="text-xs text-muted-foreground">{tenant.adminEmail}</p>
             </div>
             <div className="mt-4 flex items-center justify-end gap-2">
-              <Button variant="outline" size="sm">View</Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate(`/tenants/${tenant.id}`)}
+              >
+                View
+              </Button>
               <Button size="sm">Manage</Button>
               <DeleteTenantDialog 
                 tenantId={tenant.id} 

@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Tenants from "./pages/Tenants";
+import TenantDetails from "./pages/TenantDetails";
 import Schools from "./pages/Schools";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
@@ -44,6 +45,14 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <Tenants />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/tenants/:id" element={
+              <ProtectedRoute>
+                <Layout>
+                  <TenantDetails />
                 </Layout>
               </ProtectedRoute>
             } />

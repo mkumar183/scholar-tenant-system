@@ -6,6 +6,7 @@ export interface TenantType {
   schoolCount: number;
   adminName: string | null;
   adminEmail: string | null;
+  created_at?: string;
 }
 
 export interface TenantFormData {
