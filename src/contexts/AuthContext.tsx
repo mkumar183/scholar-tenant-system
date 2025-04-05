@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -17,7 +18,7 @@ type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
+  register: (email: string, password: string, name: string, role?: 'admin' | 'school_admin' | 'teacher' | 'student') => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -164,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (email: string, password: string, name: string) => {
+  const register = async (email: string, password: string, name: string, role: 'admin' | 'school_admin' | 'teacher' | 'student' = 'student') => {
     setIsLoading(true);
     
     try {
@@ -194,7 +195,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             { 
               id: authData.user.id,
               name: name,
-              role: 'student', // Default role
+              role: role, // Use the provided role or default to student
             }
           ])
           .select();

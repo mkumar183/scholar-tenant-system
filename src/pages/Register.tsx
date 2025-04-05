@@ -25,6 +25,14 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -35,6 +43,7 @@ const formSchema = z.object({
     message: 'Password must be at least 6 characters.',
   }),
   confirmPassword: z.string(),
+  role: z.enum(['admin', 'school_admin', 'teacher', 'student']),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -54,16 +63,19 @@ const Register = () => {
       email: '',
       password: '',
       confirmPassword: '',
+      role: 'student',
     },
   });
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     try {
-      await register(values.email, values.password, values.name);
+      await register(values.email, values.password, values.name, values.role);
+      toast.success('Registration successful! Redirecting to login...');
       navigate('/login');
     } catch (error) {
       console.error(error);
+      toast.error('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -137,6 +149,32 @@ const Register = () => {
                       <FormControl>
                         <Input type="password" placeholder="••••••••" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Role</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a role" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="school_admin">School Admin</SelectItem>
+                          <SelectItem value="teacher">Teacher</SelectItem>
+                          <SelectItem value="student">Student</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
