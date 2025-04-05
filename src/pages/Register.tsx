@@ -43,7 +43,7 @@ const formSchema = z.object({
     message: 'Password must be at least 6 characters.',
   }),
   confirmPassword: z.string(),
-  role: z.enum(['admin', 'school_admin', 'teacher', 'student']),
+  role: z.enum(['school_admin', 'teacher', 'student']),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -169,7 +169,6 @@ const Register = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
                           <SelectItem value="school_admin">School Admin</SelectItem>
                           <SelectItem value="teacher">Teacher</SelectItem>
                           <SelectItem value="student">Student</SelectItem>
