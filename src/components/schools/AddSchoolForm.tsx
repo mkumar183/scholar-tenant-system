@@ -77,14 +77,13 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
     try {
       setIsSubmitting(true);
       
-      // Enhanced logging to help debug authentication issues
+      // Debug logging to help diagnose RLS issues
       console.log('Attempting to add school with:', { 
         values,
         tenantId,
         userRole: user?.role,
         userId: user?.id,
-        hasAppMetadata: user?.hasOwnProperty('app_metadata'),
-        jwtPayload: await supabase.auth.getSession().then(res => res.data.session?.access_token)
+        app_metadata: await supabase.auth.getSession().then(res => res.data.session?.user?.app_metadata)
       });
       
       // Create the school data object with explicit tenant_id
@@ -95,9 +94,10 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
         tenant_id: tenantId,
       };
       
-      // Use the RPC endpoint instead of direct table insert to bypass potential RLS issues
+      // Use direct table insert with RLS
       const { data, error } = await supabase
-        .rpc('create_school', schoolData)
+        .from('schools')
+        .insert([schoolData])
         .select();
 
       if (error) {
