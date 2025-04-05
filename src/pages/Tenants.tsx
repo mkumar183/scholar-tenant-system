@@ -92,7 +92,7 @@ const Tenants = () => {
     try {
       console.log('Starting tenant creation process...');
       
-      // 1. Create the tenant
+      // 1. Create the tenant first (without admin_id since we don't have it yet)
       console.log('Creating tenant record...');
       const { data: tenantData, error: tenantError } = await supabase
         .from('tenants')
@@ -131,7 +131,7 @@ const Tenants = () => {
       }
       console.log('Auth user created successfully:', authData);
 
-      // 3. Create the user profile - updated to match the correct table structure
+      // 3. Create the user profile
       console.log('Creating user profile...');
       const { error: profileError } = await supabase
         .from('users')
@@ -140,7 +140,6 @@ const Tenants = () => {
           name: newTenant.adminName,
           role: 'tenant_admin',
           tenant_id: tenantData.id,
-          // Remove email field as it's not in the table structure
         });
 
       if (profileError) {
@@ -149,7 +148,7 @@ const Tenants = () => {
       }
       console.log('User profile created successfully');
 
-      // 4. Update the tenant with the admin user ID
+      // 4. Update the tenant with the admin user ID - now using the admin_id column
       console.log('Updating tenant with admin ID...');
       const { error: updateError } = await supabase
         .from('tenants')
@@ -174,27 +173,48 @@ const Tenants = () => {
 
       // Refresh the tenants list
       console.log('Refreshing tenants list...');
-      const { data: updatedTenants, error: fetchError } = await supabase
+      const { data: updatedTenantsData, error: fetchError } = await supabase
         .from('tenants')
-        .select(`
-          *,
-          schools:schools(count)
-        `);
+        .select('*');
 
       if (fetchError) {
         console.error('Error fetching updated tenants:', fetchError);
         throw fetchError;
       }
-      console.log('Tenants list refreshed successfully');
 
-      setTenants(updatedTenants.map(tenant => ({
-        id: tenant.id,
-        name: tenant.name,
-        description: tenant.description,
-        schoolCount: tenant.schools[0].count,
-        adminName: tenant.admin_name,
-        adminEmail: tenant.admin_email
-      })));
+      // Get school counts separately to avoid potential issues with complicated queries
+      const updatedTenantsWithSchoolCounts = await Promise.all(
+        updatedTenantsData.map(async (tenant) => {
+          const { count, error: schoolsError } = await supabase
+            .from('schools')
+            .select('*', { count: 'exact', head: true })
+            .eq('tenant_id', tenant.id);
+
+          if (schoolsError) {
+            console.error('Error fetching schools count:', schoolsError);
+            return {
+              id: tenant.id,
+              name: tenant.name,
+              description: tenant.description,
+              schoolCount: 0,
+              adminName: tenant.admin_name,
+              adminEmail: tenant.admin_email
+            };
+          }
+
+          return {
+            id: tenant.id,
+            name: tenant.name,
+            description: tenant.description,
+            schoolCount: count || 0,
+            adminName: tenant.admin_name,
+            adminEmail: tenant.admin_email
+          };
+        })
+      );
+
+      setTenants(updatedTenantsWithSchoolCounts);
+      console.log('Tenants list refreshed successfully');
     } catch (error) {
       console.error('Error in tenant creation process:', error);
       toast.error('Failed to create tenant. Check console for details.');

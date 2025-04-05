@@ -250,6 +250,7 @@ export type Database = {
       tenants: {
         Row: {
           admin_email: string | null
+          admin_id: string | null
           admin_name: string | null
           created_at: string
           description: string | null
@@ -259,6 +260,7 @@ export type Database = {
         }
         Insert: {
           admin_email?: string | null
+          admin_id?: string | null
           admin_name?: string | null
           created_at?: string
           description?: string | null
@@ -268,6 +270,7 @@ export type Database = {
         }
         Update: {
           admin_email?: string | null
+          admin_id?: string | null
           admin_name?: string | null
           created_at?: string
           description?: string | null
