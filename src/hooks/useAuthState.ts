@@ -12,13 +12,15 @@ export const useAuthState = () => {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
         setSession(session);
         
         if (session?.user) {
           // Fetch user profile on auth state change
           setTimeout(async () => {
             try {
+              // First get the direct user profile
               const { data: profile, error } = await supabase
                 .from('users')
                 .select('*')
@@ -31,6 +33,44 @@ export const useAuthState = () => {
               }
               
               if (profile) {
+                // If user is a tenant_admin but has no tenant_id, try to find their tenant
+                if (profile.role === 'tenant_admin' && !profile.tenant_id) {
+                  console.log('Tenant admin found with no tenant_id, searching for their tenant...');
+                  const { data: tenantData, error: tenantError } = await supabase
+                    .from('tenants')
+                    .select('id')
+                    .eq('admin_id', session.user.id)
+                    .maybeSingle();
+                  
+                  if (tenantError) {
+                    console.error('Error fetching tenant for admin:', tenantError);
+                  } else if (tenantData) {
+                    console.log('Found tenant for admin:', tenantData.id);
+                    
+                    // Update the user's profile with the tenant_id
+                    const { error: updateError } = await supabase
+                      .from('users')
+                      .update({ tenant_id: tenantData.id })
+                      .eq('id', session.user.id);
+                    
+                    if (updateError) {
+                      console.error('Error updating user with tenant_id:', updateError);
+                    } else {
+                      // Set updated profile with tenant_id
+                      setUser({
+                        id: session.user.id,
+                        email: session.user.email || '',
+                        name: profile.name || '',
+                        role: profile.role,
+                        tenantId: tenantData.id,
+                        schoolId: profile.school_id
+                      });
+                      return; // Exit early since we've set the user
+                    }
+                  }
+                }
+                
+                // Set user with original profile data
                 setUser({
                   id: session.user.id,
                   email: session.user.email || '',
@@ -57,6 +97,7 @@ export const useAuthState = () => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
+          // First get basic profile
           const { data: profile, error } = await supabase
             .from('users')
             .select('*')
@@ -66,6 +107,45 @@ export const useAuthState = () => {
           if (error) {
             console.error('Error fetching user profile:', error);
           } else if (profile) {
+            // If user is a tenant_admin but has no tenant_id, try to find their tenant
+            if (profile.role === 'tenant_admin' && !profile.tenant_id) {
+              console.log('Tenant admin found with no tenant_id on init, searching for their tenant...');
+              const { data: tenantData, error: tenantError } = await supabase
+                .from('tenants')
+                .select('id')
+                .eq('admin_id', session.user.id)
+                .maybeSingle();
+              
+              if (tenantError) {
+                console.error('Error fetching tenant for admin:', tenantError);
+              } else if (tenantData) {
+                console.log('Found tenant for admin on init:', tenantData.id);
+                
+                // Update the user's profile with the tenant_id
+                const { error: updateError } = await supabase
+                  .from('users')
+                  .update({ tenant_id: tenantData.id })
+                  .eq('id', session.user.id);
+                
+                if (updateError) {
+                  console.error('Error updating user with tenant_id:', updateError);
+                } else {
+                  // Set updated profile with tenant_id
+                  setUser({
+                    id: session.user.id,
+                    email: session.user.email || '',
+                    name: profile.name || '',
+                    role: profile.role,
+                    tenantId: tenantData.id,
+                    schoolId: profile.school_id
+                  });
+                  setIsLoading(false);
+                  return; // Exit early since we've set the user
+                }
+              }
+            }
+            
+            // Set user with original profile data
             setUser({
               id: session.user.id,
               email: session.user.email || '',
