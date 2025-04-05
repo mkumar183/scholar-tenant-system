@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -52,7 +52,6 @@ interface AddSchoolFormProps {
 const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [jwtDetails, setJwtDetails] = useState<any>(null);
   
   // Initialize the form with validation
   const form = useForm<SchoolFormValues>({
@@ -64,37 +63,6 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
     },
   });
   
-  // Fetch the current session and extract JWT details on component mount
-  useEffect(() => {
-    const getJwtDetails = async () => {
-      try {
-        // Get current session
-        const { data } = await supabase.auth.getSession();
-        
-        if (data.session?.access_token) {
-          // Parse JWT to view claims
-          const token = data.session.access_token;
-          const claims = JSON.parse(atob(token.split('.')[1]));
-          
-          console.log('JWT claims:', claims);
-          setJwtDetails({
-            role: claims.role,
-            tenantId: claims.app_metadata?.tenant_id,
-            exp: new Date(claims.exp * 1000).toLocaleString(),
-            sub: claims.sub,
-            raw: claims
-          });
-        } else {
-          console.log('No active session found');
-        }
-      } catch (error) {
-        console.error('Error parsing JWT:', error);
-      }
-    };
-    
-    getJwtDetails();
-  }, []);
-
   // Ensure tenant ID is available before allowing submission
   const tenantId = user?.tenantId;
 
@@ -109,37 +77,6 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
     try {
       setIsSubmitting(true);
       
-      // First, refresh the session to ensure we have the latest JWT claims
-      console.log('Refreshing session...');
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-      
-      if (refreshError) {
-        console.error('Failed to refresh session:', refreshError);
-        toast.error('Authentication refresh failed. Please log in again.');
-        return;
-      }
-      
-      // Get the latest session after refresh
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      if (!sessionData.session) {
-        console.error('No session available after refresh');
-        toast.error('Session not available. Please log in again.');
-        return;
-      }
-      
-      // Parse and log JWT claims for debugging
-      const token = sessionData.session.access_token;
-      const claims = JSON.parse(atob(token.split('.')[1]));
-      console.log('JWT claims after refresh:', claims);
-      
-      // Check if the necessary role is present in the JWT
-      if (!claims.role) {
-        console.error('JWT missing role claim:', claims);
-        toast.error('Authorization error: Your account is missing the required role. Please contact support.');
-        return;
-      }
-      
       // Create the school data object
       const schoolData = {
         name: values.name,
@@ -149,9 +86,8 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
       };
       
       console.log('Attempting to insert school with data:', schoolData);
-      console.log('Current user role from JWT:', claims.role);
       
-      // Try direct table insert
+      // Simple direct table insert
       const { data: insertData, error: insertError } = await supabase
         .from('schools')
         .insert([schoolData])
@@ -159,14 +95,7 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
 
       if (insertError) {
         console.error('School insertion failed:', insertError);
-        
-        if (insertError.code === 'PGRST301') {
-          toast.error('Permission denied: You do not have the required role to add schools.');
-        } else if (insertError.message.includes('violates row-level security')) {
-          toast.error('Row-level security violation. Your JWT may be missing required claims.');
-        } else {
-          toast.error(`Failed to add school: ${insertError.message}`);
-        }
+        toast.error(`Failed to add school: ${insertError.message}`);
         return;
       }
       
@@ -187,14 +116,6 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
         {!tenantId && (
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-2 rounded mb-4">
             No tenant ID available. Please refresh the page.
-          </div>
-        )}
-        
-        {jwtDetails && (
-          <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-2 rounded mb-4 text-xs">
-            <div><strong>JWT Role:</strong> {jwtDetails.role || 'none'}</div>
-            <div><strong>JWT Tenant ID:</strong> {jwtDetails.tenantId || 'none'}</div>
-            <div><strong>JWT Expiry:</strong> {jwtDetails.exp}</div>
           </div>
         )}
         
