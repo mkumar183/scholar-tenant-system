@@ -109,7 +109,7 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
     try {
       setIsSubmitting(true);
       
-      // First, refresh the JWT token to ensure we have the latest claims
+      // First, refresh the session to ensure we have the latest JWT claims
       console.log('Refreshing session...');
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
       
@@ -133,10 +133,12 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
       const claims = JSON.parse(atob(token.split('.')[1]));
       console.log('JWT claims after refresh:', claims);
       
-      // Try BOTH approaches:
-      
-      // Approach 1: Direct insert with explicit tenant_id but without RLS check
-      console.log('Attempting direct insert with explicit tenant_id...');
+      // Check if the necessary role is present in the JWT
+      if (!claims.role) {
+        console.error('JWT missing role claim:', claims);
+        toast.error('Authorization error: Your account is missing the required role. Please contact support.');
+        return;
+      }
       
       // Create the school data object
       const schoolData = {
@@ -146,6 +148,9 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
         tenant_id: tenantId,
       };
       
+      console.log('Attempting to insert school with data:', schoolData);
+      console.log('Current user role from JWT:', claims.role);
+      
       // Try direct table insert
       const { data: insertData, error: insertError } = await supabase
         .from('schools')
@@ -153,32 +158,21 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
         .select();
 
       if (insertError) {
-        console.error('Direct insert failed:', insertError);
+        console.error('School insertion failed:', insertError);
         
-        // Approach 2: Try using the RPC function that bypasses RLS
-        console.log('Attempting to create school via RPC function...');
-        const { data: rpcData, error: rpcError } = await supabase
-          .rpc('create_school', {
-            name: values.name,
-            address: values.address || null,
-            type: values.type || null,
-            tenant_id: tenantId
-          });
-        
-        if (rpcError) {
-          console.error('RPC method also failed:', rpcError);
-          toast.error(`Failed to add school: ${rpcError.message}`);
-          return;
+        if (insertError.code === 'PGRST301') {
+          toast.error('Permission denied: You do not have the required role to add schools.');
+        } else if (insertError.message.includes('violates row-level security')) {
+          toast.error('Row-level security violation. Your JWT may be missing required claims.');
+        } else {
+          toast.error(`Failed to add school: ${insertError.message}`);
         }
-        
-        console.log('School created successfully via RPC:', rpcData);
-        toast.success('School added successfully via RPC function');
-        onSuccess();
-      } else {
-        console.log('School added successfully via direct insert:', insertData);
-        toast.success('School added successfully');
-        onSuccess();
+        return;
       }
+      
+      console.log('School added successfully:', insertData);
+      toast.success('School added successfully');
+      onSuccess();
     } catch (error: any) {
       console.error('Exception adding school:', error);
       toast.error(`Unexpected error: ${error.message || 'Unknown error'}`);
