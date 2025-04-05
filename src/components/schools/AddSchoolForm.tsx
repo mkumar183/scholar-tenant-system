@@ -77,13 +77,11 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
     try {
       setIsSubmitting(true);
       
-      // Debug logging to help diagnose RLS issues
+      // Simple debug logging
       console.log('Attempting to add school with:', { 
         values,
         tenantId,
-        userRole: user?.role,
-        userId: user?.id,
-        app_metadata: await supabase.auth.getSession().then(res => res.data.session?.user?.app_metadata)
+        userRole: user?.role
       });
       
       // Create the school data object with explicit tenant_id
@@ -94,7 +92,7 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
         tenant_id: tenantId,
       };
       
-      // Use direct table insert with RLS
+      // Use direct table insert with simplified RLS
       const { data, error } = await supabase
         .from('schools')
         .insert([schoolData])
@@ -102,13 +100,7 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
 
       if (error) {
         console.error('Error adding school:', error);
-        if (error.code === '42501') {
-          toast.error('Permission denied. You do not have the required permissions to add a school.');
-        } else if (error.message.includes('tenant_id')) {
-          toast.error('Invalid tenant information. Please contact support.');
-        } else {
-          toast.error(`Failed to add school: ${error.message}`);
-        }
+        toast.error(`Failed to add school: ${error.message}`);
         return;
       }
 
