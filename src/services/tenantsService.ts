@@ -99,3 +99,28 @@ export const createTenant = async (newTenant: NewTenantForm): Promise<TenantType
     return null;
   }
 };
+
+export const deleteTenant = async (tenantId: string): Promise<boolean> => {
+  try {
+    console.log('Deleting tenant with ID:', tenantId);
+    
+    // 1. Delete the tenant
+    const { error } = await supabase
+      .from('tenants')
+      .delete()
+      .eq('id', tenantId);
+
+    if (error) {
+      console.error('Error deleting tenant:', error);
+      toast.error('Failed to delete tenant');
+      return false;
+    }
+
+    console.log('Tenant deleted successfully');
+    return true;
+  } catch (error) {
+    console.error('Error in tenant deletion process:', error);
+    toast.error('Failed to delete tenant. Check console for details.');
+    return false;
+  }
+};

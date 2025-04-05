@@ -11,7 +11,7 @@ import AddTenantDialog from '@/components/tenants/AddTenantDialog';
 const Tenants = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const { tenants, setTenants, isLoading } = useTenantsData();
+  const { tenants, setTenants, isLoading, fetchTenants } = useTenantsData();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newTenant, setNewTenant] = useState<NewTenantForm>({
     name: '',
@@ -36,6 +36,10 @@ const Tenants = () => {
         adminPassword: '',
       });
     }
+  };
+
+  const handleTenantDeleted = () => {
+    fetchTenants();
   };
 
   if (user?.role !== 'superadmin') {
@@ -71,7 +75,8 @@ const Tenants = () => {
       <TenantsList 
         isLoading={isLoading} 
         tenants={tenants} 
-        searchTerm={searchTerm} 
+        searchTerm={searchTerm}
+        onTenantDeleted={handleTenantDeleted}
       />
     </div>
   );

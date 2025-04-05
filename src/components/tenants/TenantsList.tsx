@@ -3,14 +3,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { School, Users } from 'lucide-react';
 import { TenantType } from '@/types/tenant.types';
+import DeleteTenantDialog from './DeleteTenantDialog';
 
 interface TenantsListProps {
   isLoading: boolean;
   tenants: TenantType[];
   searchTerm: string;
+  onTenantDeleted: () => void;
 }
 
-const TenantsList = ({ isLoading, tenants, searchTerm }: TenantsListProps) => {
+const TenantsList = ({ isLoading, tenants, searchTerm, onTenantDeleted }: TenantsListProps) => {
   const filteredTenants = tenants.filter(tenant =>
     tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     tenant.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -62,6 +64,11 @@ const TenantsList = ({ isLoading, tenants, searchTerm }: TenantsListProps) => {
             <div className="mt-4 flex items-center justify-end gap-2">
               <Button variant="outline" size="sm">View</Button>
               <Button size="sm">Manage</Button>
+              <DeleteTenantDialog 
+                tenantId={tenant.id} 
+                tenantName={tenant.name} 
+                onTenantDeleted={onTenantDeleted} 
+              />
             </div>
           </CardContent>
         </Card>
