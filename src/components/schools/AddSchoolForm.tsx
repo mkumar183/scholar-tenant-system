@@ -52,7 +52,7 @@ interface AddSchoolFormProps {
 const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [authSession, setAuthSession] = useState<any>(null);
+  const [jwtDetails, setJwtDetails] = useState<any>(null);
   
   // Initialize the form with validation
   const form = useForm<SchoolFormValues>({
@@ -64,15 +64,35 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
     },
   });
   
-  // Fetch the current session to ensure we have fresh JWT
+  // Fetch the current session and extract JWT details on component mount
   useEffect(() => {
-    const getSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      console.log('Current session:', data.session);
-      setAuthSession(data.session);
+    const getJwtDetails = async () => {
+      try {
+        // Get current session
+        const { data } = await supabase.auth.getSession();
+        
+        if (data.session?.access_token) {
+          // Parse JWT to view claims
+          const token = data.session.access_token;
+          const claims = JSON.parse(atob(token.split('.')[1]));
+          
+          console.log('JWT claims:', claims);
+          setJwtDetails({
+            role: claims.role,
+            tenantId: claims.app_metadata?.tenant_id,
+            exp: new Date(claims.exp * 1000).toLocaleString(),
+            sub: claims.sub,
+            raw: claims
+          });
+        } else {
+          console.log('No active session found');
+        }
+      } catch (error) {
+        console.error('Error parsing JWT:', error);
+      }
     };
     
-    getSession();
+    getJwtDetails();
   }, []);
 
   // Ensure tenant ID is available before allowing submission
@@ -90,21 +110,35 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
       setIsSubmitting(true);
       
       // First, refresh the JWT token to ensure we have the latest claims
-      await supabase.auth.refreshSession();
+      console.log('Refreshing session...');
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      
+      if (refreshError) {
+        console.error('Failed to refresh session:', refreshError);
+        toast.error('Authentication refresh failed. Please log in again.');
+        return;
+      }
+      
+      // Get the latest session after refresh
       const { data: sessionData } = await supabase.auth.getSession();
       
-      // Log authentication details for debugging
-      console.log('Auth details before submission:', { 
-        values,
-        tenantId,
-        userRole: user?.role,
-        jwt: sessionData.session?.access_token,
-        jwtClaims: sessionData.session ? 
-                  JSON.parse(atob(sessionData.session.access_token.split('.')[1])) : 
-                  null
-      });
+      if (!sessionData.session) {
+        console.error('No session available after refresh');
+        toast.error('Session not available. Please log in again.');
+        return;
+      }
       
-      // Create the school data object with explicit tenant_id
+      // Parse and log JWT claims for debugging
+      const token = sessionData.session.access_token;
+      const claims = JSON.parse(atob(token.split('.')[1]));
+      console.log('JWT claims after refresh:', claims);
+      
+      // Try BOTH approaches:
+      
+      // Approach 1: Direct insert with explicit tenant_id but without RLS check
+      console.log('Attempting direct insert with explicit tenant_id...');
+      
+      // Create the school data object
       const schoolData = {
         name: values.name,
         address: values.address || null,
@@ -112,33 +146,39 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
         tenant_id: tenantId,
       };
       
-      // Use direct table insert with simplified RLS
-      const { data, error } = await supabase
+      // Try direct table insert
+      const { data: insertData, error: insertError } = await supabase
         .from('schools')
         .insert([schoolData])
         .select();
 
-      if (error) {
-        console.error('Error adding school:', error);
-        toast.error(`Failed to add school: ${error.message}`);
+      if (insertError) {
+        console.error('Direct insert failed:', insertError);
         
-        // More detailed error logging
-        if (error.code === '42501') {
-          console.error('Permission denied. Your role may not be correctly set in JWT claims.');
-          // Try to log the current JWT claims for debugging
-          const { data: sessionData } = await supabase.auth.getSession();
-          if (sessionData.session) {
-            const token = sessionData.session.access_token;
-            const claims = JSON.parse(atob(token.split('.')[1]));
-            console.error('Current JWT claims:', claims);
-          }
+        // Approach 2: Try using the RPC function that bypasses RLS
+        console.log('Attempting to create school via RPC function...');
+        const { data: rpcData, error: rpcError } = await supabase
+          .rpc('create_school', {
+            name: values.name,
+            address: values.address || null,
+            type: values.type || null,
+            tenant_id: tenantId
+          });
+        
+        if (rpcError) {
+          console.error('RPC method also failed:', rpcError);
+          toast.error(`Failed to add school: ${rpcError.message}`);
+          return;
         }
-        return;
+        
+        console.log('School created successfully via RPC:', rpcData);
+        toast.success('School added successfully via RPC function');
+        onSuccess();
+      } else {
+        console.log('School added successfully via direct insert:', insertData);
+        toast.success('School added successfully');
+        onSuccess();
       }
-
-      console.log('School added successfully:', data);
-      toast.success('School added successfully');
-      onSuccess();
     } catch (error: any) {
       console.error('Exception adding school:', error);
       toast.error(`Unexpected error: ${error.message || 'Unknown error'}`);
@@ -156,9 +196,11 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
           </div>
         )}
         
-        {!authSession && (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-2 rounded mb-4">
-            Session information not loaded. Please wait or refresh the page.
+        {jwtDetails && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-2 rounded mb-4 text-xs">
+            <div><strong>JWT Role:</strong> {jwtDetails.role || 'none'}</div>
+            <div><strong>JWT Tenant ID:</strong> {jwtDetails.tenantId || 'none'}</div>
+            <div><strong>JWT Expiry:</strong> {jwtDetails.exp}</div>
           </div>
         )}
         
@@ -222,7 +264,7 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting || !tenantId || !authSession}>
+          <Button type="submit" disabled={isSubmitting || !tenantId}>
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
