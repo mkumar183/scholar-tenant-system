@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -52,6 +52,7 @@ interface AddSchoolFormProps {
 const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authSession, setAuthSession] = useState<any>(null);
   
   // Initialize the form with validation
   const form = useForm<SchoolFormValues>({
@@ -62,6 +63,17 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
       type: '',
     },
   });
+  
+  // Fetch the current session to ensure we have fresh JWT
+  useEffect(() => {
+    const getSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      console.log('Current session:', data.session);
+      setAuthSession(data.session);
+    };
+    
+    getSession();
+  }, []);
 
   // Ensure tenant ID is available before allowing submission
   const tenantId = user?.tenantId;
@@ -77,11 +89,19 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
     try {
       setIsSubmitting(true);
       
-      // Simple debug logging
-      console.log('Attempting to add school with:', { 
+      // First, refresh the JWT token to ensure we have the latest claims
+      await supabase.auth.refreshSession();
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      // Log authentication details for debugging
+      console.log('Auth details before submission:', { 
         values,
         tenantId,
-        userRole: user?.role
+        userRole: user?.role,
+        jwt: sessionData.session?.access_token,
+        jwtClaims: sessionData.session ? 
+                  JSON.parse(atob(sessionData.session.access_token.split('.')[1])) : 
+                  null
       });
       
       // Create the school data object with explicit tenant_id
@@ -101,6 +121,18 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
       if (error) {
         console.error('Error adding school:', error);
         toast.error(`Failed to add school: ${error.message}`);
+        
+        // More detailed error logging
+        if (error.code === '42501') {
+          console.error('Permission denied. Your role may not be correctly set in JWT claims.');
+          // Try to log the current JWT claims for debugging
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData.session) {
+            const token = sessionData.session.access_token;
+            const claims = JSON.parse(atob(token.split('.')[1]));
+            console.error('Current JWT claims:', claims);
+          }
+        }
         return;
       }
 
@@ -123,6 +155,13 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
             No tenant ID available. Please refresh the page.
           </div>
         )}
+        
+        {!authSession && (
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-2 rounded mb-4">
+            Session information not loaded. Please wait or refresh the page.
+          </div>
+        )}
+        
         <FormField
           control={form.control}
           name="name"
@@ -183,7 +222,7 @@ const AddSchoolForm = ({ onSuccess, onCancel }: AddSchoolFormProps) => {
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting || !tenantId}>
+          <Button type="submit" disabled={isSubmitting || !tenantId || !authSession}>
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
