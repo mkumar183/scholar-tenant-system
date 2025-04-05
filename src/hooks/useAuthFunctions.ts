@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -12,14 +11,37 @@ export const useAuthFunctions = (
     setIsLoading(true);
     
     try {
+      console.log('Attempting to log in with email:', email);
+      
+      // First check connection to Supabase
+      try {
+        const { data, error } = await supabase.from('tenants').select('id').limit(1);
+        if (error) {
+          console.error('Connection test before login failed:', error);
+          toast.error('Connection to server failed. Please check your internet connection.');
+          setIsLoading(false);
+          return;
+        }
+      } catch (connError) {
+        console.error('Connection test exception:', connError);
+        toast.error('Connection to server failed. Please check your internet connection.');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Proceed with login
       const { data, error } = await supabase.auth.signInWithPassword({ 
         email, 
         password 
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Authentication error:', error);
+        throw error;
+      }
 
       if (data.user) {
+        console.log('Auth successful, fetching user profile');
         // Fetch user profile after successful login
         const { data: profile, error: profileError } = await supabase
           .from('users')
@@ -43,7 +65,7 @@ export const useAuthFunctions = (
           };
           
           setUser(userData);
-          console.log('User logged in:', userData);
+          console.log('User logged in successfully:', userData);
         } else {
           console.error('No profile found for user');
           throw new Error('User profile not found');
@@ -53,7 +75,18 @@ export const useAuthFunctions = (
       toast.success('Logged in successfully');
     } catch (error: any) {
       console.error('Login error:', error);
-      toast.error('Login failed: ' + error.message);
+      // More user-friendly error message
+      let errorMessage = 'Login failed';
+      if (error.message.includes('Invalid login credentials')) {
+        errorMessage = 'Invalid email or password';
+      } else if (error.message.includes('network')) {
+        errorMessage = 'Network error. Please check your connection';
+      } else if (error.message.includes('Load failed')) {
+        errorMessage = 'Server connection failed. Please try again later';
+      } else {
+        errorMessage += ': ' + error.message;
+      }
+      toast.error(errorMessage);
       throw error;
     } finally {
       setIsLoading(false);

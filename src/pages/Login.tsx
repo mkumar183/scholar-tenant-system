@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { School } from 'lucide-react';
+import { School, AlertCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { checkSupabaseConnection } from '@/lib/supabase';
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -37,6 +39,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -48,13 +51,30 @@ const Login = () => {
     },
   });
 
+  // Check Supabase connection on component mount
+  useState(() => {
+    const checkConnection = async () => {
+      const isConnected = await checkSupabaseConnection();
+      if (!isConnected) {
+        setConnectionError('Cannot connect to server. Please check your internet connection or try again later.');
+      } else {
+        setConnectionError(null);
+      }
+    };
+    
+    checkConnection();
+  });
+
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
+    setConnectionError(null);
+    
     try {
       await login(values.email, values.password);
       navigate('/dashboard');
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      console.error('Login submission error:', error);
+      // Connection errors are handled in the login function via toast
     } finally {
       setIsLoading(false);
     }
@@ -78,6 +98,15 @@ const Login = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {connectionError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {connectionError}
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
