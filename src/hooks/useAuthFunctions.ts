@@ -15,21 +15,22 @@ export const useAuthFunctions = (
       
       // First check connection to Supabase
       try {
+        console.log('Checking connection before login attempt...');
         const { data, error } = await supabase.from('tenants').select('id').limit(1);
         if (error) {
           console.error('Connection test before login failed:', error);
-          toast.error('Connection to server failed. Please check your internet connection.');
-          setIsLoading(false);
+          toast.error('Connection to server failed. Please check your internet connection and try again.');
           return;
         }
+        console.log('Connection test successful, proceeding with login');
       } catch (connError) {
         console.error('Connection test exception:', connError);
-        toast.error('Connection to server failed. Please check your internet connection.');
-        setIsLoading(false);
+        toast.error('Connection to server failed. Please check your internet connection and try again.');
         return;
       }
       
       // Proceed with login
+      console.log('Making authentication request to Supabase');
       const { data, error } = await supabase.auth.signInWithPassword({ 
         email, 
         password 
@@ -77,17 +78,22 @@ export const useAuthFunctions = (
       console.error('Login error:', error);
       // More user-friendly error message
       let errorMessage = 'Login failed';
-      if (error.message.includes('Invalid login credentials')) {
+      
+      if (error.message?.includes('Invalid login credentials')) {
         errorMessage = 'Invalid email or password';
-      } else if (error.message.includes('network')) {
-        errorMessage = 'Network error. Please check your connection';
-      } else if (error.message.includes('Load failed')) {
-        errorMessage = 'Server connection failed. Please try again later';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Network error. Please check your connection and try again';
+      } else if (error.message?.includes('Load failed') || error.message?.includes('Failed to fetch')) {
+        errorMessage = 'Server connection failed. Please check your internet connection';
+      } else if (error.message?.includes('timeout') || error.message?.includes('Timeout')) {
+        errorMessage = 'Connection timed out. Please try again later';
+      } else if (error.message?.includes('abort') || error.message?.includes('Aborted')) {
+        errorMessage = 'Request was cancelled. Please try again';
       } else {
         errorMessage += ': ' + error.message;
       }
+      
       toast.error(errorMessage);
-      throw error;
     } finally {
       setIsLoading(false);
     }

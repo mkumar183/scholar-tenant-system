@@ -1,10 +1,10 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { School, AlertCircle } from 'lucide-react';
+import { School, AlertCircle, WifiOff } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { checkSupabaseConnection } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -40,6 +41,7 @@ type FormValues = z.infer<typeof formSchema>;
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isCheckingConnection, setIsCheckingConnection] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -52,24 +54,55 @@ const Login = () => {
   });
 
   // Check Supabase connection on component mount
-  useState(() => {
+  useEffect(() => {
     const checkConnection = async () => {
-      const isConnected = await checkSupabaseConnection();
-      if (!isConnected) {
-        setConnectionError('Cannot connect to server. Please check your internet connection or try again later.');
+      setIsCheckingConnection(true);
+      const { connected, error } = await checkSupabaseConnection();
+      
+      if (!connected) {
+        setConnectionError(`Cannot connect to server: ${error || 'Please check your internet connection or try again later.'}`);
+        toast.error("Connection to server failed. Please check your internet connection.");
       } else {
         setConnectionError(null);
       }
+      setIsCheckingConnection(false);
     };
     
     checkConnection();
-  });
+  }, []);
 
-  const onSubmit = async (values: FormValues) => {
-    setIsLoading(true);
+  const retryConnection = async () => {
+    setIsCheckingConnection(true);
     setConnectionError(null);
     
+    const { connected, error } = await checkSupabaseConnection();
+    
+    if (!connected) {
+      setConnectionError(`Cannot connect to server: ${error || 'Please check your internet connection or try again later.'}`);
+      toast.error("Connection to server failed. Please check your internet connection.");
+    } else {
+      setConnectionError(null);
+      toast.success("Connection restored successfully!");
+    }
+    
+    setIsCheckingConnection(false);
+  };
+
+  const onSubmit = async (values: FormValues) => {
+    if (connectionError) {
+      toast.error("Cannot log in while offline. Please check your connection.");
+      return;
+    }
+    
+    setIsLoading(true);
+    
     try {
+      // Double-check connection before attempting login
+      const { connected } = await checkSupabaseConnection();
+      if (!connected) {
+        throw new Error("Network connection unavailable");
+      }
+      
       await login(values.email, values.password);
       navigate('/dashboard');
     } catch (error: any) {
@@ -100,9 +133,18 @@ const Login = () => {
           <CardContent>
             {connectionError && (
               <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {connectionError}
+                <WifiOff className="h-4 w-4 mr-2" />
+                <AlertDescription className="flex flex-col gap-2">
+                  <span>{connectionError}</span>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="self-start mt-2"
+                    onClick={retryConnection}
+                    disabled={isCheckingConnection}
+                  >
+                    {isCheckingConnection ? 'Checking connection...' : 'Retry connection'}
+                  </Button>
                 </AlertDescription>
               </Alert>
             )}
@@ -135,7 +177,11 @@ const Login = () => {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isLoading || !!connectionError || isCheckingConnection}
+                >
                   {isLoading ? 'Logging in...' : 'Login'}
                 </Button>
               </form>
