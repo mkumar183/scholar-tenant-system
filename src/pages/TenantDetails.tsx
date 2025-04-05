@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -134,9 +133,6 @@ const TenantDetails = () => {
                   <h3 className="text-lg font-semibold mb-3">Actions</h3>
                   <div className="flex gap-2">
                     <Button>Edit Tenant</Button>
-                    <Button variant="outline" onClick={() => navigate('/schools', { state: { tenantId: tenant.id } })}>
-                      Manage Schools
-                    </Button>
                   </div>
                 </div>
               </CardContent>
