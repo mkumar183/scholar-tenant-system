@@ -1,167 +1,32 @@
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Plus, School, Users, Search } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import { useTenantsData } from '@/hooks/useTenantsData';
+import { createTenant, NewTenantForm } from '@/services/tenantsService';
+import TenantsList from '@/components/tenants/TenantsList';
+import TenantSearch from '@/components/tenants/TenantSearch';
+import AddTenantDialog from '@/components/tenants/AddTenantDialog';
 
 const Tenants = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [tenants, setTenants] = useState<{
-    id: string;
-    name: string;
-    description: string | null;
-    schoolCount: number;
-    adminName: string | null;
-    adminEmail: string | null;
-  }[]>([]);
+  const { tenants, setTenants, isLoading } = useTenantsData();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newTenant, setNewTenant] = useState({
+  const [newTenant, setNewTenant] = useState<NewTenantForm>({
     name: '',
     description: '',
     adminName: '',
     adminEmail: '',
     adminPassword: '',
   });
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchTenants = async () => {
-      try {
-        // First fetch the tenants
-        const { data: tenantsData, error: tenantsError } = await supabase
-          .from('tenants')
-          .select('*');
-
-        if (tenantsError) throw tenantsError;
-
-        // Then fetch the schools count for each tenant
-        const tenantsWithSchoolCounts = await Promise.all(
-          tenantsData.map(async (tenant) => {
-            const { count, error: schoolsError } = await supabase
-              .from('schools')
-              .select('*', { count: 'exact', head: true })
-              .eq('tenant_id', tenant.id);
-
-            if (schoolsError) {
-              console.error('Error fetching schools count:', schoolsError);
-              return {
-                ...tenant,
-                schoolCount: 0
-              };
-            }
-
-            return {
-              id: tenant.id,
-              name: tenant.name,
-              description: tenant.description,
-              schoolCount: count || 0,
-              adminName: tenant.admin_name,
-              adminEmail: tenant.admin_email
-            };
-          })
-        );
-
-        setTenants(tenantsWithSchoolCounts);
-      } catch (error) {
-        console.error('Error fetching tenants:', error);
-        toast.error('Failed to fetch tenants');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTenants();
-  }, []);
 
   const handleAddTenant = async () => {
-    try {
-      console.log('Starting tenant creation process...');
-      
-      // 1. Create the tenant first (without admin_id since we don't have it yet)
-      console.log('Creating tenant record...');
-      const { data: tenantData, error: tenantError } = await supabase
-        .from('tenants')
-        .insert({
-          name: newTenant.name,
-          description: newTenant.description,
-          admin_name: newTenant.adminName,
-          admin_email: newTenant.adminEmail,
-        })
-        .select()
-        .single();
-
-      if (tenantError) {
-        console.error('Error creating tenant:', tenantError);
-        throw tenantError;
-      }
-      console.log('Tenant created successfully:', tenantData);
-
-      // 2. Create the tenant admin user
-      console.log('Creating tenant admin user...');
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newTenant.adminEmail,
-        password: newTenant.adminPassword,
-        options: {
-          data: {
-            name: newTenant.adminName,
-            role: 'tenant_admin',
-            tenant_id: tenantData.id,
-          },
-        },
-      });
-
-      if (authError) {
-        console.error('Error creating auth user:', authError);
-        throw authError;
-      }
-      console.log('Auth user created successfully:', authData);
-
-      // 3. Create the user profile
-      console.log('Creating user profile...');
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert({
-          id: authData.user.id,
-          name: newTenant.adminName,
-          role: 'tenant_admin',
-          tenant_id: tenantData.id,
-        });
-
-      if (profileError) {
-        console.error('Error creating user profile:', profileError);
-        throw profileError;
-      }
-      console.log('User profile created successfully');
-
-      // 4. Update the tenant with the admin user ID - now using the admin_id column
-      console.log('Updating tenant with admin ID...');
-      const { error: updateError } = await supabase
-        .from('tenants')
-        .update({ admin_id: authData.user.id })
-        .eq('id', tenantData.id);
-
-      if (updateError) {
-        console.error('Error updating tenant with admin ID:', updateError);
-        throw updateError;
-      }
-      console.log('Tenant updated with admin ID successfully');
-
+    const createdTenant = await createTenant(newTenant);
+    
+    if (createdTenant) {
       toast.success('Tenant created successfully');
+      setTenants([...tenants, createdTenant]);
       setIsAddDialogOpen(false);
       setNewTenant({
         name: '',
@@ -170,63 +35,8 @@ const Tenants = () => {
         adminEmail: '',
         adminPassword: '',
       });
-
-      // Refresh the tenants list
-      console.log('Refreshing tenants list...');
-      const { data: updatedTenantsData, error: fetchError } = await supabase
-        .from('tenants')
-        .select('*');
-
-      if (fetchError) {
-        console.error('Error fetching updated tenants:', fetchError);
-        throw fetchError;
-      }
-
-      // Get school counts separately to avoid potential issues with complicated queries
-      const updatedTenantsWithSchoolCounts = await Promise.all(
-        updatedTenantsData.map(async (tenant) => {
-          const { count, error: schoolsError } = await supabase
-            .from('schools')
-            .select('*', { count: 'exact', head: true })
-            .eq('tenant_id', tenant.id);
-
-          if (schoolsError) {
-            console.error('Error fetching schools count:', schoolsError);
-            return {
-              id: tenant.id,
-              name: tenant.name,
-              description: tenant.description,
-              schoolCount: 0,
-              adminName: tenant.admin_name,
-              adminEmail: tenant.admin_email
-            };
-          }
-
-          return {
-            id: tenant.id,
-            name: tenant.name,
-            description: tenant.description,
-            schoolCount: count || 0,
-            adminName: tenant.admin_name,
-            adminEmail: tenant.admin_email
-          };
-        })
-      );
-
-      setTenants(updatedTenantsWithSchoolCounts);
-      console.log('Tenants list refreshed successfully');
-    } catch (error) {
-      console.error('Error in tenant creation process:', error);
-      toast.error('Failed to create tenant. Check console for details.');
     }
   };
-
-  const filteredTenants = tenants.filter(tenant =>
-    tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tenant.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tenant.adminName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tenant.adminEmail?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   if (user?.role !== 'superadmin') {
     return (
@@ -244,133 +54,25 @@ const Tenants = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold">Tenants</h1>
-          <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search tenants..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 w-64"
-            />
-          </div>
+          <TenantSearch 
+            searchTerm={searchTerm} 
+            setSearchTerm={setSearchTerm} 
+          />
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Tenant
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Tenant</DialogTitle>
-              <DialogDescription>
-                Create a new tenant and set up their admin user.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Tenant Name</Label>
-                <Input
-                  id="name"
-                  value={newTenant.name}
-                  onChange={(e) => setNewTenant({ ...newTenant, name: e.target.value })}
-                  placeholder="Enter tenant name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Input
-                  id="description"
-                  value={newTenant.description}
-                  onChange={(e) => setNewTenant({ ...newTenant, description: e.target.value })}
-                  placeholder="Enter tenant description"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="adminName">Admin Name</Label>
-                <Input
-                  id="adminName"
-                  value={newTenant.adminName}
-                  onChange={(e) => setNewTenant({ ...newTenant, adminName: e.target.value })}
-                  placeholder="Enter admin name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="adminEmail">Admin Email</Label>
-                <Input
-                  id="adminEmail"
-                  type="email"
-                  value={newTenant.adminEmail}
-                  onChange={(e) => setNewTenant({ ...newTenant, adminEmail: e.target.value })}
-                  placeholder="Enter admin email"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="adminPassword">Admin Password</Label>
-                <Input
-                  id="adminPassword"
-                  type="password"
-                  value={newTenant.adminPassword}
-                  onChange={(e) => setNewTenant({ ...newTenant, adminPassword: e.target.value })}
-                  placeholder="Enter admin password"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddTenant}>Create Tenant</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <AddTenantDialog
+          isOpen={isAddDialogOpen}
+          setIsOpen={setIsAddDialogOpen}
+          newTenant={newTenant}
+          setNewTenant={setNewTenant}
+          handleAddTenant={handleAddTenant}
+        />
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      ) : (
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {filteredTenants.map((tenant) => (
-            <Card key={tenant.id} className="overflow-hidden">
-              <CardHeader>
-                <CardTitle>{tenant.name}</CardTitle>
-                <CardDescription>{tenant.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <School className="mr-1 h-4 w-4" />
-                    <span>{tenant.schoolCount} Schools</span>
-                  </div>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Users className="mr-1 h-4 w-4" />
-                    <span>1 Admin</span>
-                  </div>
-                </div>
-                <div className="border-t pt-4">
-                  <p className="text-sm font-medium">{tenant.adminName}</p>
-                  <p className="text-xs text-muted-foreground">{tenant.adminEmail}</p>
-                </div>
-                <div className="mt-4 flex items-center justify-end gap-2">
-                  <Button variant="outline" size="sm">View</Button>
-                  <Button size="sm">Manage</Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-      
-      {!isLoading && filteredTenants.length === 0 && (
-        <div className="text-center py-12">
-          <School className="mx-auto h-12 w-12 text-muted-foreground/50" />
-          <h3 className="mt-4 text-lg font-semibold">No tenants found</h3>
-          <p className="text-muted-foreground">Try adjusting your search or add a new tenant.</p>
-        </div>
-      )}
+      <TenantsList 
+        isLoading={isLoading} 
+        tenants={tenants} 
+        searchTerm={searchTerm} 
+      />
     </div>
   );
 };
