@@ -66,30 +66,10 @@ const Login = () => {
         setConnectionError(null);
       }
       setIsCheckingConnection(false);
-      
-      // Debug: Log the state variables that affect button enabled status
-      console.log('Connection check complete. Button disable conditions:', {
-        isLoading,
-        connectionError: !!connectionError,
-        isCheckingConnection: false
-      });
     };
     
     checkConnection();
   }, []);
-
-  // Add this to debug form validity
-  useEffect(() => {
-    const subscription = form.watch(() => {
-      console.log('Form state:', {
-        isValid: form.formState.isValid,
-        isDirty: form.formState.isDirty,
-        errors: form.formState.errors
-      });
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form, form.watch]);
 
   const retryConnection = async () => {
     setIsCheckingConnection(true);
@@ -106,13 +86,6 @@ const Login = () => {
     }
     
     setIsCheckingConnection(false);
-    
-    // Debug: Log button state after connection retry
-    console.log('After retry. Button disable conditions:', {
-      isLoading,
-      connectionError: connected ? null : 'error',
-      isCheckingConnection: false
-    });
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -122,7 +95,6 @@ const Login = () => {
     }
     
     setIsLoading(true);
-    console.log('Login attempt started. Button should be disabled:', { isLoading: true });
     
     try {
       // Double-check connection before attempting login
@@ -138,18 +110,8 @@ const Login = () => {
       // Connection errors are handled in the login function via toast
     } finally {
       setIsLoading(false);
-      console.log('Login attempt finished. Button should be enabled:', { isLoading: false });
     }
   };
-
-  // Debug: Log current state of variables affecting button
-  const isButtonDisabled = isLoading || !!connectionError || isCheckingConnection;
-  console.log('Current button state:', {
-    isDisabled: isButtonDisabled,
-    isLoading,
-    connectionError: !!connectionError,
-    isCheckingConnection
-  });
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
@@ -215,15 +177,6 @@ const Login = () => {
                     </FormItem>
                   )}
                 />
-                
-                {/* Debug display */}
-                <div className="text-xs text-amber-500 border border-amber-200 p-2 rounded bg-amber-50 mb-2">
-                  <p>Debug: Button disabled: {isButtonDisabled ? 'Yes' : 'No'}</p>
-                  <p>- Is Loading: {isLoading ? 'Yes' : 'No'}</p>
-                  <p>- Connection Error: {connectionError ? 'Yes' : 'No'}</p>
-                  <p>- Checking Connection: {isCheckingConnection ? 'Yes' : 'No'}</p>
-                  <p>- Form Valid: {form.formState.isValid ? 'Yes' : 'No'}</p>
-                </div>
                 
                 <Button 
                   type="submit" 
