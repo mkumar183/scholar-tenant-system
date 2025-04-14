@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import Tenants from "./pages/Tenants";
 import TenantDetails from "./pages/TenantDetails";
 import Schools from "./pages/Schools";
+import SchoolDetails from "./pages/SchoolDetails";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import AcademicSessions from "./pages/AcademicSessions";
@@ -75,6 +76,14 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <Schools />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/schools/:id" element={
+              <ProtectedRoute>
+                <Layout>
+                  <SchoolDetails />
                 </Layout>
               </ProtectedRoute>
             } />

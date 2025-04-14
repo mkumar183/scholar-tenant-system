@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,17 +6,23 @@ import { useSchoolsData } from '@/hooks/useSchoolsData';
 import { useAuth } from '@/contexts/AuthContext';
 import AddSchoolDialog from '@/components/schools/AddSchoolDialog';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 const Schools = () => {
   const { user } = useAuth();
   const { schools, isLoading, refreshSchools } = useSchoolsData();
   const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
 
   const filteredSchools = schools.filter(school => 
     school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (school.address && school.address.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (school.type && school.type.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const handleManageSchool = (schoolId: string) => {
+    navigate(`/schools/${schoolId}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -69,7 +74,13 @@ const Schools = () => {
                     </div>
                   </div>
                   <div className="mt-4 flex items-center justify-end gap-2">
-                    <Button size="sm">Manage</Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleManageSchool(school.id)}
+                    >
+                      Manage
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
