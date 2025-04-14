@@ -22,6 +22,7 @@ const Schools = () => {
   );
 
   const handleManageSchool = (school: any) => {
+    console.log("Opening manage dialog for school:", school);
     setSelectedSchool(school);
   };
 
