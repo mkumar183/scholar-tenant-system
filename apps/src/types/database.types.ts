@@ -52,6 +52,17 @@ export type Enrollment = {
   updated_at: string;
 };
 
+export type AcademicSession = {
+  id: string;
+  tenant_id: string;
+  name: string;
+  start_date: string;
+  end_date: string;
+  is_active: boolean | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -79,6 +90,11 @@ export type Database = {
         Row: Enrollment;
         Insert: Omit<Enrollment, 'id' | 'created_at' | 'updated_at' | 'enrollment_date'>;
         Update: Partial<Omit<Enrollment, 'id' | 'created_at' | 'updated_at' | 'enrollment_date'>>;
+      };
+      academic_sessions: {
+        Row: AcademicSession;
+        Insert: Omit<AcademicSession, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<AcademicSession, 'id' | 'created_at' | 'updated_at'>>;
       };
     };
   };

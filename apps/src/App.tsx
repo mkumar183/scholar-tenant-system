@@ -17,6 +17,7 @@ import TenantDetails from "./pages/TenantDetails";
 import Schools from "./pages/Schools";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
+import AcademicSessions from "./pages/AcademicSessions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -69,6 +70,14 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <Users />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/academic-sessions" element={
+              <ProtectedRoute>
+                <Layout>
+                  <AcademicSessions />
                 </Layout>
               </ProtectedRoute>
             } />

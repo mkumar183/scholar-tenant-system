@@ -9,7 +9,8 @@ import {
   Users, 
   BookOpen, 
   LayoutDashboard, 
-  Settings
+  Settings,
+  CalendarRange
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -63,6 +64,18 @@ const Layout = ({ children }: LayoutProps) => {
             >
               <School className="mr-2 h-5 w-5" />
               Schools
+            </Button>
+          )}
+
+          {/* Academic Sessions menu item - visible only to tenant admins */}
+          {user.role === 'tenant_admin' && (
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-primary-foreground hover:text-primary-foreground hover:bg-primary/80"
+              onClick={() => navigate('/academic-sessions')}
+            >
+              <CalendarRange className="mr-2 h-5 w-5" />
+              Academic Sessions
             </Button>
           )}
 
