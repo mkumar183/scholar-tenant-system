@@ -5,8 +5,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, School, Users, BookOpen, MapPin, Mail, Calendar } from 'lucide-react';
+import { ArrowLeft, School, Users, BookOpen, MapPin, Mail, Calendar, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
+import EditSchoolForm from '@/components/schools/EditSchoolForm';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface SchoolDetails {
   id: string;
@@ -25,6 +32,7 @@ const SchoolDetails = () => {
   const { user } = useAuth();
   const [school, setSchool] = useState<SchoolDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const fetchSchoolDetails = async () => {
     try {
@@ -71,8 +79,16 @@ const SchoolDetails = () => {
   };
 
   useEffect(() => {
+    console.log('Debug - Current user:', user);
+    console.log('Debug - User role:', user?.role);
+    console.log('Debug - Is tenant_admin:', user?.role === 'tenant_admin');
     fetchSchoolDetails();
-  }, [id]);
+  }, [id, user]);
+
+  const handleEditSuccess = () => {
+    setIsEditDialogOpen(false);
+    fetchSchoolDetails();
+  };
 
   if (isLoading) {
     return (
@@ -102,15 +118,29 @@ const SchoolDetails = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate('/schools')}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-2xl font-bold">{school.name}</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/schools')}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-2xl font-bold">{school.name}</h1>
+        </div>
+        {(() => {
+          console.log('Debug - Rendering edit button check:', user?.role === 'tenant_admin');
+          return user?.role === 'tenant_admin' && (
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(true)}
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit School
+            </Button>
+          );
+        })()}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -157,6 +187,20 @@ const SchoolDetails = () => {
           </Card>
         </div>
       </div>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit School</DialogTitle>
+          </DialogHeader>
+          {school && (
+            <EditSchoolForm
+              school={school}
+              onSuccess={handleEditSuccess}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
