@@ -1,8 +1,9 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
 // Import components
 import SearchBar from '@/components/users/SearchBar';
@@ -10,21 +11,40 @@ import AddUserDialog from '@/components/users/AddUserDialog';
 import TeachersList from '@/components/users/TeachersList';
 import StudentsList from '@/components/users/StudentsList';
 
-// Import mock data
-import { 
-  MOCK_TEACHERS, 
-  MOCK_STUDENTS, 
-  MOCK_SCHOOLS, 
-  SUBJECTS, 
-  GRADES 
-} from '@/components/users/usersData';
+// Import mock data for subjects and grades
+import { SUBJECTS, GRADES, MOCK_SCHOOLS } from '@/components/users/usersData';
+
+interface Teacher {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  schoolId: string;
+  schoolName: string;
+  subjects: string[];
+}
+
+interface Student {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  schoolId: string;
+  schoolName: string;
+  grade: string;
+  guardianName: string;
+}
 
 const Users = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('teachers');
   const [searchTerm, setSearchTerm] = useState('');
-  const [teachers, setTeachers] = useState(MOCK_TEACHERS);
-  const [students, setStudents] = useState(MOCK_STUDENTS);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [schools, setSchools] = useState(MOCK_SCHOOLS);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newTeacher, setNewTeacher] = useState({
     name: '',
@@ -42,6 +62,102 @@ const Users = () => {
     guardianName: '',
   });
 
+  // Fetch users from Supabase
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      
+      try {
+        // Fetch schools first
+        const { data: schoolsData, error: schoolsError } = await supabase
+          .from('schools')
+          .select('id, name');
+        
+        if (schoolsError) {
+          throw schoolsError;
+        }
+        
+        const formattedSchools = schoolsData.map(school => ({
+          id: school.id,
+          name: school.name
+        }));
+        
+        setSchools(formattedSchools);
+        
+        // Fetch teachers (users with role 'teacher')
+        const { data: teachersData, error: teachersError } = await supabase
+          .from('users')
+          .select(`
+            id, 
+            name, 
+            email,
+            role,
+            school_id,
+            tenant_id,
+            schools:schools(name)
+          `)
+          .eq('role', 'teacher');
+        
+        if (teachersError) {
+          throw teachersError;
+        }
+        
+        // Fetch students (users with role 'student')
+        const { data: studentsData, error: studentsError } = await supabase
+          .from('users')
+          .select(`
+            id, 
+            name, 
+            email,
+            role,
+            school_id,
+            tenant_id,
+            schools:schools(name)
+          `)
+          .eq('role', 'student');
+        
+        if (studentsError) {
+          throw studentsError;
+        }
+        
+        // Format teachers data
+        const formattedTeachers = teachersData.map(teacher => ({
+          id: teacher.id,
+          name: teacher.name || 'No Name',
+          email: teacher.email || 'No Email',
+          phone: 'Not provided', // This field isn't in our DB schema yet
+          role: teacher.role,
+          schoolId: teacher.school_id || '',
+          schoolName: teacher.schools?.name || 'No School',
+          subjects: ['Not specified'], // This field isn't in our DB schema yet
+        }));
+        
+        // Format students data
+        const formattedStudents = studentsData.map(student => ({
+          id: student.id,
+          name: student.name || 'No Name',
+          email: student.email || 'No Email',
+          phone: 'Not provided', // This field isn't in our DB schema yet
+          role: student.role,
+          schoolId: student.school_id || '',
+          schoolName: student.schools?.name || 'No School',
+          grade: 'Not specified', // This field isn't in our DB schema yet
+          guardianName: 'Not specified', // This field isn't in our DB schema yet
+        }));
+        
+        setTeachers(formattedTeachers);
+        setStudents(formattedStudents);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        toast.error('Failed to load users');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchUsers();
+  }, []);
+
   // Filter data based on search
   const filteredTeachers = teachers.filter(teacher => 
     teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -56,53 +172,107 @@ const Users = () => {
   );
 
   // Add new teacher
-  const handleAddTeacher = () => {
-    const id = `teacher-${teachers.length + 1}`;
-    const schoolName = MOCK_SCHOOLS.find(s => s.id === newTeacher.schoolId)?.name || '';
-    
-    const newTeacherData = {
-      ...newTeacher,
-      id,
-      role: 'teacher',
-      schoolName,
-      subjects: [newTeacher.subjects[0]],
-    };
-    
-    setTeachers([...teachers, newTeacherData]);
-    setNewTeacher({
-      name: '',
-      email: '',
-      phone: '',
-      schoolId: '',
-      subjects: [''],
-    });
-    setIsAddDialogOpen(false);
-    toast.success('Teacher added successfully');
+  const handleAddTeacher = async () => {
+    try {
+      // Get school name for display
+      const school = schools.find(s => s.id === newTeacher.schoolId);
+      const schoolName = school ? school.name : '';
+      
+      // Create user in Supabase
+      const { data, error } = await supabase
+        .from('users')
+        .insert({
+          name: newTeacher.name,
+          email: newTeacher.email,
+          role: 'teacher',
+          school_id: newTeacher.schoolId,
+          tenant_id: user?.tenantId
+        })
+        .select();
+      
+      if (error) throw error;
+      
+      if (data && data[0]) {
+        // Add new teacher to state
+        const newTeacherData = {
+          id: data[0].id,
+          name: newTeacher.name,
+          email: newTeacher.email,
+          phone: newTeacher.phone,
+          role: 'teacher',
+          schoolId: newTeacher.schoolId,
+          schoolName: schoolName,
+          subjects: [newTeacher.subjects[0]],
+        };
+        
+        setTeachers([...teachers, newTeacherData]);
+        setNewTeacher({
+          name: '',
+          email: '',
+          phone: '',
+          schoolId: '',
+          subjects: [''],
+        });
+        setIsAddDialogOpen(false);
+        toast.success('Teacher added successfully');
+      }
+    } catch (error) {
+      console.error('Error adding teacher:', error);
+      toast.error('Failed to add teacher');
+    }
   };
 
   // Add new student
-  const handleAddStudent = () => {
-    const id = `student-${students.length + 1}`;
-    const schoolName = MOCK_SCHOOLS.find(s => s.id === newStudent.schoolId)?.name || '';
-    
-    const newStudentData = {
-      ...newStudent,
-      id,
-      role: 'student',
-      schoolName,
-    };
-    
-    setStudents([...students, newStudentData]);
-    setNewStudent({
-      name: '',
-      email: '',
-      phone: '',
-      schoolId: '',
-      grade: '',
-      guardianName: '',
-    });
-    setIsAddDialogOpen(false);
-    toast.success('Student added successfully');
+  const handleAddStudent = async () => {
+    try {
+      // Get school name for display
+      const school = schools.find(s => s.id === newStudent.schoolId);
+      const schoolName = school ? school.name : '';
+      
+      // Create user in Supabase
+      const { data, error } = await supabase
+        .from('users')
+        .insert({
+          name: newStudent.name,
+          email: newStudent.email,
+          role: 'student',
+          school_id: newStudent.schoolId,
+          tenant_id: user?.tenantId
+        })
+        .select();
+      
+      if (error) throw error;
+      
+      if (data && data[0]) {
+        // Add new student to state
+        const newStudentData = {
+          id: data[0].id,
+          name: newStudent.name,
+          email: newStudent.email,
+          phone: newStudent.phone,
+          role: 'student',
+          schoolId: newStudent.schoolId,
+          schoolName: schoolName,
+          grade: newStudent.grade,
+          guardianName: newStudent.guardianName,
+        };
+        
+        setStudents([...students, newStudentData]);
+        setNewStudent({
+          name: '',
+          email: '',
+          phone: '',
+          schoolId: '',
+          grade: '',
+          guardianName: '',
+        });
+        setIsAddDialogOpen(false);
+        toast.success('Student added successfully');
+      }
+    } catch (error) {
+      console.error('Error adding student:', error);
+      toast.error('Failed to add student');
+    }
   };
 
   return (
@@ -120,7 +290,7 @@ const Users = () => {
           setNewStudent={setNewStudent}
           handleAddTeacher={handleAddTeacher}
           handleAddStudent={handleAddStudent}
-          schools={MOCK_SCHOOLS}
+          schools={schools}
           subjects={SUBJECTS}
           grades={GRADES}
         />
@@ -132,13 +302,21 @@ const Users = () => {
           <TabsTrigger value="students">Students</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="teachers">
-          <TeachersList teachers={filteredTeachers} />
-        </TabsContent>
-        
-        <TabsContent value="students">
-          <StudentsList students={filteredStudents} />
-        </TabsContent>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <>
+            <TabsContent value="teachers">
+              <TeachersList teachers={filteredTeachers} />
+            </TabsContent>
+            
+            <TabsContent value="students">
+              <StudentsList students={filteredStudents} />
+            </TabsContent>
+          </>
+        )}
       </Tabs>
     </div>
   );
