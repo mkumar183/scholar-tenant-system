@@ -174,23 +174,38 @@ const Users = () => {
   // Add new teacher
   const handleAddTeacher = async () => {
     try {
+      console.log('Adding teacher:', newTeacher);
+      
+      // Form validation
+      if (!newTeacher.name || !newTeacher.email || !newTeacher.schoolId) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+      
       // Get school name for display
       const school = schools.find(s => s.id === newTeacher.schoolId);
-      const schoolName = school ? school.name : '';
+      const schoolName = school ? school.name : 'Unknown School';
+      
+      console.log('Creating user with tenant_id:', user?.tenantId);
       
       // Create user in Supabase
       const { data, error } = await supabase
         .from('users')
-        .insert({
+        .insert([{
           name: newTeacher.name,
           email: newTeacher.email,
           role: 'teacher',
           school_id: newTeacher.schoolId,
           tenant_id: user?.tenantId
-        })
+        }])
         .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error adding teacher:', error);
+        throw error;
+      }
+      
+      console.log('Teacher added successfully:', data);
       
       if (data && data[0]) {
         // Add new teacher to state
@@ -198,11 +213,11 @@ const Users = () => {
           id: data[0].id,
           name: newTeacher.name,
           email: newTeacher.email,
-          phone: newTeacher.phone,
+          phone: newTeacher.phone || 'Not provided',
           role: 'teacher',
           schoolId: newTeacher.schoolId,
           schoolName: schoolName,
-          subjects: [newTeacher.subjects[0]],
+          subjects: newTeacher.subjects[0] ? [newTeacher.subjects[0]] : ['Not specified'],
         };
         
         setTeachers([...teachers, newTeacherData]);
@@ -216,9 +231,9 @@ const Users = () => {
         setIsAddDialogOpen(false);
         toast.success('Teacher added successfully');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding teacher:', error);
-      toast.error('Failed to add teacher');
+      toast.error(`Failed to add teacher: ${error.message || 'Unknown error'}`);
     }
   };
 
