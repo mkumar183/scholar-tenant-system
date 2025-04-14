@@ -2,10 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Layout from "@/components/Layout";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useEffect } from "react";
 
 // Pages
 import Login from "./pages/Login";
@@ -13,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import Tenants from "./pages/Tenants";
 import TenantDetails from "./pages/TenantDetails";
 import Schools from "./pages/Schools";
+import SchoolDetails from "./pages/SchoolDetails";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import AcademicSessions from "./pages/AcademicSessions";
@@ -20,6 +22,19 @@ import Grades from "./pages/Grades";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+// Create a component to handle redirects based on authentication
+const AuthRedirects = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  useEffect(() => {
+    // This ensures we log any navigation issues
+    console.log('Current path:', location.pathname);
+  }, [location.pathname]);
+  
+  return null;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -29,7 +44,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            {/* Changed this route to render the Login component directly */}
+            <Route path="/" element={<Login />} />
             <Route path="/login" element={<Login />} />
             
             <Route path="/dashboard" element={
@@ -60,6 +76,14 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <Schools />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/schools/:id" element={
+              <ProtectedRoute>
+                <Layout>
+                  <SchoolDetails />
                 </Layout>
               </ProtectedRoute>
             } />
@@ -98,6 +122,7 @@ const App = () => (
             
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <AuthRedirects />
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>

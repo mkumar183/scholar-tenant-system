@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -10,14 +11,22 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [shouldRender, setShouldRender] = useState(false);
+  const [checkComplete, setCheckComplete] = useState(false);
 
   useEffect(() => {
+    // Add console logs to help with debugging
+    console.log('ProtectedRoute: User state:', user);
+    console.log('ProtectedRoute: Loading state:', isLoading);
+    
     if (!isLoading) {
       if (!user) {
         // Redirect to login if no user
+        console.log('No user found, redirecting to login');
         navigate('/login');
       } else if (!user.role) {
         // If user exists but has no role, redirect to settings to complete profile
+        console.log('User has no role, redirecting to settings');
         navigate('/settings');
       } else if (requiredRole && user.role !== requiredRole) {
         // Check if role is superadmin and the required role is privileged
@@ -27,28 +36,35 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
         
         // If not superadmin accessing privileged role, redirect to dashboard
         if (!isSuperadminAccessingPrivilegedRole) {
+          console.log('User does not have required role, redirecting to dashboard');
           navigate('/dashboard');
+        } else {
+          setShouldRender(true);
         }
+      } else {
+        // User has permission, render children
+        setShouldRender(true);
       }
+      setCheckComplete(true);
     }
   }, [user, isLoading, navigate, requiredRole]);
 
-  if (isLoading) {
+  // Only show loading indicator when actively checking the auth state
+  if (isLoading && !checkComplete) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
-  // Render children if:
-  // 1. User exists and has the required role, OR
-  // 2. User is superadmin (can access any role's routes)
-  if (user && (
-    !requiredRole || 
-    user.role === requiredRole || 
-    (user.role === 'superadmin' && ['tenant_admin', 'school_admin', 'teacher', 'staff', 'student', 'parent'].includes(requiredRole))
-  )) {
+  if (shouldRender) {
     return <>{children}</>;
   }
 
-  return <div className="flex h-screen items-center justify-center">Redirecting...</div>;
+  // Only show redirect message when check is complete but rendering isn't allowed
+  if (checkComplete && !shouldRender) {
+    return <div className="flex h-screen items-center justify-center">Redirecting...</div>;
+  }
+  
+  // Return empty during transitional states to prevent flicker
+  return null;
 };
 
 export default ProtectedRoute;
