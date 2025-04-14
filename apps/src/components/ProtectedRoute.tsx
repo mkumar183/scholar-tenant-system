@@ -12,8 +12,13 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const [shouldRender, setShouldRender] = useState(false);
+  const [checkComplete, setCheckComplete] = useState(false);
 
   useEffect(() => {
+    // Add console logs to help with debugging
+    console.log('ProtectedRoute: User state:', user);
+    console.log('ProtectedRoute: Loading state:', isLoading);
+    
     if (!isLoading) {
       if (!user) {
         // Redirect to login if no user
@@ -40,10 +45,12 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
         // User has permission, render children
         setShouldRender(true);
       }
+      setCheckComplete(true);
     }
   }, [user, isLoading, navigate, requiredRole]);
 
-  if (isLoading) {
+  // Only show loading indicator when actively checking the auth state
+  if (isLoading && !checkComplete) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
@@ -51,7 +58,13 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     return <>{children}</>;
   }
 
-  return <div className="flex h-screen items-center justify-center">Redirecting...</div>;
+  // Only show redirect message when check is complete but rendering isn't allowed
+  if (checkComplete && !shouldRender) {
+    return <div className="flex h-screen items-center justify-center">Redirecting...</div>;
+  }
+  
+  // Return empty during transitional states to prevent flicker
+  return null;
 };
 
 export default ProtectedRoute;
