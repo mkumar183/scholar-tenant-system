@@ -1,3 +1,4 @@
+
 {
   "name": "@scholar/app1",
   "private": true,
@@ -11,7 +12,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@scholar/core": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2"
@@ -23,4 +23,4 @@
     "typescript": "^5.5.3",
     "vite": "^5.4.1"
   }
-} 
+}
