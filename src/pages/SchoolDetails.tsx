@@ -5,8 +5,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Users, BookOpen, MapPin, Calendar } from 'lucide-react';
+import { ArrowLeft, Users, BookOpen, MapPin, Calendar, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { EditSchoolForm } from '@/components/schools/EditSchoolForm';
 
 interface SchoolDetails {
   id: string;
@@ -25,6 +34,7 @@ const SchoolDetails = () => {
   const { user } = useAuth();
   const [school, setSchool] = useState<SchoolDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const fetchSchoolDetails = async () => {
     try {
@@ -74,6 +84,11 @@ const SchoolDetails = () => {
     fetchSchoolDetails();
   }, [id]);
 
+  const handleUpdateSuccess = () => {
+    setIsSheetOpen(false);
+    fetchSchoolDetails();
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -99,6 +114,8 @@ const SchoolDetails = () => {
     );
   }
 
+  const canEdit = user?.role === 'tenant_admin' || user?.role === 'school_admin';
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -115,12 +132,38 @@ const SchoolDetails = () => {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2 hover:shadow-md transition-shadow">
-          <CardHeader>
-            <CardTitle>{school.name}</CardTitle>
-            <CardDescription className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              {school.address || 'No address specified'}
-            </CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between">
+            <div>
+              <CardTitle>{school.name}</CardTitle>
+              <CardDescription className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                {school.address || 'No address specified'}
+              </CardDescription>
+            </div>
+            {canEdit && (
+              <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>Edit School</SheetTitle>
+                    <SheetDescription>
+                      Make changes to school information here. Click save when you're done.
+                    </SheetDescription>
+                  </SheetHeader>
+                  <div className="py-6">
+                    <EditSchoolForm
+                      school={school}
+                      onSuccess={handleUpdateSuccess}
+                      onCancel={() => setIsSheetOpen(false)}
+                    />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            )}
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
