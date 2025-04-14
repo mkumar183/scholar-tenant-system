@@ -53,38 +53,45 @@ export const useTeachers = () => {
   const fetchTeachers = async () => {
     try {
       console.log('Fetching teachers...');
-      // First, get the teacher users
+      // Simple query to avoid relationship issues
       const { data: teachersData, error: teachersError } = await supabase
         .from('users')
-        .select(`
-          id, 
-          name, 
-          role,
-          school_id,
-          tenant_id
-        `)
+        .select('id, name, role, school_id, tenant_id')
         .eq('role', 'teacher');
       
-      if (teachersError) throw teachersError;
+      if (teachersError) {
+        console.error('Error fetching teachers:', teachersError);
+        throw teachersError;
+      }
       
       console.log('Teachers data from database:', teachersData);
       
-      // Process teacher data and look up school names separately
-      const formattedTeachers = await Promise.all(teachersData.map(async (teacher) => {
-        // Get school name if school_id exists
-        let schoolName = 'No School';
+      if (!teachersData || teachersData.length === 0) {
+        console.log('No teachers found');
+        setTeachers([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Get school data in a separate query
+      const { data: schoolsData, error: schoolsError } = await supabase
+        .from('schools')
+        .select('id, name');
         
-        if (teacher.school_id) {
-          const { data: schoolData, error: schoolError } = await supabase
-            .from('schools')
-            .select('name')
-            .eq('id', teacher.school_id)
-            .single();
-            
-          if (!schoolError && schoolData) {
-            schoolName = schoolData.name;
-          }
-        }
+      if (schoolsError) {
+        console.error('Error fetching schools for teachers:', schoolsError);
+        throw schoolsError;
+      }
+      
+      // Create a map of school IDs to names for faster lookup
+      const schoolMap = new Map();
+      schoolsData?.forEach(school => {
+        schoolMap.set(school.id, school.name);
+      });
+      
+      // Format teacher data with school names from our map
+      const formattedTeachers = teachersData.map(teacher => {
+        const schoolName = teacher.school_id ? (schoolMap.get(teacher.school_id) || 'Unknown School') : 'No School';
         
         return {
           id: teacher.id,
@@ -96,7 +103,7 @@ export const useTeachers = () => {
           schoolName: schoolName,
           subjects: ['Not specified'],
         };
-      }));
+      });
       
       console.log('Formatted teachers:', formattedTeachers);
       setTeachers(formattedTeachers);
@@ -159,6 +166,9 @@ export const useTeachers = () => {
       console.log('Teacher added to database:', data);
       
       if (data && data[0]) {
+        // Get school name for display
+        const schoolName = schools.find(s => s.id === newTeacher.schoolId)?.name || 'No School';
+        
         const newTeacherData = {
           id: data[0].id,
           name: newTeacher.name,
@@ -166,7 +176,7 @@ export const useTeachers = () => {
           phone: newTeacher.phone || 'Not provided',
           role: 'teacher',
           schoolId: newTeacher.schoolId,
-          schoolName: schools.find(s => s.id === newTeacher.schoolId)?.name || 'No School',
+          schoolName: schoolName,
           subjects: newTeacher.subjects[0] ? [newTeacher.subjects[0]] : ['Not specified'],
         };
         

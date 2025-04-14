@@ -26,6 +26,7 @@ const Users = () => {
     phone: '',
     schoolId: '',
     subjects: [''],
+    password: '', // Make sure password is included
   });
   const [newStudent, setNewStudent] = useState({
     name: '',
@@ -54,6 +55,7 @@ const Users = () => {
   );
 
   const handleAddTeacher = async () => {
+    console.log('Handling add teacher with data:', newTeacher);
     const success = await addTeacher(newTeacher);
     if (success) {
       setNewTeacher({
@@ -62,6 +64,7 @@ const Users = () => {
         phone: '',
         schoolId: '',
         subjects: [''],
+        password: '',
       });
       setIsAddDialogOpen(false);
     }
@@ -83,6 +86,10 @@ const Users = () => {
   };
 
   const isLoading = teachersLoading || studentsLoading || schoolsLoading;
+
+  console.log('Users component - teachers:', teachers);
+  console.log('Users component - filtered teachers:', filteredTeachers);
+  console.log('Users component - loading state:', isLoading);
 
   return (
     <div className="space-y-6">
