@@ -10,6 +10,7 @@ export const useAuthState = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log('Setting up auth state');
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -90,9 +91,11 @@ export const useAuthState = () => {
     const initializeAuth = async () => {
       setIsLoading(true);
       try {
+        console.log('Checking for existing session');
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
+          console.log('Found existing session:', session.user.id);
           // Get user profile
           const { data: profile, error } = await supabase
             .from('users')
@@ -145,6 +148,8 @@ export const useAuthState = () => {
               schoolId: profile.school_id
             });
           }
+        } else {
+          console.log('No existing session found');
         }
       } catch (error) {
         console.error('Error checking authentication:', error);

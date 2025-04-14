@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
@@ -41,8 +42,24 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [isCheckingConnection, setIsCheckingConnection] = useState(false);
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
+
+  // Debugging log for component mount
+  useEffect(() => {
+    console.log('Login component mounted');
+    return () => {
+      console.log('Login component unmounted');
+    };
+  }, []);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      console.log('User already logged in, redirecting to dashboard');
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -96,6 +113,7 @@ const Login = () => {
     setIsLoading(true);
     
     try {
+      console.log('Attempting login with:', values.email);
       // Double-check connection before attempting login
       const { connected } = await checkSupabaseConnection();
       if (!connected) {
@@ -103,7 +121,7 @@ const Login = () => {
       }
       
       await login(values.email, values.password);
-      navigate('/dashboard');
+      // No need to navigate here as the useEffect will handle it
     } catch (error: any) {
       console.error('Login submission error:', error);
       // Connection errors are handled in the login function via toast
