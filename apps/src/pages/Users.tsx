@@ -186,12 +186,16 @@ const Users = () => {
       
       console.log('Creating user with tenant_id:', user?.tenantId);
       
-      // First create an auth user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Use the standard signup method instead of admin.createUser
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newTeacher.email,
         password: 'Password123', // This is a temporary password, should be changed on first login
-        email_confirm: true,
-        user_metadata: { name: newTeacher.name }
+        options: {
+          data: {
+            name: newTeacher.name,
+            role: 'teacher'
+          }
+        }
       });
       
       if (authError) {
@@ -268,12 +272,16 @@ const Users = () => {
       const school = schools.find(s => s.id === newStudent.schoolId);
       const schoolName = school ? school.name : '';
       
-      // First create an auth user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Use the standard signup method instead of admin.createUser
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newStudent.email,
         password: 'Password123', // This is a temporary password, should be changed on first login
-        email_confirm: true,
-        user_metadata: { name: newStudent.name }
+        options: {
+          data: {
+            name: newStudent.name,
+            role: 'student'
+          }
+        }
       });
       
       if (authError) {
