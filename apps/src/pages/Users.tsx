@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/contexts/AuthContext';
@@ -185,11 +186,15 @@ const Users = () => {
       
       console.log('Creating user with tenant_id:', user?.tenantId);
       
+      // Generate a UUID for the new user
+      const newUserId = crypto.randomUUID();
+      
       // Create user in Supabase - Note: We're not storing the email directly in the users table
       // since the users table doesn't have an email column
       const { data, error } = await supabase
         .from('users')
         .insert([{
+          id: newUserId, // Explicitly set the ID
           name: newTeacher.name,
           role: 'teacher',
           school_id: newTeacher.schoolId,
@@ -241,10 +246,14 @@ const Users = () => {
       const school = schools.find(s => s.id === newStudent.schoolId);
       const schoolName = school ? school.name : '';
       
+      // Generate a UUID for the new user
+      const newUserId = crypto.randomUUID();
+      
       // Create user in Supabase
       const { data, error } = await supabase
         .from('users')
         .insert({
+          id: newUserId, // Explicitly set the ID
           name: newStudent.name,
           role: 'student',
           school_id: newStudent.schoolId,
