@@ -93,7 +93,7 @@ const Users = () => {
             role,
             school_id,
             tenant_id,
-            schools:schools(name)
+            school:schools!users_school_id_fkey(name)
           `)
           .eq('role', 'teacher');
         
@@ -110,7 +110,7 @@ const Users = () => {
             role,
             school_id,
             tenant_id,
-            schools:schools(name)
+            school:schools!users_school_id_fkey(name)
           `)
           .eq('role', 'student');
         
@@ -122,11 +122,11 @@ const Users = () => {
         const formattedTeachers = teachersData.map(teacher => ({
           id: teacher.id,
           name: teacher.name || 'No Name',
-          email: 'Not provided', // Since email isn't in the users table, we'll set a default
+          email: 'Not provided',
           phone: 'Not provided',
           role: teacher.role,
           schoolId: teacher.school_id || '',
-          schoolName: teacher.schools?.name || 'No School',
+          schoolName: teacher.school?.name || 'No School',
           subjects: ['Not specified'],
         }));
         
@@ -134,11 +134,11 @@ const Users = () => {
         const formattedStudents = studentsData.map(student => ({
           id: student.id,
           name: student.name || 'No Name',
-          email: 'Not provided', // Since email isn't in the users table, we'll set a default
+          email: 'Not provided',
           phone: 'Not provided',
           role: student.role,
           schoolId: student.school_id || '',
-          schoolName: student.schools?.name || 'No School',
+          schoolName: student.school?.name || 'No School',
           grade: 'Not specified',
           guardianName: 'Not specified',
         }));
