@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,6 +51,7 @@ const Users = () => {
     phone: '',
     schoolId: '',
     subjects: [''],
+    password: '', // Added password field
   });
   const [newStudent, setNewStudent] = useState({
     name: '',
@@ -189,7 +189,7 @@ const Users = () => {
       // Use the standard signup method instead of admin.createUser
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newTeacher.email,
-        password: 'Password123', // This is a temporary password, should be changed on first login
+        password: newTeacher.password, // This is a temporary password, should be changed on first login
         options: {
           data: {
             name: newTeacher.name,
@@ -249,6 +249,7 @@ const Users = () => {
           phone: '',
           schoolId: '',
           subjects: [''],
+          password: '',
         });
         setIsAddDialogOpen(false);
         toast.success('Teacher added successfully');

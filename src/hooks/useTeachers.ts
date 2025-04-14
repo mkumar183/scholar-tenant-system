@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +20,7 @@ interface NewTeacher {
   phone: string;
   schoolId: string;
   subjects: string[];
+  password: string; // Added password field
 }
 
 export const useTeachers = () => {
@@ -70,14 +70,14 @@ export const useTeachers = () => {
 
   const addTeacher = async (newTeacher: NewTeacher) => {
     try {
-      if (!newTeacher.name || !newTeacher.email || !newTeacher.schoolId) {
+      if (!newTeacher.name || !newTeacher.email || !newTeacher.schoolId || !newTeacher.password) {
         toast.error('Please fill in all required fields');
         return;
       }
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newTeacher.email,
-        password: 'Password123',
+        password: newTeacher.password, // Use the provided password instead of hardcoded one
         options: {
           data: {
             name: newTeacher.name,
