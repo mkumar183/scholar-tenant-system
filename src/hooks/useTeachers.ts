@@ -53,6 +53,7 @@ export const useTeachers = () => {
   const fetchTeachers = async () => {
     try {
       console.log('Fetching teachers...');
+      // First, get the teacher users
       const { data: teachersData, error: teachersError } = await supabase
         .from('users')
         .select(`
@@ -60,8 +61,7 @@ export const useTeachers = () => {
           name, 
           role,
           school_id,
-          tenant_id,
-          schools:schools(name)
+          tenant_id
         `)
         .eq('role', 'teacher');
       
@@ -69,17 +69,22 @@ export const useTeachers = () => {
       
       console.log('Teachers data from database:', teachersData);
       
-      // Get emails from auth.users table using user IDs
-      // Note: We can't directly query auth.users, so we use user metadata
-      const teacherIds = teachersData.map(teacher => teacher.id);
-      
-      // Fetch user emails from the auth system
-      // This is simulated since we can't directly query auth.users
-      // In a real app, this data should be stored in a public profiles table
-      
-      const formattedTeachers = teachersData.map(teacher => {
-        // Find the school name
-        const school = teacher.schools ? teacher.schools.name : 'No School';
+      // Process teacher data and look up school names separately
+      const formattedTeachers = await Promise.all(teachersData.map(async (teacher) => {
+        // Get school name if school_id exists
+        let schoolName = 'No School';
+        
+        if (teacher.school_id) {
+          const { data: schoolData, error: schoolError } = await supabase
+            .from('schools')
+            .select('name')
+            .eq('id', teacher.school_id)
+            .single();
+            
+          if (!schoolError && schoolData) {
+            schoolName = schoolData.name;
+          }
+        }
         
         return {
           id: teacher.id,
@@ -88,10 +93,10 @@ export const useTeachers = () => {
           phone: 'Not provided',
           role: teacher.role,
           schoolId: teacher.school_id || '',
-          schoolName: school || 'No School',
+          schoolName: schoolName,
           subjects: ['Not specified'],
         };
-      });
+      }));
       
       console.log('Formatted teachers:', formattedTeachers);
       setTeachers(formattedTeachers);
