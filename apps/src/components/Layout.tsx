@@ -10,7 +10,8 @@ import {
   BookOpen, 
   LayoutDashboard, 
   Settings,
-  CalendarRange
+  CalendarRange,
+  GraduationCap
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -76,6 +77,18 @@ const Layout = ({ children }: LayoutProps) => {
             >
               <CalendarRange className="mr-2 h-5 w-5" />
               Academic Sessions
+            </Button>
+          )}
+
+          {/* Grades menu item - visible to school admins, tenant admins, and teachers */}
+          {(user.role === 'school_admin' || user.role === 'tenant_admin' || user.role === 'teacher') && (
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-primary-foreground hover:text-primary-foreground hover:bg-primary/80"
+              onClick={() => navigate('/grades')}
+            >
+              <GraduationCap className="mr-2 h-5 w-5" />
+              Grades
             </Button>
           )}
 

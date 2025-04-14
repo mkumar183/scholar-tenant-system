@@ -5,8 +5,10 @@ import { useAcademicSessions } from '@/hooks/useAcademicSessions';
 import { Button } from '@/components/ui/button';
 import { AcademicSessionDialog } from '@/components/academic-sessions/AcademicSessionDialog';
 import { AcademicSessionsTable } from '@/components/academic-sessions/AcademicSessionsTable';
+import { AcademicSessionDetails } from '@/components/academic-sessions/AcademicSessionDetails';
 import { CalendarRange } from 'lucide-react';
 import { AcademicSession } from '@/types/database.types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const AcademicSessions = () => {
   const { user } = useAuth();
@@ -19,6 +21,7 @@ const AcademicSessions = () => {
     setActiveSession 
   } = useAcademicSessions();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   const handleCreateSession = async (session: Omit<AcademicSession, 'id' | 'created_at' | 'updated_at'>) => {
     await createSession(session);
@@ -31,11 +34,16 @@ const AcademicSessions = () => {
 
   const handleDeleteSession = async (id: string) => {
     await deleteSession(id);
+    if (selectedSessionId === id) {
+      setSelectedSessionId(null);
+    }
   };
 
   const handleSetActiveSession = async (id: string) => {
     await setActiveSession(id);
   };
+
+  const selectedSession = sessions.find(s => s.id === selectedSessionId);
 
   // Only tenant admins can access this page
   if (user?.role !== 'tenant_admin') {
@@ -61,20 +69,40 @@ const AcademicSessions = () => {
         </Button>
       </div>
 
-      <div className="rounded-md border shadow-sm">
-        {isLoading ? (
-          <div className="flex items-center justify-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <Tabs defaultValue="sessions" className="w-full">
+        <TabsList>
+          <TabsTrigger value="sessions">All Sessions</TabsTrigger>
+          {selectedSession && (
+            <TabsTrigger value="details">
+              {selectedSession.name} Details
+            </TabsTrigger>
+          )}
+        </TabsList>
+        
+        <TabsContent value="sessions" className="mt-4">
+          <div className="rounded-md border shadow-sm">
+            {isLoading ? (
+              <div className="flex items-center justify-center p-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <AcademicSessionsTable 
+                sessions={sessions} 
+                onEdit={handleUpdateSession} 
+                onDelete={handleDeleteSession}
+                onSetActive={handleSetActiveSession}
+                onSelect={setSelectedSessionId}
+              />
+            )}
           </div>
-        ) : (
-          <AcademicSessionsTable 
-            sessions={sessions} 
-            onEdit={handleUpdateSession} 
-            onDelete={handleDeleteSession}
-            onSetActive={handleSetActiveSession}
-          />
+        </TabsContent>
+        
+        {selectedSession && (
+          <TabsContent value="details" className="mt-4">
+            <AcademicSessionDetails session={selectedSession} />
+          </TabsContent>
         )}
-      </div>
+      </Tabs>
 
       <AcademicSessionDialog
         isOpen={isCreateDialogOpen}
