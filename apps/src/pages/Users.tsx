@@ -186,15 +186,31 @@ const Users = () => {
       
       console.log('Creating user with tenant_id:', user?.tenantId);
       
-      // Generate a UUID for the new user
-      const newUserId = crypto.randomUUID();
+      // First create an auth user
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: newTeacher.email,
+        password: 'Password123', // This is a temporary password, should be changed on first login
+        email_confirm: true,
+        user_metadata: { name: newTeacher.name }
+      });
       
-      // Create user in Supabase - Note: We're not storing the email directly in the users table
-      // since the users table doesn't have an email column
+      if (authError) {
+        console.error('Error creating auth user:', authError);
+        throw new Error(`Failed to create auth user: ${authError.message}`);
+      }
+      
+      if (!authData.user) {
+        throw new Error('Failed to create auth user, no user returned');
+      }
+      
+      console.log('Auth user created:', authData.user);
+      const userId = authData.user.id;
+      
+      // Now insert into public.users table with the same ID
       const { data, error } = await supabase
         .from('users')
         .insert([{
-          id: newUserId, // Explicitly set the ID
+          id: userId, // Use the ID from auth.users
           name: newTeacher.name,
           role: 'teacher',
           school_id: newTeacher.schoolId,
@@ -242,18 +258,41 @@ const Users = () => {
   // Add new student
   const handleAddStudent = async () => {
     try {
+      // Form validation
+      if (!newStudent.name || !newStudent.email || !newStudent.schoolId) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+      
       // Get school name for display
       const school = schools.find(s => s.id === newStudent.schoolId);
       const schoolName = school ? school.name : '';
       
-      // Generate a UUID for the new user
-      const newUserId = crypto.randomUUID();
+      // First create an auth user
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: newStudent.email,
+        password: 'Password123', // This is a temporary password, should be changed on first login
+        email_confirm: true,
+        user_metadata: { name: newStudent.name }
+      });
+      
+      if (authError) {
+        console.error('Error creating auth user:', authError);
+        throw new Error(`Failed to create auth user: ${authError.message}`);
+      }
+      
+      if (!authData.user) {
+        throw new Error('Failed to create auth user, no user returned');
+      }
+      
+      console.log('Auth user created:', authData.user);
+      const userId = authData.user.id;
       
       // Create user in Supabase
       const { data, error } = await supabase
         .from('users')
         .insert({
-          id: newUserId, // Explicitly set the ID
+          id: userId, // Use the ID from auth.users
           name: newStudent.name,
           role: 'student',
           school_id: newStudent.schoolId,
