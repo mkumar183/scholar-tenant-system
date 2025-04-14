@@ -11,6 +11,7 @@ interface AddTeacherFormProps {
     phone: string;
     schoolId: string;
     subjects: string[];
+    password: string; // Added password field
   };
   setNewTeacher: React.Dispatch<React.SetStateAction<{
     name: string;
@@ -18,6 +19,7 @@ interface AddTeacherFormProps {
     phone: string;
     schoolId: string;
     subjects: string[];
+    password: string; // Added password field
   }>>;
   schools: { id: string; name: string }[];
   subjects: string[];
@@ -28,6 +30,7 @@ const AddTeacherForm = ({ newTeacher, setNewTeacher, schools, subjects }: AddTea
     name?: string;
     email?: string;
     schoolId?: string;
+    password?: string; // Added error for password field
   }>({});
 
   const validateField = (field: string, value: string) => {
@@ -41,6 +44,10 @@ const AddTeacherForm = ({ newTeacher, setNewTeacher, schools, subjects }: AddTea
     }
     if (field === 'schoolId' && !value) {
       return 'School selection is required';
+    }
+    if (field === 'password') {
+      if (!value) return 'Password is required';
+      if (value.length < 6) return 'Password must be at least 6 characters';
     }
     return '';
   };
@@ -83,6 +90,18 @@ const AddTeacherForm = ({ newTeacher, setNewTeacher, schools, subjects }: AddTea
           className={`mt-1 ${errors.email ? 'border-red-500' : ''}`}
         />
         {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+      </div>
+      <div>
+        <Label htmlFor="teacher-password">Initial Password <span className="text-red-500">*</span></Label>
+        <Input
+          id="teacher-password"
+          type="password"
+          value={newTeacher.password}
+          onChange={(e) => handleChange('password', e.target.value)}
+          className={`mt-1 ${errors.password ? 'border-red-500' : ''}`}
+          placeholder="Enter initial password"
+        />
+        {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
       </div>
       <div>
         <Label htmlFor="teacher-phone">Phone</Label>
