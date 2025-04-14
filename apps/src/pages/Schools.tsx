@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -50,7 +51,10 @@ const Schools = () => {
         <>
           <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {filteredSchools.map((school) => (
-              <Card key={school.id} className="overflow-hidden">
+              <Card 
+                key={school.id} 
+                className="overflow-hidden hover:shadow-md transition-all duration-200 hover:translate-y-[-2px]"
+              >
                 <CardHeader className="pb-0">
                   <CardTitle className="text-xl">{school.name}</CardTitle>
                   <CardDescription className="flex items-center text-xs">
@@ -63,23 +67,24 @@ const Schools = () => {
                     <div className="text-xs text-muted-foreground">Type</div>
                     <div className="text-sm font-medium">{school.type || 'Not specified'}</div>
                   </div>
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="grid grid-cols-2 gap-4 mb-4">
                     <div className="flex items-center text-sm">
-                      <Users className="mr-1 h-4 w-4 text-muted-foreground" />
+                      <Users className="mr-1 h-4 w-4 text-primary" />
                       <span>{school.teacherCount} Teachers</span>
                     </div>
                     <div className="flex items-center text-sm">
-                      <BookOpen className="mr-1 h-4 w-4 text-muted-foreground" />
+                      <BookOpen className="mr-1 h-4 w-4 text-primary" />
                       <span>{school.studentCount} Students</span>
                     </div>
                   </div>
                   <div className="mt-4 flex items-center justify-end gap-2">
                     <Button
-                      variant="outline"
                       size="sm"
+                      variant="default"  // Changed to default variant which uses primary color
                       onClick={() => handleManageSchool(school.id)}
+                      className="w-full"
                     >
-                      Manage
+                      Manage School
                     </Button>
                   </div>
                 </CardContent>
