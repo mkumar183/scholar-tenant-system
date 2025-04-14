@@ -18,6 +18,7 @@ import Schools from "./pages/Schools";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import AcademicSessions from "./pages/AcademicSessions";
+import Grades from "./pages/Grades";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -78,6 +79,14 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <AcademicSessions />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/grades" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Grades />
                 </Layout>
               </ProtectedRoute>
             } />
