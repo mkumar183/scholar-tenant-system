@@ -23,6 +23,7 @@ interface AddUserDialogProps {
     phone: string;
     schoolId: string;
     subjects: string[];
+    password: string; // Added password field
   };
   setNewTeacher: React.Dispatch<React.SetStateAction<{
     name: string;
@@ -30,6 +31,7 @@ interface AddUserDialogProps {
     phone: string;
     schoolId: string;
     subjects: string[];
+    password: string; // Added password field
   }>>;
   newStudent: {
     name: string;

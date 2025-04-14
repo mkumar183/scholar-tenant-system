@@ -1,4 +1,3 @@
-
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,7 +29,7 @@ const AddTeacherForm = ({ newTeacher, setNewTeacher, schools, subjects }: AddTea
     name?: string;
     email?: string;
     schoolId?: string;
-    password?: string; // Added error for password field
+    password?: string;
   }>({});
 
   const validateField = (field: string, value: string) => {

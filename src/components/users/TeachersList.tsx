@@ -1,3 +1,5 @@
+
+import TeacherCard from './TeacherCard';
 import EmptyState from './EmptyState';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Mail, Phone, School, BookOpen } from 'lucide-react';
@@ -16,10 +18,13 @@ interface TeachersListProps {
 }
 
 const TeachersList = ({ teachers }: TeachersListProps) => {
-  if (teachers.length === 0) {
+  if (!teachers || teachers.length === 0) {
     return <EmptyState type="teachers" />;
   }
   
+  console.log('Rendering TeachersList with data:', teachers);
+  
+  // Use a table view for better organization
   return (
     <div className="space-y-6">
       <Table>
@@ -62,6 +67,12 @@ const TeachersList = ({ teachers }: TeachersListProps) => {
           ))}
         </TableBody>
       </Table>
+      
+      <div className="mt-6 grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {teachers.map((teacher) => (
+          <TeacherCard key={teacher.id} teacher={teacher} />
+        ))}
+      </div>
     </div>
   );
 };
