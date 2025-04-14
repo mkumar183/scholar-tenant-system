@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/contexts/AuthContext';
@@ -90,7 +89,6 @@ const Users = () => {
           .select(`
             id, 
             name, 
-            email,
             role,
             school_id,
             tenant_id,
@@ -108,7 +106,6 @@ const Users = () => {
           .select(`
             id, 
             name, 
-            email,
             role,
             school_id,
             tenant_id,
@@ -124,25 +121,25 @@ const Users = () => {
         const formattedTeachers = teachersData.map(teacher => ({
           id: teacher.id,
           name: teacher.name || 'No Name',
-          email: teacher.email || 'No Email',
-          phone: 'Not provided', // This field isn't in our DB schema yet
+          email: 'Not provided', // Since email isn't in the users table, we'll set a default
+          phone: 'Not provided',
           role: teacher.role,
           schoolId: teacher.school_id || '',
           schoolName: teacher.schools?.name || 'No School',
-          subjects: ['Not specified'], // This field isn't in our DB schema yet
+          subjects: ['Not specified'],
         }));
         
         // Format students data
         const formattedStudents = studentsData.map(student => ({
           id: student.id,
           name: student.name || 'No Name',
-          email: student.email || 'No Email',
-          phone: 'Not provided', // This field isn't in our DB schema yet
+          email: 'Not provided', // Since email isn't in the users table, we'll set a default
+          phone: 'Not provided',
           role: student.role,
           schoolId: student.school_id || '',
           schoolName: student.schools?.name || 'No School',
-          grade: 'Not specified', // This field isn't in our DB schema yet
-          guardianName: 'Not specified', // This field isn't in our DB schema yet
+          grade: 'Not specified',
+          guardianName: 'Not specified',
         }));
         
         setTeachers(formattedTeachers);
@@ -188,12 +185,12 @@ const Users = () => {
       
       console.log('Creating user with tenant_id:', user?.tenantId);
       
-      // Create user in Supabase
+      // Create user in Supabase - Note: We're not storing the email directly in the users table
+      // since the users table doesn't have an email column
       const { data, error } = await supabase
         .from('users')
         .insert([{
           name: newTeacher.name,
-          email: newTeacher.email,
           role: 'teacher',
           school_id: newTeacher.schoolId,
           tenant_id: user?.tenantId
@@ -212,7 +209,7 @@ const Users = () => {
         const newTeacherData = {
           id: data[0].id,
           name: newTeacher.name,
-          email: newTeacher.email,
+          email: newTeacher.email, // This won't be stored in the DB, just for display
           phone: newTeacher.phone || 'Not provided',
           role: 'teacher',
           schoolId: newTeacher.schoolId,
@@ -249,7 +246,6 @@ const Users = () => {
         .from('users')
         .insert({
           name: newStudent.name,
-          email: newStudent.email,
           role: 'student',
           school_id: newStudent.schoolId,
           tenant_id: user?.tenantId
@@ -263,7 +259,7 @@ const Users = () => {
         const newStudentData = {
           id: data[0].id,
           name: newStudent.name,
-          email: newStudent.email,
+          email: newStudent.email, // This won't be stored in the DB, just for display
           phone: newStudent.phone,
           role: 'student',
           schoolId: newStudent.schoolId,
