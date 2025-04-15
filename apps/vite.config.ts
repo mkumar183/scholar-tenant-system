@@ -19,5 +19,12 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080
+    allowedHosts: [
+      'localhost',
+      '904cff78-0618-4fe1-bbce-147582d1c5f8.lovableproject.com'
+    ],
+    proxy: {
+      // your proxy configuration if any
+    }
   }
 }));
