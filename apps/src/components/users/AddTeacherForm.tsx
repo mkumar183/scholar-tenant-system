@@ -1,4 +1,3 @@
-
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,7 +10,8 @@ interface AddTeacherFormProps {
     phone: string;
     schoolId: string;
     subjects: string[];
-    password: string; // Added password field
+    password: string;
+    role: string; // Added role field
   };
   setNewTeacher: React.Dispatch<React.SetStateAction<{
     name: string;
@@ -19,7 +19,8 @@ interface AddTeacherFormProps {
     phone: string;
     schoolId: string;
     subjects: string[];
-    password: string; // Added password field
+    password: string;
+    role: string; // Added role field
   }>>;
   schools: { id: string; name: string }[];
   subjects: string[];
@@ -30,7 +31,8 @@ const AddTeacherForm = ({ newTeacher, setNewTeacher, schools, subjects }: AddTea
     name?: string;
     email?: string;
     schoolId?: string;
-    password?: string; // Added error for password field
+    password?: string;
+    role?: string; // Added error for role field
   }>({});
 
   const validateField = (field: string, value: string) => {
@@ -48,6 +50,9 @@ const AddTeacherForm = ({ newTeacher, setNewTeacher, schools, subjects }: AddTea
     if (field === 'password') {
       if (!value) return 'Password is required';
       if (value.length < 6) return 'Password must be at least 6 characters';
+    }
+    if (field === 'role' && !value) {
+      return 'Role selection is required';
     }
     return '';
   };
@@ -70,6 +75,24 @@ const AddTeacherForm = ({ newTeacher, setNewTeacher, schools, subjects }: AddTea
 
   return (
     <div className="grid gap-4 py-4">
+      <div>
+        <Label htmlFor="teacher-role">Role <span className="text-red-500">*</span></Label>
+        <Select 
+          value={newTeacher.role} 
+          onValueChange={(value) => handleChange('role', value)}
+        >
+          <SelectTrigger className={`mt-1 ${errors.role ? 'border-red-500' : ''}`}>
+            <SelectValue placeholder="Select role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="school_admin">School Admin</SelectItem>
+            <SelectItem value="teacher">Teacher</SelectItem>
+            <SelectItem value="staff">Staff</SelectItem>
+          </SelectContent>
+        </Select>
+        {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
+      </div>
+
       <div>
         <Label htmlFor="teacher-name">Name <span className="text-red-500">*</span></Label>
         <Input

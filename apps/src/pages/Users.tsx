@@ -51,7 +51,8 @@ const Users = () => {
     phone: '',
     schoolId: '',
     subjects: [''],
-    password: '', // Added password field
+    password: '',
+    role: '',
   });
   const [newStudent, setNewStudent] = useState({
     name: '',
@@ -95,7 +96,8 @@ const Users = () => {
             tenant_id,
             school:schools!users_school_id_fkey(name)
           `)
-          .eq('role', 'teacher');
+          .in('role', ['teacher', 'staff', 'school_admin'])
+          .eq('tenant_id', user?.tenantId);
         
         if (teachersError) {
           throw teachersError;
@@ -175,7 +177,7 @@ const Users = () => {
       console.log('Adding teacher:', newTeacher);
       
       // Form validation
-      if (!newTeacher.name || !newTeacher.email || !newTeacher.schoolId) {
+      if (!newTeacher.name || !newTeacher.email || !newTeacher.schoolId || !newTeacher.role) {
         toast.error('Please fill in all required fields');
         return;
       }
@@ -189,11 +191,11 @@ const Users = () => {
       // Use the standard signup method instead of admin.createUser
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newTeacher.email,
-        password: newTeacher.password, // This is a temporary password, should be changed on first login
+        password: newTeacher.password,
         options: {
           data: {
             name: newTeacher.name,
-            role: 'teacher'
+            role: newTeacher.role
           }
         }
       });
@@ -214,9 +216,9 @@ const Users = () => {
       const { data, error } = await supabase
         .from('users')
         .insert([{
-          id: userId, // Use the ID from auth.users
+          id: userId,
           name: newTeacher.name,
-          role: 'teacher',
+          role: newTeacher.role,
           school_id: newTeacher.schoolId,
           tenant_id: user?.tenantId
         }])
@@ -234,9 +236,9 @@ const Users = () => {
         const newTeacherData = {
           id: data[0].id,
           name: newTeacher.name,
-          email: newTeacher.email, // This won't be stored in the DB, just for display
+          email: newTeacher.email,
           phone: newTeacher.phone || 'Not provided',
-          role: 'teacher',
+          role: newTeacher.role,
           schoolId: newTeacher.schoolId,
           schoolName: schoolName,
           subjects: newTeacher.subjects[0] ? [newTeacher.subjects[0]] : ['Not specified'],
@@ -250,6 +252,7 @@ const Users = () => {
           schoolId: '',
           subjects: [''],
           password: '',
+          role: '',
         });
         setIsAddDialogOpen(false);
         toast.success('Teacher added successfully');
@@ -366,7 +369,7 @@ const Users = () => {
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2 mb-6 max-w-md">
-          <TabsTrigger value="teachers">Teachers</TabsTrigger>
+          <TabsTrigger value="teachers">Staff</TabsTrigger>
           <TabsTrigger value="students">Students</TabsTrigger>
         </TabsList>
         
