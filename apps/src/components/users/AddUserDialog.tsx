@@ -21,7 +21,6 @@ interface AddUserDialogProps {
     email: string;
     phone: string;
     schoolId: string;
-    subjects: string[];
     password: string;
     role: string;
   };
@@ -30,7 +29,6 @@ interface AddUserDialogProps {
     email: string;
     phone: string;
     schoolId: string;
-    subjects: string[];
     password: string;
     role: string;
   }>>;
@@ -53,7 +51,6 @@ interface AddUserDialogProps {
   handleAddTeacher: () => void;
   handleAddStudent: () => void;
   schools: { id: string; name: string }[];
-  subjects: string[];
   grades: string[];
 }
 
@@ -68,7 +65,6 @@ const AddUserDialog = ({
   handleAddTeacher,
   handleAddStudent,
   schools,
-  subjects,
   grades
 }: AddUserDialogProps) => {
   return (
@@ -90,8 +86,7 @@ const AddUserDialog = ({
           <AddTeacherForm 
             newTeacher={newTeacher} 
             setNewTeacher={setNewTeacher} 
-            schools={schools} 
-            subjects={subjects} 
+            schools={schools}
           />
         ) : (
           <AddStudentForm 

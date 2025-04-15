@@ -11,7 +11,6 @@ interface TeachersListProps {
     role: string;
     schoolId: string;
     schoolName: string;
-    subjects: string[];
   }[];
 }
 
@@ -42,7 +41,6 @@ const TeachersList = ({ teachers }: TeachersListProps) => {
             <TableHead>Email</TableHead>
             <TableHead>Role</TableHead>
             <TableHead>School</TableHead>
-            <TableHead>Subjects</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -63,19 +61,6 @@ const TeachersList = ({ teachers }: TeachersListProps) => {
                 <div className="flex items-center">
                   <School className="mr-2 h-4 w-4 text-muted-foreground" />
                   {teacher.schoolName}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-wrap gap-1">
-                  {teacher.subjects.map((subject) => (
-                    <span 
-                      key={subject} 
-                      className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full flex items-center"
-                    >
-                      <BookOpen className="mr-1 h-3 w-3" />
-                      {subject}
-                    </span>
-                  ))}
                 </div>
               </TableCell>
             </TableRow>

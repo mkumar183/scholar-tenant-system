@@ -58,6 +58,16 @@ interface Student {
   guardianName: string;
 }
 
+interface NewTeacher {
+  name: string;
+  email: string;
+  phone: string;
+  schoolId: string;
+  subjects: string[];
+  password: string;
+  role: string;
+}
+
 const Users = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('teachers');
@@ -67,12 +77,12 @@ const Users = () => {
   const [schools, setSchools] = useState(MOCK_SCHOOLS);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newTeacher, setNewTeacher] = useState({
+  const [newTeacher, setNewTeacher] = useState<NewTeacher>({
     name: '',
     email: '',
     phone: '',
     schoolId: '',
-    subjects: [''],
+    subjects: [],
     password: '',
     role: '',
   });
@@ -125,14 +135,6 @@ const Users = () => {
           throw teachersError;
         }
 
-        console.log('Raw teachers data:', teachersData);
-        console.log('First teacher:', teachersData?.[0]);
-        console.log('First teacher school:', teachersData?.[0]?.school);
-        console.log('First teacher school name:', teachersData?.[0]?.school?.[0]?.name);
-        console.log('Type of school:', typeof teachersData?.[0]?.school);
-        console.log('Is school an array?', Array.isArray(teachersData?.[0]?.school));
-        console.log('School keys:', Object.keys(teachersData?.[0]?.school || {}));
-
         // Get list of user IDs
         const teacherIds = (teachersData || []).map(teacher => teacher.id);
 
@@ -173,7 +175,7 @@ const Users = () => {
           role: teacher.role,
           schoolId: teacher.school_id || '',
           schoolName: teacher.school?.name || 'No School',
-          subjects: ['Not specified'],
+          subjects: [],
         }));
         
         // Format students data
@@ -289,7 +291,7 @@ const Users = () => {
           role: newTeacher.role,
           schoolId: newTeacher.schoolId,
           schoolName: schoolName,
-          subjects: newTeacher.subjects[0] ? [newTeacher.subjects[0]] : ['Not specified'],
+          subjects: [],
         };
         
         setTeachers([...teachers, newTeacherData]);
@@ -298,7 +300,7 @@ const Users = () => {
           email: '',
           phone: '',
           schoolId: '',
-          subjects: [''],
+          subjects: [],
           password: '',
           role: '',
         });

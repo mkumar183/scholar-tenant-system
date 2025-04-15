@@ -9,30 +9,27 @@ interface AddTeacherFormProps {
     email: string;
     phone: string;
     schoolId: string;
-    subjects: string[];
     password: string;
-    role: string; // Added role field
+    role: string;
   };
   setNewTeacher: React.Dispatch<React.SetStateAction<{
     name: string;
     email: string;
     phone: string;
     schoolId: string;
-    subjects: string[];
     password: string;
-    role: string; // Added role field
+    role: string;
   }>>;
   schools: { id: string; name: string }[];
-  subjects: string[];
 }
 
-const AddTeacherForm = ({ newTeacher, setNewTeacher, schools, subjects }: AddTeacherFormProps) => {
+const AddTeacherForm = ({ newTeacher, setNewTeacher, schools }: AddTeacherFormProps) => {
   const [errors, setErrors] = useState<{
     name?: string;
     email?: string;
     schoolId?: string;
     password?: string;
-    role?: string; // Added error for role field
+    role?: string;
   }>({});
 
   const validateField = (field: string, value: string) => {
@@ -66,33 +63,11 @@ const AddTeacherForm = ({ newTeacher, setNewTeacher, schools, subjects }: AddTea
     }));
 
     // Update form data
-    if (field === 'subjects') {
-      setNewTeacher({...newTeacher, subjects: [value]});
-    } else {
-      setNewTeacher({...newTeacher, [field]: value});
-    }
+    setNewTeacher({...newTeacher, [field]: value});
   };
 
   return (
     <div className="grid gap-4 py-4">
-      <div>
-        <Label htmlFor="teacher-role">Role <span className="text-red-500">*</span></Label>
-        <Select 
-          value={newTeacher.role} 
-          onValueChange={(value) => handleChange('role', value)}
-        >
-          <SelectTrigger className={`mt-1 ${errors.role ? 'border-red-500' : ''}`}>
-            <SelectValue placeholder="Select role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="school_admin">School Admin</SelectItem>
-            <SelectItem value="teacher">Teacher</SelectItem>
-            <SelectItem value="staff">Staff</SelectItem>
-          </SelectContent>
-        </Select>
-        {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
-      </div>
-
       <div>
         <Label htmlFor="teacher-name">Name <span className="text-red-500">*</span></Label>
         <Input
@@ -155,22 +130,21 @@ const AddTeacherForm = ({ newTeacher, setNewTeacher, schools, subjects }: AddTea
         {errors.schoolId && <p className="text-red-500 text-sm mt-1">{errors.schoolId}</p>}
       </div>
       <div>
-        <Label htmlFor="teacher-subject">Primary Subject</Label>
+        <Label htmlFor="teacher-role">Role <span className="text-red-500">*</span></Label>
         <Select 
-          value={newTeacher.subjects[0]} 
-          onValueChange={(value) => handleChange('subjects', value)}
+          value={newTeacher.role} 
+          onValueChange={(value) => handleChange('role', value)}
         >
-          <SelectTrigger className="mt-1">
-            <SelectValue placeholder="Select subject" />
+          <SelectTrigger className={`mt-1 ${errors.role ? 'border-red-500' : ''}`}>
+            <SelectValue placeholder="Select role" />
           </SelectTrigger>
           <SelectContent>
-            {subjects.map((subject) => (
-              <SelectItem key={subject} value={subject}>
-                {subject}
-              </SelectItem>
-            ))}
+            <SelectItem value="school_admin">School Admin</SelectItem>
+            <SelectItem value="teacher">Teacher</SelectItem>
+            <SelectItem value="staff">Staff</SelectItem>
           </SelectContent>
         </Select>
+        {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
       </div>
     </div>
   );
