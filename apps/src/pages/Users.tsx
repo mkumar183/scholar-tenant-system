@@ -13,6 +13,28 @@ import StudentsList from '@/components/users/StudentsList';
 // Import mock data for subjects and grades
 import { SUBJECTS, GRADES, MOCK_SCHOOLS } from '@/components/users/usersData';
 
+interface School {
+  name: string;
+}
+
+interface TeacherData {
+  id: string;
+  name: string;
+  role: string;
+  school_id: string;
+  tenant_id: string;
+  school: School;
+}
+
+interface StudentData {
+  id: string;
+  name: string;
+  role: string;
+  school_id: string;
+  tenant_id: string;
+  school: School;
+}
+
 interface Teacher {
   id: string;
   name: string;
@@ -97,11 +119,33 @@ const Users = () => {
             school:schools!users_school_id_fkey(name)
           `)
           .in('role', ['teacher', 'staff', 'school_admin'])
-          .eq('tenant_id', user?.tenantId);
+          .eq('tenant_id', user?.tenantId) as { data: TeacherData[] | null, error: any };
         
         if (teachersError) {
           throw teachersError;
         }
+
+        console.log('Raw teachers data:', teachersData);
+        console.log('First teacher:', teachersData?.[0]);
+        console.log('First teacher school:', teachersData?.[0]?.school);
+        console.log('First teacher school name:', teachersData?.[0]?.school?.[0]?.name);
+        console.log('Type of school:', typeof teachersData?.[0]?.school);
+        console.log('Is school an array?', Array.isArray(teachersData?.[0]?.school));
+        console.log('School keys:', Object.keys(teachersData?.[0]?.school || {}));
+
+        // Get list of user IDs
+        const teacherIds = (teachersData || []).map(teacher => teacher.id);
+
+        // Fetch emails using the database function
+        const { data: emailData, error: emailError } = await supabase
+          .rpc('get_user_emails', { user_ids: teacherIds });
+
+        if (emailError) {
+          console.error('Error fetching emails:', emailError);
+        }
+
+        // Create a map of user IDs to emails
+        const emailMap = new Map(emailData?.map(user => [user.id, user.email]) || []);
         
         // Fetch students (users with role 'student')
         const { data: studentsData, error: studentsError } = await supabase
@@ -114,17 +158,17 @@ const Users = () => {
             tenant_id,
             school:schools!users_school_id_fkey(name)
           `)
-          .eq('role', 'student');
+          .eq('role', 'student') as { data: StudentData[] | null, error: any };
         
         if (studentsError) {
           throw studentsError;
         }
         
         // Format teachers data
-        const formattedTeachers = teachersData.map(teacher => ({
+        const formattedTeachers = (teachersData || []).map(teacher => ({
           id: teacher.id,
           name: teacher.name || 'No Name',
-          email: 'Not provided',
+          email: emailMap.get(teacher.id) as string || 'Not provided',
           phone: 'Not provided',
           role: teacher.role,
           schoolId: teacher.school_id || '',
@@ -133,10 +177,10 @@ const Users = () => {
         }));
         
         // Format students data
-        const formattedStudents = studentsData.map(student => ({
+        const formattedStudents = (studentsData || []).map(student => ({
           id: student.id,
           name: student.name || 'No Name',
-          email: 'Not provided',
+          email: emailMap.get(student.id) as string || 'Not provided',
           phone: 'Not provided',
           role: student.role,
           schoolId: student.school_id || '',
@@ -147,6 +191,10 @@ const Users = () => {
         
         setTeachers(formattedTeachers);
         setStudents(formattedStudents);
+
+        console.log('Formatted teachers:', formattedTeachers);
+        console.log('First formatted teacher:', formattedTeachers[0]);
+        console.log('First formatted teacher school name:', formattedTeachers[0]?.schoolName);
       } catch (error) {
         console.error('Error fetching users:', error);
         toast.error('Failed to load users');
