@@ -13,6 +13,28 @@ import StudentsList from '@/components/users/StudentsList';
 // Import mock data for subjects and grades
 import { SUBJECTS, GRADES, MOCK_SCHOOLS } from '@/components/users/usersData';
 
+interface School {
+  name: string;
+}
+
+interface TeacherData {
+  id: string;
+  name: string;
+  role: string;
+  school_id: string;
+  tenant_id: string;
+  school: School;
+}
+
+interface StudentData {
+  id: string;
+  name: string;
+  role: string;
+  school_id: string;
+  tenant_id: string;
+  school: School;
+}
+
 interface Teacher {
   id: string;
   name: string;
@@ -36,6 +58,16 @@ interface Student {
   guardianName: string;
 }
 
+interface NewTeacher {
+  name: string;
+  email: string;
+  phone: string;
+  schoolId: string;
+  subjects: string[];
+  password: string;
+  role: string;
+}
+
 const Users = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('teachers');
@@ -45,13 +77,14 @@ const Users = () => {
   const [schools, setSchools] = useState(MOCK_SCHOOLS);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newTeacher, setNewTeacher] = useState({
+  const [newTeacher, setNewTeacher] = useState<NewTeacher>({
     name: '',
     email: '',
     phone: '',
     schoolId: '',
-    subjects: [''],
-    password: '', // Added password field
+    subjects: [],
+    password: '',
+    role: '',
   });
   const [newStudent, setNewStudent] = useState({
     name: '',
@@ -95,11 +128,26 @@ const Users = () => {
             tenant_id,
             school:schools!users_school_id_fkey(name)
           `)
-          .eq('role', 'teacher');
+          .in('role', ['teacher', 'staff', 'school_admin'])
+          .eq('tenant_id', user?.tenantId) as { data: TeacherData[] | null, error: any };
         
         if (teachersError) {
           throw teachersError;
         }
+
+        // Get list of user IDs
+        const teacherIds = (teachersData || []).map(teacher => teacher.id);
+
+        // Fetch emails using the database function
+        const { data: emailData, error: emailError } = await supabase
+          .rpc('get_user_emails', { user_ids: teacherIds });
+
+        if (emailError) {
+          console.error('Error fetching emails:', emailError);
+        }
+
+        // Create a map of user IDs to emails
+        const emailMap = new Map(emailData?.map(user => [user.id, user.email]) || []);
         
         // Fetch students (users with role 'student')
         const { data: studentsData, error: studentsError } = await supabase
@@ -112,29 +160,43 @@ const Users = () => {
             tenant_id,
             school:schools!users_school_id_fkey(name)
           `)
-          .eq('role', 'student');
+          .eq('role', 'student') as { data: StudentData[] | null, error: any };
         
         if (studentsError) {
           throw studentsError;
         }
         
+        // Get list of student IDs
+        const studentIds = (studentsData || []).map(student => student.id);
+
+        // Fetch emails for students using the database function
+        const { data: studentEmailData, error: studentEmailError } = await supabase
+          .rpc('get_user_emails', { user_ids: studentIds });
+
+        if (studentEmailError) {
+          console.error('Error fetching student emails:', studentEmailError);
+        }
+
+        // Create a map of student IDs to emails
+        const studentEmailMap = new Map(studentEmailData?.map(user => [user.id, user.email]) || []);
+        
         // Format teachers data
-        const formattedTeachers = teachersData.map(teacher => ({
+        const formattedTeachers = (teachersData || []).map(teacher => ({
           id: teacher.id,
           name: teacher.name || 'No Name',
-          email: 'Not provided',
+          email: emailMap.get(teacher.id) as string || 'Not provided',
           phone: 'Not provided',
           role: teacher.role,
           schoolId: teacher.school_id || '',
           schoolName: teacher.school?.name || 'No School',
-          subjects: ['Not specified'],
+          subjects: [],
         }));
         
         // Format students data
-        const formattedStudents = studentsData.map(student => ({
+        const formattedStudents = (studentsData || []).map(student => ({
           id: student.id,
           name: student.name || 'No Name',
-          email: 'Not provided',
+          email: studentEmailMap.get(student.id) as string || 'Not provided',
           phone: 'Not provided',
           role: student.role,
           schoolId: student.school_id || '',
@@ -145,6 +207,7 @@ const Users = () => {
         
         setTeachers(formattedTeachers);
         setStudents(formattedStudents);
+
       } catch (error) {
         console.error('Error fetching users:', error);
         toast.error('Failed to load users');
@@ -175,7 +238,7 @@ const Users = () => {
       console.log('Adding teacher:', newTeacher);
       
       // Form validation
-      if (!newTeacher.name || !newTeacher.email || !newTeacher.schoolId) {
+      if (!newTeacher.name || !newTeacher.email || !newTeacher.schoolId || !newTeacher.role) {
         toast.error('Please fill in all required fields');
         return;
       }
@@ -189,11 +252,11 @@ const Users = () => {
       // Use the standard signup method instead of admin.createUser
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newTeacher.email,
-        password: newTeacher.password, // This is a temporary password, should be changed on first login
+        password: newTeacher.password,
         options: {
           data: {
             name: newTeacher.name,
-            role: 'teacher'
+            role: newTeacher.role
           }
         }
       });
@@ -214,9 +277,9 @@ const Users = () => {
       const { data, error } = await supabase
         .from('users')
         .insert([{
-          id: userId, // Use the ID from auth.users
+          id: userId,
           name: newTeacher.name,
-          role: 'teacher',
+          role: newTeacher.role,
           school_id: newTeacher.schoolId,
           tenant_id: user?.tenantId
         }])
@@ -234,12 +297,12 @@ const Users = () => {
         const newTeacherData = {
           id: data[0].id,
           name: newTeacher.name,
-          email: newTeacher.email, // This won't be stored in the DB, just for display
+          email: newTeacher.email,
           phone: newTeacher.phone || 'Not provided',
-          role: 'teacher',
+          role: newTeacher.role,
           schoolId: newTeacher.schoolId,
           schoolName: schoolName,
-          subjects: newTeacher.subjects[0] ? [newTeacher.subjects[0]] : ['Not specified'],
+          subjects: [],
         };
         
         setTeachers([...teachers, newTeacherData]);
@@ -248,8 +311,9 @@ const Users = () => {
           email: '',
           phone: '',
           schoolId: '',
-          subjects: [''],
+          subjects: [],
           password: '',
+          role: '',
         });
         setIsAddDialogOpen(false);
         toast.success('Teacher added successfully');
@@ -359,14 +423,14 @@ const Users = () => {
           handleAddTeacher={handleAddTeacher}
           handleAddStudent={handleAddStudent}
           schools={schools}
-          subjects={SUBJECTS}
+          // subjects={SUBJECTS}
           grades={GRADES}
         />
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2 mb-6 max-w-md">
-          <TabsTrigger value="teachers">Teachers</TabsTrigger>
+          <TabsTrigger value="teachers">Staff</TabsTrigger>
           <TabsTrigger value="students">Students</TabsTrigger>
         </TabsList>
         

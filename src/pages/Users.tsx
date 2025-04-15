@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -26,7 +25,8 @@ const Users = () => {
     phone: '',
     schoolId: '',
     subjects: [''],
-    password: '', // Make sure password is included
+    password: '',
+    role: 'teacher', // Added default role
   });
   const [newStudent, setNewStudent] = useState({
     name: '',
@@ -65,6 +65,7 @@ const Users = () => {
         schoolId: '',
         subjects: [''],
         password: '',
+        role: 'teacher',
       });
       setIsAddDialogOpen(false);
     }

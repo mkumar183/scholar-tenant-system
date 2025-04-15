@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,7 +20,8 @@ interface NewTeacher {
   phone: string;
   schoolId: string;
   subjects: string[];
-  password: string; // Added password field
+  password: string;
+  role: string; // Added role field
 }
 
 export const useTeachers = () => {
@@ -117,7 +117,7 @@ export const useTeachers = () => {
 
   const addTeacher = async (newTeacher: NewTeacher) => {
     try {
-      if (!newTeacher.name || !newTeacher.email || !newTeacher.schoolId || !newTeacher.password) {
+      if (!newTeacher.name || !newTeacher.email || !newTeacher.schoolId || !newTeacher.password || !newTeacher.role) {
         toast.error('Please fill in all required fields');
         return false;
       }
@@ -126,11 +126,11 @@ export const useTeachers = () => {
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newTeacher.email,
-        password: newTeacher.password, // Use the provided password instead of hardcoded one
+        password: newTeacher.password,
         options: {
           data: {
             name: newTeacher.name,
-            role: 'teacher'
+            role: newTeacher.role // Use the selected role
           }
         }
       });
@@ -152,7 +152,7 @@ export const useTeachers = () => {
         .insert([{
           id: userId,
           name: newTeacher.name,
-          role: 'teacher',
+          role: newTeacher.role, // Use the selected role
           school_id: newTeacher.schoolId,
           tenant_id: user?.tenantId
         }])

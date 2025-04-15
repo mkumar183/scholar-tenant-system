@@ -1,6 +1,6 @@
 import EmptyState from './EmptyState';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Mail, Phone, School, BookOpen } from 'lucide-react';
+import { Mail, Phone, School, BookOpen, User } from 'lucide-react';
 
 interface TeachersListProps {
   teachers: {
@@ -11,7 +11,6 @@ interface TeachersListProps {
     role: string;
     schoolId: string;
     schoolName: string;
-    subjects: string[];
   }[];
 }
 
@@ -20,6 +19,19 @@ const TeachersList = ({ teachers }: TeachersListProps) => {
     return <EmptyState type="teachers" />;
   }
   
+  const getRoleDisplay = (role: string) => {
+    switch (role) {
+      case 'school_admin':
+        return 'School Admin';
+      case 'teacher':
+        return 'Teacher';
+      case 'staff':
+        return 'Staff';
+      default:
+        return role;
+    }
+  };
+  
   return (
     <div className="space-y-6">
       <Table>
@@ -27,8 +39,8 @@ const TeachersList = ({ teachers }: TeachersListProps) => {
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Email</TableHead>
+            <TableHead>Role</TableHead>
             <TableHead>School</TableHead>
-            <TableHead>Subjects</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -41,21 +53,14 @@ const TeachersList = ({ teachers }: TeachersListProps) => {
               </TableCell>
               <TableCell>
                 <div className="flex items-center">
-                  <School className="mr-2 h-4 w-4 text-muted-foreground" />
-                  {teacher.schoolName}
+                  <User className="mr-2 h-4 w-4 text-muted-foreground" />
+                  {getRoleDisplay(teacher.role)}
                 </div>
               </TableCell>
               <TableCell>
-                <div className="flex flex-wrap gap-1">
-                  {teacher.subjects.map((subject) => (
-                    <span 
-                      key={subject} 
-                      className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full flex items-center"
-                    >
-                      <BookOpen className="mr-1 h-3 w-3" />
-                      {subject}
-                    </span>
-                  ))}
+                <div className="flex items-center">
+                  <School className="mr-2 h-4 w-4 text-muted-foreground" />
+                  {teacher.schoolName}
                 </div>
               </TableCell>
             </TableRow>
