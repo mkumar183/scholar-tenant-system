@@ -18,8 +18,21 @@ export default defineConfig(({ mode }) => ({
   },
   server: {
     host: "::",
-    port: 8080
+    port: 8080,
+    
+    cors: {
+      origin: [
+        'https://lovable.dev',
+        'https://*.lovable.app',
+        'https://*.lovableproject.com'
+      ],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      credentials: true
+    },
     allowedHosts: [
+      'localhost',
+      '.lovable.app',
+      '.lovableproject.com',
       'localhost',
       '904cff78-0618-4fe1-bbce-147582d1c5f8.lovableproject.com'
     ],
