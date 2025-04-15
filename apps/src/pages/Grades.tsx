@@ -1,74 +1,72 @@
+import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { useGrades } from '@/hooks/useGrades';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { GraduationCap, Plus } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useGrades } from "@/hooks/useGrades";
-import GradeCard from "@/components/grades/GradeCard";
-import GradeDialog from "@/components/grades/GradeDialog";
-import { useToast } from "@/hooks/use-toast";
+const GRADE_LEVELS = [
+  { name: 'Nursery', level: 0 },
+  { name: 'LKG', level: 1 },
+  { name: 'UKG', level: 2 },
+  { name: '1', level: 3 },
+  { name: '2', level: 4 },
+  { name: '3', level: 5 },
+  { name: '4', level: 6 },
+  { name: '5', level: 7 },
+  { name: '6', level: 8 },
+  { name: '7', level: 9 },
+  { name: '8', level: 10 },
+  { name: '9', level: 11 },
+  { name: '10', level: 12 },
+  { name: '11', level: 13 },
+  { name: '12', level: 14 },
+];
 
 const Grades = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const schoolId = user?.school_id;
-  const [academicYears, setAcademicYears] = useState<string[]>([]);
-  const [selectedYear, setSelectedYear] = useState<string>("");
-  
-  const {
-    grades,
-    isLoading,
-    isDialogOpen,
-    selectedGrade,
-    openCreateDialog,
-    openEditDialog,
-    closeDialog,
-    handleCreateGrade,
-    handleUpdateGrade,
-    handleDeleteGrade,
-  } = useGrades(schoolId);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newGrade, setNewGrade] = useState({
+    name: '',
+    level: 0,
+  });
 
-  useEffect(() => {
-    // Generate academic years (current year - 1 to current year + 3)
-    const currentYear = new Date().getFullYear();
-    const years = [];
-    
-    for (let i = -1; i <= 3; i++) {
-      const startYear = currentYear + i;
-      const endYear = startYear + 1;
-      years.push(`${startYear}-${endYear}`);
-    }
-    
-    setAcademicYears(years);
-    // Set default selected year to current academic year
-    setSelectedYear(`${currentYear}-${currentYear + 1}`);
-  }, []);
-
-  // Filter grades by selected academic year
-  const filteredGrades = selectedYear 
-    ? grades.filter(grade => grade.school_year === selectedYear)
-    : grades;
-
-  // Only school admins and above can access this page
-  if (user?.role !== 'school_admin' && user?.role !== 'tenant_admin' && user?.role !== 'superadmin') {
+  // Only tenant admins can access this page
+  if (user?.role !== 'tenant_admin') {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-muted-foreground">Only school administrators can access this page.</p>
+          <p className="text-muted-foreground">Only tenant administrators can access this page.</p>
         </div>
       </div>
     );
   }
 
-  // Check if school ID is available
-  if (!schoolId) {
+  const { grades, isLoading, addGrade, deleteGrade } = useGrades(user.tenantId);
+
+  const handleAddGrade = async () => {
+    if (!user?.tenantId) return;
+    
+    const success = await addGrade({
+      ...newGrade,
+      tenantId: user.tenantId,
+    });
+
+    if (success) {
+      setNewGrade({ name: '', level: 0 });
+      setIsDialogOpen(false);
+    }
+  };
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">School Not Selected</h1>
-          <p className="text-muted-foreground">You need to be associated with a school to manage grades.</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="mt-2 text-muted-foreground">Loading grades...</p>
         </div>
       </div>
     );
@@ -76,76 +74,74 @@ const Grades = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <GraduationCap className="h-6 w-6" />
-          <h1 className="text-2xl font-bold">Grades & Classes</h1>
-        </div>
-        <Button onClick={openCreateDialog}>
-          <Plus className="mr-2 h-4 w-4" /> Add Grade
-        </Button>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Grades</h1>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>Add Grade</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Grade</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Grade Name</label>
+                <Input
+                  value={newGrade.name}
+                  onChange={(e) => setNewGrade({ ...newGrade, name: e.target.value })}
+                  placeholder="Enter grade name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Grade Level</label>
+                <Select
+                  value={newGrade.level.toString()}
+                  onValueChange={(value) => setNewGrade({ ...newGrade, level: parseInt(value) })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select grade level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GRADE_LEVELS.map((grade) => (
+                      <SelectItem key={grade.level} value={grade.level.toString()}>
+                        {grade.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={handleAddGrade}>Add Grade</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <Tabs defaultValue={selectedYear} onValueChange={setSelectedYear} className="w-full">
-        <div className="flex justify-between items-center">
-          <TabsList>
-            {academicYears.map(year => (
-              <TabsTrigger key={year} value={year}>
-                {year}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
-        
-        {academicYears.map(year => (
-          <TabsContent key={year} value={year} className="mt-4">
-            {isLoading ? (
-              <div className="flex items-center justify-center p-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : filteredGrades.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredGrades.map(grade => (
-                  <GradeCard
-                    key={grade.id}
-                    id={grade.id}
-                    name={grade.name}
-                    description={grade.description || undefined}
-                    onEdit={() => openEditDialog(grade)}
-                    onDelete={() => handleDeleteGrade(grade.id)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-lg">
-                <GraduationCap className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No Grades Found</h3>
-                <p className="text-muted-foreground text-center mb-4">
-                  There are no grades or classes defined for the {year} academic year.
-                </p>
-                <Button onClick={openCreateDialog}>
-                  <Plus className="mr-2 h-4 w-4" /> Add Your First Grade
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Level</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {grades.map((grade) => (
+            <TableRow key={grade.id}>
+              <TableCell>{grade.name}</TableCell>
+              <TableCell>{grade.level}</TableCell>
+              <TableCell>
+                <Button
+                  variant="ghost"
+                  onClick={() => deleteGrade(grade.id)}
+                >
+                  Delete
                 </Button>
-              </div>
-            )}
-          </TabsContent>
-        ))}
-      </Tabs>
-
-      <GradeDialog
-        isOpen={isDialogOpen}
-        onClose={closeDialog}
-        onSave={selectedGrade ? handleUpdateGrade : handleCreateGrade}
-        initialData={selectedGrade ? {
-          name: selectedGrade.name,
-          description: selectedGrade.description || "",
-          academicYear: selectedGrade.school_year || selectedYear
-        } : {
-          academicYear: selectedYear
-        }}
-        title={selectedGrade ? "Edit Grade" : "Add New Grade"}
-        academicYears={academicYears}
-      />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 };
