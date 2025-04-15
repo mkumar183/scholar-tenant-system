@@ -1,5 +1,5 @@
-
-import StudentCard from './StudentCard';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Mail, Phone, School, GraduationCap, User } from 'lucide-react';
 import EmptyState from './EmptyState';
 
 interface StudentsListProps {
@@ -22,10 +22,47 @@ const StudentsList = ({ students }: StudentsListProps) => {
   }
   
   return (
-    <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-      {students.map((student) => (
-        <StudentCard key={student.id} student={student} />
-      ))}
+    <div className="space-y-6">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Grade</TableHead>
+            <TableHead>School</TableHead>
+            <TableHead>Guardian</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {students.map((student) => (
+            <TableRow key={student.id}>
+              <TableCell className="font-medium">{student.name}</TableCell>
+              <TableCell className="flex items-center">
+                <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
+                {student.email}
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  <GraduationCap className="mr-2 h-4 w-4 text-muted-foreground" />
+                  {student.grade}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  <School className="mr-2 h-4 w-4 text-muted-foreground" />
+                  {student.schoolName}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  <User className="mr-2 h-4 w-4 text-muted-foreground" />
+                  {student.guardianName}
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 };

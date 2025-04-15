@@ -166,6 +166,20 @@ const Users = () => {
           throw studentsError;
         }
         
+        // Get list of student IDs
+        const studentIds = (studentsData || []).map(student => student.id);
+
+        // Fetch emails for students using the database function
+        const { data: studentEmailData, error: studentEmailError } = await supabase
+          .rpc('get_user_emails', { user_ids: studentIds });
+
+        if (studentEmailError) {
+          console.error('Error fetching student emails:', studentEmailError);
+        }
+
+        // Create a map of student IDs to emails
+        const studentEmailMap = new Map(studentEmailData?.map(user => [user.id, user.email]) || []);
+        
         // Format teachers data
         const formattedTeachers = (teachersData || []).map(teacher => ({
           id: teacher.id,
@@ -182,7 +196,7 @@ const Users = () => {
         const formattedStudents = (studentsData || []).map(student => ({
           id: student.id,
           name: student.name || 'No Name',
-          email: emailMap.get(student.id) as string || 'Not provided',
+          email: studentEmailMap.get(student.id) as string || 'Not provided',
           phone: 'Not provided',
           role: student.role,
           schoolId: student.school_id || '',
@@ -194,9 +208,6 @@ const Users = () => {
         setTeachers(formattedTeachers);
         setStudents(formattedStudents);
 
-        console.log('Formatted teachers:', formattedTeachers);
-        console.log('First formatted teacher:', formattedTeachers[0]);
-        console.log('First formatted teacher school name:', formattedTeachers[0]?.schoolName);
       } catch (error) {
         console.error('Error fetching users:', error);
         toast.error('Failed to load users');
@@ -412,7 +423,7 @@ const Users = () => {
           handleAddTeacher={handleAddTeacher}
           handleAddStudent={handleAddStudent}
           schools={schools}
-          subjects={SUBJECTS}
+          // subjects={SUBJECTS}
           grades={GRADES}
         />
       </div>
