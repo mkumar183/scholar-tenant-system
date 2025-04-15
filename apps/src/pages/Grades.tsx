@@ -28,6 +28,8 @@ const GRADE_LEVELS = [
 const Grades = () => {
   const { user } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedGrade, setSelectedGrade] = useState<Grade | null>(null);
   const [newGrade, setNewGrade] = useState({
     name: '',
     level: 0,
@@ -45,19 +47,45 @@ const Grades = () => {
     );
   }
 
-  const { grades, isLoading, addGrade, deleteGrade } = useGrades(user.tenantId);
+  const { grades, isLoading, addGrade, updateGrade, deleteGrade } = useGrades(user.tenantId);
 
-  const handleAddGrade = async () => {
+  const handleAddOrUpdateGrade = async () => {
     if (!user?.tenantId) return;
     
-    const success = await addGrade({
-      ...newGrade,
-      tenantId: user.tenantId,
-    });
+    let success;
+    if (isEditMode && selectedGrade) {
+      success = await updateGrade(selectedGrade.id, {
+        ...newGrade,
+        tenantId: user.tenantId,
+      });
+    } else {
+      success = await addGrade({
+        ...newGrade,
+        tenantId: user.tenantId,
+      });
+    }
 
     if (success) {
       setNewGrade({ name: '', level: 0 });
+      setIsEditMode(false);
+      setSelectedGrade(null);
       setIsDialogOpen(false);
+    }
+  };
+
+  const handleEditClick = (grade: Grade) => {
+    setSelectedGrade(grade);
+    setNewGrade({
+      name: grade.name,
+      level: grade.level,
+    });
+    setIsEditMode(true);
+    setIsDialogOpen(true);
+  };
+
+  const handleDeleteClick = async (id: string) => {
+    if (confirm('Are you sure you want to delete this grade?')) {
+      await deleteGrade(id);
     }
   };
 
@@ -78,11 +106,17 @@ const Grades = () => {
         <h1 className="text-2xl font-bold">Grades</h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>Add Grade</Button>
+            <Button onClick={() => {
+              setIsEditMode(false);
+              setSelectedGrade(null);
+              setNewGrade({ name: '', level: 0 });
+            }}>
+              Add Grade
+            </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Grade</DialogTitle>
+              <DialogTitle>{isEditMode ? 'Edit Grade' : 'Add New Grade'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -111,7 +145,9 @@ const Grades = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleAddGrade}>Add Grade</Button>
+              <Button onClick={handleAddOrUpdateGrade}>
+                {isEditMode ? 'Update Grade' : 'Add Grade'}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -131,12 +167,22 @@ const Grades = () => {
               <TableCell>{grade.name}</TableCell>
               <TableCell>{grade.level}</TableCell>
               <TableCell>
-                <Button
-                  variant="ghost"
-                  onClick={() => deleteGrade(grade.id)}
-                >
-                  Delete
-                </Button>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEditClick(grade)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteClick(grade.id)}
+                  >
+                    Delete
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
