@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -47,7 +48,7 @@ const Grades = () => {
     );
   }
 
-  const { grades, isLoading, addGrade, updateGrade, deleteGrade } = useGrades(user.tenantId);
+  const { grades, isLoading, addGrade, updateGrade } = useGrades(user.tenantId);
 
   const handleAddOrUpdateGrade = async () => {
     if (!user?.tenantId) return;
@@ -81,12 +82,6 @@ const Grades = () => {
     });
     setIsEditMode(true);
     setIsDialogOpen(true);
-  };
-
-  const handleDeleteClick = async (id: string) => {
-    if (confirm('Are you sure you want to delete this grade?')) {
-      await deleteGrade(id);
-    }
   };
 
   if (isLoading) {
@@ -175,13 +170,6 @@ const Grades = () => {
                   >
                     Edit
                   </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteClick(grade.id)}
-                  >
-                    Delete
-                  </Button>
                 </div>
               </TableCell>
             </TableRow>
@@ -193,3 +181,4 @@ const Grades = () => {
 };
 
 export default Grades;
+
