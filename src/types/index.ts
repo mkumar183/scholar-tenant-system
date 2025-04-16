@@ -1,40 +1,10 @@
-export interface Teacher {
-  id?: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: string;
-  schoolId: string;
-  schoolName?: string;
-  subjects: string[];
-  password?: string;
-}
-
-export interface Student {
-  id?: string;
-  name: string;
-  email: string;
-  phone: string;
-  role?: string;
-  schoolId: string;
-  schoolName?: string;
-  grade: string;
-  guardianName: string;
-}
-
-export interface School {
+export type Section = {
   id: string;
   name: string;
-  address?: string;
-  type?: string;
-  tenantId: string;
-}
-
-export interface Grade {
-  id: string;
-  name: string;
-  level: number;
-  tenantId: string;
-  createdAt: string;
-  updatedAt: string;
-} 
+  school_id: string;
+  grade_id: string;
+  academic_session_id: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};

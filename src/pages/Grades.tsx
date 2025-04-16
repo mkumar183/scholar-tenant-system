@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Grade } from '@/types';
+import { useSections } from '@/hooks/useSections';
+import { SectionsManager } from '@/components/sections/SectionsManager';
 
 const GRADE_LEVELS = [
   { name: 'Nursery', level: 0 },
@@ -36,6 +37,18 @@ const Grades = () => {
     name: '',
     level: 0,
   });
+  const [selectedGradeId, setSelectedGradeId] = useState<string | null>(null);
+  const activeSession = GRADE_LEVELS.find(g => g.level === selectedGradeId);
+
+  const { grades, isLoading, addGrade, updateGrade } = useGrades(user.tenantId);
+  
+  const { sections, isLoading: sectionsLoading, addSection, updateSection, toggleSectionStatus } = 
+    useSections(
+      selectedGradeId || '', 
+      user?.schoolId || '', 
+      // TODO: Replace with actual active academic session ID
+      'current_session_id'
+    );
 
   // Only tenant admins can access this page
   if (user?.role !== 'tenant_admin') {
@@ -48,8 +61,6 @@ const Grades = () => {
       </div>
     );
   }
-
-  const { grades, isLoading, addGrade, updateGrade } = useGrades(user.tenantId);
 
   const handleAddOrUpdateGrade = async () => {
     if (!user?.tenantId) return;
@@ -77,6 +88,7 @@ const Grades = () => {
 
   const handleEditClick = (grade: Grade) => {
     setSelectedGrade(grade);
+    setSelectedGradeId(grade.id);
     setNewGrade({
       name: grade.name,
       level: grade.level,
@@ -177,6 +189,18 @@ const Grades = () => {
           ))}
         </TableBody>
       </Table>
+      
+      {selectedGradeId && (
+        <div className="mt-8">
+          <SectionsManager
+            sections={sections}
+            isLoading={sectionsLoading}
+            onAddSection={addSection}
+            onUpdateSection={updateSection}
+            onToggleStatus={toggleSectionStatus}
+          />
+        </div>
+      )}
     </div>
   );
 };
