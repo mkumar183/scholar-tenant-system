@@ -5,17 +5,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Users, BookOpen, MapPin, Calendar, Pencil } from 'lucide-react';
+import { ArrowLeft, School, Users, BookOpen, MapPin, Mail, Calendar, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
+import EditSchoolForm from '@/components/schools/EditSchoolForm';
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { EditSchoolForm } from '@/components/schools/EditSchoolForm';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface SchoolDetails {
   id: string;
@@ -34,7 +32,7 @@ const SchoolDetails = () => {
   const { user } = useAuth();
   const [school, setSchool] = useState<SchoolDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const fetchSchoolDetails = async () => {
     try {
@@ -81,11 +79,14 @@ const SchoolDetails = () => {
   };
 
   useEffect(() => {
+    console.log('Debug - Current user:', user);
+    console.log('Debug - User role:', user?.role);
+    console.log('Debug - Is tenant_admin:', user?.role === 'tenant_admin');
     fetchSchoolDetails();
-  }, [id]);
+  }, [id, user]);
 
-  const handleUpdateSuccess = () => {
-    setIsSheetOpen(false);
+  const handleEditSuccess = () => {
+    setIsEditDialogOpen(false);
     fetchSchoolDetails();
   };
 
@@ -102,9 +103,10 @@ const SchoolDetails = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">School Not Found</h1>
-          <p className="text-muted-foreground mb-6">The requested school could not be found.</p>
+          <p className="text-muted-foreground">The requested school could not be found.</p>
           <Button 
             variant="outline" 
+            className="mt-4"
             onClick={() => navigate('/schools')}
           >
             Back to Schools
@@ -114,97 +116,93 @@ const SchoolDetails = () => {
     );
   }
 
-  const canEdit = user?.role === 'tenant_admin' || user?.role === 'school_admin';
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate('/schools')}
-          className="hover:bg-muted"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-2xl font-bold">{school.name}</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/schools')}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-2xl font-bold">{school.name}</h1>
+        </div>
+        {(() => {
+          console.log('Debug - Rendering edit button check:', user?.role === 'tenant_admin');
+          return user?.role === 'tenant_admin' && (
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(true)}
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit School
+            </Button>
+          );
+        })()}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2 hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-start justify-between">
-            <div>
-              <CardTitle>{school.name}</CardTitle>
-              <CardDescription className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                {school.address || 'No address specified'}
-              </CardDescription>
-            </div>
-            {canEdit && (
-              <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent>
-                  <SheetHeader>
-                    <SheetTitle>Edit School</SheetTitle>
-                    <SheetDescription>
-                      Make changes to school information here. Click save when you're done.
-                    </SheetDescription>
-                  </SheetHeader>
-                  <div className="py-6">
-                    <EditSchoolForm
-                      school={school}
-                      onSuccess={handleUpdateSuccess}
-                      onCancel={() => setIsSheetOpen(false)}
-                    />
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl">{school.name}</CardTitle>
+              <CardDescription>{school.type || 'No type specified'}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center gap-3">
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Teachers</p>
+                    <p className="text-sm text-muted-foreground">{school.teacherCount} Teachers</p>
                   </div>
-                </SheetContent>
-              </Sheet>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground">School Type</label>
-                <p className="font-medium">{school.type || 'Not specified'}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <BookOpen className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Students</p>
+                    <p className="text-sm text-muted-foreground">{school.studentCount} Students</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <MapPin className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Address</p>
+                    <p className="text-sm text-muted-foreground">{school.address || 'No address provided'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Created</p>
+                    <p className="text-sm text-muted-foreground">
+                      {school.created_at ? format(new Date(school.created_at), 'MMM d, yyyy') : 'Unknown'}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground">Creation Date</label>
-                <p className="font-medium">
-                  {school.created_at ? format(new Date(school.created_at), 'MMM d, yyyy') : 'Unknown'}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <Card className="border-muted bg-muted/5">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <Users className="h-5 w-5 text-primary" />
-                    <span className="text-2xl font-bold">{school.teacherCount}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">Teachers</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-muted bg-muted/5">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <BookOpen className="h-5 w-5 text-primary" />
-                    <span className="text-2xl font-bold">{school.studentCount}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">Students</p>
-                </CardContent>
-              </Card>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit School</DialogTitle>
+          </DialogHeader>
+          {school && (
+            <EditSchoolForm
+              school={school}
+              onSuccess={handleEditSuccess}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-export default SchoolDetails;
+export default SchoolDetails; 
