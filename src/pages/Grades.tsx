@@ -38,7 +38,9 @@ const Grades = () => {
     level: 0,
   });
   const [selectedGradeId, setSelectedGradeId] = useState<string | null>(null);
-  const activeSession = GRADE_LEVELS.find(g => g.level === selectedGradeId);
+  
+  // Fix type comparison issue - remove this line that has the type error
+  // const activeSession = GRADE_LEVELS.find(g => g.level === selectedGradeId);
 
   const { grades, isLoading, addGrade, updateGrade } = useGrades(user.tenantId);
   
