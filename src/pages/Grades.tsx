@@ -192,7 +192,7 @@ const Grades = () => {
         </TableBody>
       </Table>
       
-      {selectedGradeId && (
+      {selectedGradeId ? (
         <div className="mt-8">
           <SectionsManager
             sections={sections}
@@ -201,6 +201,10 @@ const Grades = () => {
             onUpdateSection={updateSection}
             onToggleStatus={toggleSectionStatus}
           />
+        </div>
+      ) : (
+        <div className="text-center text-muted-foreground p-4 bg-background border rounded">
+          <p>Select a grade to view and manage its sections</p>
         </div>
       )}
     </div>
