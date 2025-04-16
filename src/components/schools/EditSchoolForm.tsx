@@ -1,11 +1,32 @@
-
 import { useState } from 'react';
-import { useForm } from "react-hook-form";
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+const formSchema = z.object({
+  name: z.string().min(1, 'School name is required'),
+  address: z.string().optional(),
+  type: z.string().optional(),
+});
 
 interface EditSchoolFormProps {
   school: {
@@ -15,19 +36,13 @@ interface EditSchoolFormProps {
     type: string | null;
   };
   onSuccess: () => void;
-  onCancel: () => void;
 }
 
-interface FormValues {
-  name: string;
-  address: string;
-  type: string;
-}
-
-export function EditSchoolForm({ school, onSuccess, onCancel }: EditSchoolFormProps) {
+const EditSchoolForm = ({ school, onSuccess }: EditSchoolFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<FormValues>({
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: school.name,
       address: school.address || '',
@@ -35,29 +50,30 @@ export function EditSchoolForm({ school, onSuccess, onCancel }: EditSchoolFormPr
     },
   });
 
-  async function onSubmit(values: FormValues) {
-    setIsLoading(true);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      setIsLoading(true);
+
       const { error } = await supabase
         .from('schools')
         .update({
           name: values.name,
-          address: values.address || null,
-          type: values.type || null,
+          address: values.address,
+          type: values.type,
         })
         .eq('id', school.id);
 
       if (error) throw error;
 
-      toast.success('School information updated successfully');
+      toast.success('School updated successfully');
       onSuccess();
     } catch (error) {
       console.error('Error updating school:', error);
-      toast.error('Failed to update school information');
+      toast.error('Failed to update school');
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Form {...form}>
@@ -69,21 +85,7 @@ export function EditSchoolForm({ school, onSuccess, onCancel }: EditSchoolFormPr
             <FormItem>
               <FormLabel>School Name</FormLabel>
               <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>School Type</FormLabel>
-              <FormControl>
-                <Input {...field} />
+                <Input placeholder="Enter school name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -97,22 +99,46 @@ export function EditSchoolForm({ school, onSuccess, onCancel }: EditSchoolFormPr
             <FormItem>
               <FormLabel>Address</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input placeholder="Enter school address" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </div>
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>School Type</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select school type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="public">Public</SelectItem>
+                  <SelectItem value="private">Private</SelectItem>
+                  <SelectItem value="charter">Charter</SelectItem>
+                  <SelectItem value="international">International</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Saving...' : 'Save Changes'}
+        </Button>
       </form>
     </Form>
   );
-}
+};
+
+export default EditSchoolForm; 
