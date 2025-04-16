@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -42,7 +43,7 @@ const Grades = () => {
   // Fix type comparison issue - remove this line that has the type error
   // const activeSession = GRADE_LEVELS.find(g => g.level === selectedGradeId);
 
-  const { grades, isLoading, addGrade, updateGrade } = useGrades(user.tenantId);
+  const { grades, isLoading, addGrade, updateGrade } = useGrades(user?.tenantId || '');
   
   const { sections, isLoading: sectionsLoading, addSection, updateSection, toggleSectionStatus } = 
     useSections(
@@ -52,13 +53,13 @@ const Grades = () => {
       'current_session_id'
     );
 
-  // Only tenant admins can access this page
-  if (user?.role !== 'tenant_admin') {
+  // Updated to allow both tenant admins AND school admins to access this page
+  if (user?.role !== 'tenant_admin' && user?.role !== 'school_admin') {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-muted-foreground">Only tenant administrators can access this page.</p>
+          <p className="text-muted-foreground">Only tenant administrators and school administrators can access this page.</p>
         </div>
       </div>
     );
@@ -110,57 +111,62 @@ const Grades = () => {
     );
   }
 
+  // Only tenant admins can add/edit grades, school admins can only view
+  const canManageGrades = user?.role === 'tenant_admin';
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Grades</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => {
-              setIsEditMode(false);
-              setSelectedGrade(null);
-              setNewGrade({ name: '', level: 0 });
-            }}>
-              Add Grade
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{isEditMode ? 'Edit Grade' : 'Add New Grade'}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Grade Name</label>
-                <Input
-                  value={newGrade.name}
-                  onChange={(e) => setNewGrade({ ...newGrade, name: e.target.value })}
-                  placeholder="Enter grade name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Grade Level</label>
-                <Select
-                  value={newGrade.level.toString()}
-                  onValueChange={(value) => setNewGrade({ ...newGrade, level: parseInt(value) })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select grade level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GRADE_LEVELS.map((grade) => (
-                      <SelectItem key={grade.level} value={grade.level.toString()}>
-                        {grade.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={handleAddOrUpdateGrade}>
-                {isEditMode ? 'Update Grade' : 'Add Grade'}
+        {canManageGrades && (
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => {
+                setIsEditMode(false);
+                setSelectedGrade(null);
+                setNewGrade({ name: '', level: 0 });
+              }}>
+                Add Grade
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{isEditMode ? 'Edit Grade' : 'Add New Grade'}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Grade Name</label>
+                  <Input
+                    value={newGrade.name}
+                    onChange={(e) => setNewGrade({ ...newGrade, name: e.target.value })}
+                    placeholder="Enter grade name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Grade Level</label>
+                  <Select
+                    value={newGrade.level.toString()}
+                    onValueChange={(value) => setNewGrade({ ...newGrade, level: parseInt(value) })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select grade level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {GRADE_LEVELS.map((grade) => (
+                        <SelectItem key={grade.level} value={grade.level.toString()}>
+                          {grade.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={handleAddOrUpdateGrade}>
+                  {isEditMode ? 'Update Grade' : 'Add Grade'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <Table>
@@ -168,25 +174,34 @@ const Grades = () => {
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Level</TableHead>
-            <TableHead>Actions</TableHead>
+            {canManageGrades && <TableHead>Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {grades.map((grade) => (
-            <TableRow key={grade.id}>
+            <TableRow 
+              key={grade.id} 
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => setSelectedGradeId(grade.id)}
+            >
               <TableCell>{grade.name}</TableCell>
               <TableCell>{grade.level}</TableCell>
-              <TableCell>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditClick(grade)}
-                  >
-                    Edit
-                  </Button>
-                </div>
-              </TableCell>
+              {canManageGrades && (
+                <TableCell>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent row click
+                        handleEditClick(grade);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  </div>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>
