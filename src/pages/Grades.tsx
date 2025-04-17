@@ -6,7 +6,7 @@ import { useGrades } from '@/hooks/useGrades';
 import { DialogTrigger } from '@/components/ui/dialog';
 import { Grade } from '@/types';
 import { useSections } from '@/hooks/useSections';
-import { SectionsManager } from '@/components/sections/SectionsManager';
+import SectionsManager from '@/components/sections/SectionsManager';
 import GradeDialog from '@/components/grades/GradeDialog';
 import GradesTable from '@/components/grades/GradesTable';
 import AccessDenied from '@/components/common/AccessDenied';

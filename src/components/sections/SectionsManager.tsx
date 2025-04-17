@@ -2,11 +2,11 @@
 import { useState } from 'react';
 import { Section } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Switch } from '@/components/ui/switch';
-import { Pencil, Plus } from 'lucide-react';
+import { DialogTrigger } from '@/components/ui/dialog';
+import { Plus } from 'lucide-react';
+import SectionDialog from './SectionDialog';
+import SectionsTable from './SectionsTable';
+import SectionsLoading from './SectionsLoading';
 
 interface SectionsManagerProps {
   sections: Section[];
@@ -25,113 +25,54 @@ export const SectionsManager = ({
 }: SectionsManagerProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<Section | null>(null);
-  const [newSectionName, setNewSectionName] = useState('');
 
-  const handleSubmit = async () => {
-    if (!newSectionName.trim()) return;
-
-    const success = editingSection
-      ? await onUpdateSection(editingSection.id, newSectionName)
-      : await onAddSection(newSectionName);
-
-    if (success) {
-      setIsDialogOpen(false);
-      setNewSectionName('');
-      setEditingSection(null);
+  const handleSubmit = async (name: string) => {
+    if (editingSection) {
+      return await onUpdateSection(editingSection.id, name);
     }
+    return await onAddSection(name);
   };
 
   const handleEdit = (section: Section) => {
     setEditingSection(section);
-    setNewSectionName(section.name);
     setIsDialogOpen(true);
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <SectionsLoading />;
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Sections</h3>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button
-              onClick={() => {
-                setEditingSection(null);
-                setNewSectionName('');
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Section
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingSection ? 'Edit Section' : 'Add New Section'}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Section Name</label>
-                <Input
-                  value={newSectionName}
-                  onChange={(e) => setNewSectionName(e.target.value)}
-                  placeholder="Enter section name (e.g., A, B, C)"
-                />
-              </div>
-              <Button onClick={handleSubmit}>
-                {editingSection ? 'Update Section' : 'Add Section'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <DialogTrigger asChild>
+          <Button
+            onClick={() => {
+              setEditingSection(null);
+              setIsDialogOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Section
+          </Button>
+        </DialogTrigger>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sections.map((section) => (
-            <TableRow key={section.id}>
-              <TableCell>{section.name}</TableCell>
-              <TableCell>
-                <Switch
-                  checked={section.is_active}
-                  onCheckedChange={(checked) => onToggleStatus(section.id, checked)}
-                />
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEdit(section)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-          {sections.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={3} className="text-center text-muted-foreground">
-                No sections found
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      <SectionDialog 
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onSubmit={handleSubmit}
+        editingSection={editingSection}
+      />
+
+      <SectionsTable 
+        sections={sections}
+        onEdit={handleEdit}
+        onToggleStatus={onToggleStatus}
+      />
     </div>
   );
 };
+
+export default SectionsManager;
