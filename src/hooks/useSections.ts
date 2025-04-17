@@ -4,12 +4,12 @@ import { supabase } from '@/lib/supabase';
 import { Section } from '@/types';
 import { toast } from 'sonner';
 
-export const useSections = (gradeId: string, schoolId: string | null, academicSessionId: string) => {
+export const useSections = (gradeId: string, schoolId: string, academicSessionId: string) => {
   const [sections, setSections] = useState<Section[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchSections = async () => {
-    if (!gradeId || !academicSessionId) {
+    if (!gradeId || !schoolId || !academicSessionId) {
       console.log('Missing required parameters for fetching sections:', { 
         gradeId, 
         schoolId, 
@@ -28,18 +28,12 @@ export const useSections = (gradeId: string, schoolId: string | null, academicSe
         academicSessionId 
       });
       
-      let query = supabase
+      const { data, error } = await supabase
         .from('sections')
         .select('*')
         .eq('grade_id', gradeId)
+        .eq('school_id', schoolId)
         .eq('academic_session_id', academicSessionId);
-      
-      // Only filter by school_id if it's provided
-      if (schoolId) {
-        query = query.eq('school_id', schoolId);
-      }
-
-      const { data, error } = await query;
 
       if (error) {
         console.error('Supabase error fetching sections:', error);
@@ -61,7 +55,7 @@ export const useSections = (gradeId: string, schoolId: string | null, academicSe
       gradeId, 
       schoolId, 
       academicSessionId,
-      hasAllParams: !!(gradeId && academicSessionId)
+      hasAllParams: !!(gradeId && schoolId && academicSessionId)
     });
     
     fetchSections();
@@ -75,7 +69,7 @@ export const useSections = (gradeId: string, schoolId: string | null, academicSe
           {
             name,
             grade_id: gradeId,
-            school_id: schoolId || null, // Handle null schoolId
+            school_id: schoolId,
             academic_session_id: academicSessionId,
           },
         ])

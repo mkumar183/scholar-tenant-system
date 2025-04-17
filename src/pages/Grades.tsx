@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -77,9 +78,10 @@ const Grades = () => {
     fetchActiveSession();
   }, [user?.tenantId]);
   
-  // Remove manual sections loading code
+  // Only load sections for school admins since they have a schoolId
+  const canManageSections = user?.role === 'school_admin' && !!user?.schoolId;
   
-  // Use the standard hook for sections - pass null instead of empty string for schoolId
+  // Use the sections hook only if the user is a school admin
   const { 
     sections: hookSections, 
     isLoading: sectionsLoading, 
@@ -88,11 +90,9 @@ const Grades = () => {
     toggleSectionStatus 
   } = useSections(
     selectedGradeId || '', 
-    user?.schoolId || null, // Pass null instead of empty string
+    user?.schoolId || '', // Revert back to using string instead of null
     activeAcademicSession || ''
   );
-  
-  // Remove tracking useEffect
   
   // Simplified grade selection handler
   const handleGradeSelect = (gradeId: string) => {
@@ -192,7 +192,7 @@ const Grades = () => {
         canManageGrades={canManageGrades}
       />
       
-      {selectedGradeId && (
+      {selectedGradeId && canManageSections && (
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-4">Sections for Selected Grade</h3>
           
@@ -218,6 +218,14 @@ const Grades = () => {
               )}
             </React.Fragment>
           )}
+        </div>
+      )}
+      
+      {selectedGradeId && !canManageSections && (
+        <div className="mt-8 p-4 border rounded-md">
+          <p className="text-muted-foreground text-center">
+            Only school administrators can manage sections. Tenant administrators cannot manage sections directly.
+          </p>
         </div>
       )}
       
