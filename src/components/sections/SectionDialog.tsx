@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogDescription
 } from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
 
 interface SectionDialogProps {
   isOpen: boolean;
@@ -68,8 +68,9 @@ const SectionDialog = ({
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <FormLabel>Section Name</FormLabel>
+            <Label htmlFor="section-name">Section Name</Label>
             <Input
+              id="section-name"
               value={sectionName}
               onChange={(e) => setSectionName(e.target.value)}
               placeholder="Enter section name (e.g., A, B, C)"
