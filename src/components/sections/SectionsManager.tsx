@@ -29,7 +29,8 @@ const SectionsManager = ({
   useEffect(() => {
     console.log("SectionsManager rendered with sections:", { 
       sectionsCount: sections?.length || 0, 
-      isLoading 
+      isLoading,
+      renderingButtons: true
     });
   }, [sections, isLoading]);
 
@@ -61,6 +62,12 @@ const SectionsManager = ({
 
   const quickSectionButtons = ['A', 'B', 'C', 'D'];
   const existingSectionNames = sections.map(s => s.name);
+  
+  console.log("Quick section buttons render check:", {
+    quickSectionButtons,
+    existingSectionNames,
+    willRenderAddButton: true
+  });
 
   return (
     <div className="space-y-4">

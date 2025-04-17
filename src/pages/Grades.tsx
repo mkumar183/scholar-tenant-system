@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -41,9 +40,35 @@ const Grades = () => {
   const [activeAcademicSession, setActiveAcademicSession] = useState<string | null>(null);
   const [isLoadingSession, setIsLoadingSession] = useState(true);
   
-  // Remove debug state and logging functions
+  // Add debug state to help troubleshoot
+  const [debugInfo, setDebugInfo] = useState({
+    userRole: '',
+    hasSchoolId: false,
+    schoolId: '',
+    canManageSections: false
+  });
   
   const { grades, isLoading, addGrade, updateGrade } = useGrades(user?.tenantId || '');
+  
+  // Update debug info whenever relevant user info changes
+  useEffect(() => {
+    if (user) {
+      setDebugInfo({
+        userRole: user.role,
+        hasSchoolId: !!user.schoolId,
+        schoolId: user.schoolId || 'none',
+        canManageSections: user.role === 'school_admin' && !!user.schoolId
+      });
+      
+      // Log debug info to console
+      console.log('User info for sections access:', {
+        role: user.role,
+        schoolId: user.schoolId,
+        tenantId: user.tenantId,
+        canManageSections: user.role === 'school_admin' && !!user.schoolId
+      });
+    }
+  }, [user]);
   
   // Fetch active academic session
   useEffect(() => {
@@ -90,13 +115,26 @@ const Grades = () => {
     toggleSectionStatus 
   } = useSections(
     selectedGradeId || '', 
-    user?.schoolId || '', // Revert back to using string instead of null
+    user?.schoolId || '', 
     activeAcademicSession || ''
   );
+  
+  // Add logging for sections loading
+  useEffect(() => {
+    if (selectedGradeId) {
+      console.log('Sections loading state:', {
+        selectedGradeId,
+        sectionsCount: hookSections?.length || 0,
+        isLoading: sectionsLoading,
+        academicSession: activeAcademicSession
+      });
+    }
+  }, [selectedGradeId, hookSections, sectionsLoading, activeAcademicSession]);
   
   // Simplified grade selection handler
   const handleGradeSelect = (gradeId: string) => {
     setSelectedGradeId(gradeId);
+    console.log('Grade selected:', gradeId);
   };
   
   const handleAddOrUpdateGrade = async (newGradeData: Partial<Grade>) => {
@@ -160,6 +198,21 @@ const Grades = () => {
   
   return (
     <div className="space-y-6">
+      {/* Debug info - only visible during development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-md mb-4 text-sm">
+          <h3 className="font-semibold">Debug Info:</h3>
+          <ul className="list-disc pl-5 mt-1">
+            <li>Role: {debugInfo.userRole}</li>
+            <li>Has School ID: {debugInfo.hasSchoolId ? 'Yes' : 'No'}</li>
+            <li>School ID: {debugInfo.schoolId}</li>
+            <li>Can Manage Sections: {debugInfo.canManageSections ? 'Yes' : 'No'}</li>
+            <li>Selected Grade: {selectedGradeId || 'None'}</li>
+            <li>Active Session: {activeAcademicSession ? 'Yes' : 'No'}</li>
+          </ul>
+        </div>
+      )}
+      
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Grades</h1>
         {canManageGrades && (
@@ -214,6 +267,13 @@ const Grades = () => {
               ) : (
                 <div className="p-4 border rounded-md text-center">
                   <p className="text-muted-foreground">No sections found for this grade</p>
+                  <SectionsManager
+                    sections={[]}
+                    isLoading={false}
+                    onAddSection={addSection}
+                    onUpdateSection={updateSection}
+                    onToggleStatus={toggleSectionStatus}
+                  />
                 </div>
               )}
             </React.Fragment>
