@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Section } from '@/types';
@@ -10,6 +9,11 @@ export const useSections = (gradeId: string, schoolId: string, academicSessionId
 
   const fetchSections = async () => {
     if (!gradeId || !schoolId || !academicSessionId) {
+      console.log('Missing required parameters for fetching sections:', { 
+        gradeId, 
+        schoolId, 
+        academicSessionId 
+      });
       setSections([]);
       setIsLoading(false);
       return;
@@ -17,6 +21,12 @@ export const useSections = (gradeId: string, schoolId: string, academicSessionId
     
     try {
       setIsLoading(true);
+      console.log('Fetching sections with params:', { 
+        gradeId, 
+        schoolId, 
+        academicSessionId 
+      });
+      
       const { data, error } = await supabase
         .from('sections')
         .select('*')
@@ -24,7 +34,12 @@ export const useSections = (gradeId: string, schoolId: string, academicSessionId
         .eq('school_id', schoolId)
         .eq('academic_session_id', academicSessionId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error fetching sections:', error);
+        throw error;
+      }
+      
+      console.log('Sections fetched successfully:', data);
       setSections(data || []);
     } catch (error) {
       console.error('Error fetching sections:', error);
@@ -35,6 +50,13 @@ export const useSections = (gradeId: string, schoolId: string, academicSessionId
   };
 
   useEffect(() => {
+    console.log("useSections useEffect triggered with dependencies:", {
+      gradeId, 
+      schoolId, 
+      academicSessionId,
+      hasAllParams: !!(gradeId && schoolId && academicSessionId)
+    });
+    
     fetchSections();
   }, [gradeId, schoolId, academicSessionId]);
 

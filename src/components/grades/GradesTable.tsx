@@ -1,4 +1,3 @@
-
 import { Grade } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -18,6 +17,12 @@ const GradesTable = ({
   selectedGradeId,
   canManageGrades,
 }: GradesTableProps) => {
+  
+  const handleGradeSelect = (gradeId: string) => {
+    console.log("GradesTable: grade selected", gradeId);
+    onGradeSelect(gradeId);
+  };
+  
   return (
     <Table>
       <TableHeader>
@@ -32,7 +37,7 @@ const GradesTable = ({
           <TableRow 
             key={grade.id} 
             className={`cursor-pointer hover:bg-muted/50 ${selectedGradeId === grade.id ? 'bg-muted' : ''}`}
-            onClick={() => onGradeSelect(grade.id)}
+            onClick={() => handleGradeSelect(grade.id)}
           >
             <TableCell>{grade.name}</TableCell>
             <TableCell>{grade.level}</TableCell>
@@ -44,6 +49,7 @@ const GradesTable = ({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent row click
+                      console.log("GradesTable: Edit button clicked for grade", grade.id);
                       if (onGradeEdit) onGradeEdit(grade);
                     }}
                   >

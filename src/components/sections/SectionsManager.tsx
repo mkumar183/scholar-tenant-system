@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Section } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -24,6 +23,18 @@ const SectionsManager = ({
 }: SectionsManagerProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<Section | null>(null);
+  
+  console.log("SectionsManager rendering with props:", { 
+    sections: sections?.length || 0, 
+    isLoading 
+  });
+  
+  useEffect(() => {
+    console.log("SectionsManager props changed:", { 
+      sections: sections?.length || 0, 
+      isLoading 
+    });
+  }, [sections, isLoading]);
 
   const handleSubmit = async (name: string) => {
     if (editingSection) {
@@ -43,6 +54,7 @@ const SectionsManager = ({
   };
 
   if (isLoading) {
+    console.log("SectionsManager showing loading spinner");
     return <SectionsLoading />;
   }
 
