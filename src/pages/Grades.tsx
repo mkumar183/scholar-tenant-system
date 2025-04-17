@@ -79,7 +79,7 @@ const Grades = () => {
   
   // Remove manual sections loading code
   
-  // Use the standard hook for sections
+  // Use the standard hook for sections - pass null instead of empty string for schoolId
   const { 
     sections: hookSections, 
     isLoading: sectionsLoading, 
@@ -88,7 +88,7 @@ const Grades = () => {
     toggleSectionStatus 
   } = useSections(
     selectedGradeId || '', 
-    user?.schoolId || '', 
+    user?.schoolId || null, // Pass null instead of empty string
     activeAcademicSession || ''
   );
   

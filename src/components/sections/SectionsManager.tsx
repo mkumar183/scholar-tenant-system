@@ -27,8 +27,8 @@ const SectionsManager = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   useEffect(() => {
-    console.log("SectionsManager props changed:", { 
-      sections: sections?.length || 0, 
+    console.log("SectionsManager rendered with sections:", { 
+      sectionsCount: sections?.length || 0, 
       isLoading 
     });
   }, [sections, isLoading]);
@@ -66,8 +66,8 @@ const SectionsManager = ({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Sections</h3>
-        <Button onClick={handleAddNew}>
-          <Plus className="h-4 w-4 mr-2" />
+        <Button onClick={handleAddNew} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
           Add Section
         </Button>
       </div>
