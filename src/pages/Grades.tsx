@@ -1,18 +1,19 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
 import { useGrades } from '@/hooks/useGrades';
 import { Grade } from '@/types';
 import { useSections } from '@/hooks/useSections';
-import SectionsManager from '@/components/sections/SectionsManager';
-import GradeDialog from '@/components/grades/GradeDialog';
-import GradesTable from '@/components/grades/GradesTable';
 import AccessDenied from '@/components/common/AccessDenied';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import GradesTable from '@/components/grades/GradesTable';
+import DebugPanel from '@/components/grades/DebugPanel';
+import NoActiveSessionMessage from '@/components/grades/NoActiveSessionMessage';
+import GradeSectionsArea from '@/components/grades/GradeSectionsArea';
+import GradesHeader from '@/components/grades/GradesHeader';
 
-// Remove console log too
+// Grade level definitions
 const GRADE_LEVELS = [
   { name: 'Nursery', level: 0 },
   { name: 'LKG', level: 1 },
@@ -40,7 +41,7 @@ const Grades = () => {
   const [activeAcademicSession, setActiveAcademicSession] = useState<string | null>(null);
   const [isLoadingSession, setIsLoadingSession] = useState(true);
   
-  // Add debug state to help troubleshoot
+  // Debug info state
   const [debugInfo, setDebugInfo] = useState({
     userRole: '',
     hasSchoolId: false,
@@ -60,7 +61,6 @@ const Grades = () => {
         canManageSections: user.role === 'school_admin' && !!user.schoolId
       });
       
-      // Log debug info to console
       console.log('User info for sections access:', {
         role: user.role,
         schoolId: user.schoolId,
@@ -103,7 +103,7 @@ const Grades = () => {
     fetchActiveSession();
   }, [user?.tenantId]);
   
-  // Only load sections for school admins since they have a schoolId
+  // Only load sections for school admins with a schoolId
   const canManageSections = user?.role === 'school_admin' && !!user?.schoolId;
   
   // Use the sections hook only if the user is a school admin
@@ -131,7 +131,7 @@ const Grades = () => {
     }
   }, [selectedGradeId, hookSections, sectionsLoading, activeAcademicSession]);
   
-  // Simplified grade selection handler
+  // Grade selection handler
   const handleGradeSelect = (gradeId: string) => {
     setSelectedGradeId(gradeId);
     console.log('Grade selected:', gradeId);
@@ -185,58 +185,33 @@ const Grades = () => {
   
   // Warning if no active session
   if (!activeAcademicSession) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">No Active Academic Session</h1>
-          <p className="text-muted-foreground mb-4">To manage grades and sections, an active academic session is required.</p>
-          <p className="text-muted-foreground">Please set an active academic session in the Academic Sessions page.</p>
-        </div>
-      </div>
-    );
+    return <NoActiveSessionMessage />;
   }
   
   return (
     <div className="space-y-6">
-      {/* Debug info - only visible during development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-md mb-4 text-sm">
-          <h3 className="font-semibold">Debug Info:</h3>
-          <ul className="list-disc pl-5 mt-1">
-            <li>Role: {debugInfo.userRole}</li>
-            <li>Has School ID: {debugInfo.hasSchoolId ? 'Yes' : 'No'}</li>
-            <li>School ID: {debugInfo.schoolId}</li>
-            <li>Can Manage Sections: {debugInfo.canManageSections ? 'Yes' : 'No'}</li>
-            <li>Selected Grade: {selectedGradeId || 'None'}</li>
-            <li>Active Session: {activeAcademicSession ? 'Yes' : 'No'}</li>
-          </ul>
-        </div>
-      )}
+      {/* Debug info panel */}
+      <DebugPanel 
+        userRole={debugInfo.userRole}
+        hasSchoolId={debugInfo.hasSchoolId}
+        schoolId={debugInfo.schoolId}
+        canManageSections={debugInfo.canManageSections}
+        selectedGradeId={selectedGradeId}
+        activeSession={!!activeAcademicSession}
+      />
       
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Grades</h1>
-        {canManageGrades && (
-          <>
-            <GradeDialog
-              isOpen={isDialogOpen}
-              onOpenChange={setIsDialogOpen}
-              onSubmit={handleAddOrUpdateGrade}
-              initialGrade={selectedGrade}
-              gradeOptions={GRADE_LEVELS}
-              isEditMode={isEditMode}
-            />
-            
-            <Button onClick={() => {
-              setIsEditMode(false);
-              setSelectedGrade(null);
-              setIsDialogOpen(true);
-            }}>
-              Add Grade
-            </Button>
-          </>
-        )}
-      </div>
+      {/* Grades header */}
+      <GradesHeader 
+        isDialogOpen={isDialogOpen}
+        setIsDialogOpen={setIsDialogOpen}
+        handleAddOrUpdateGrade={handleAddOrUpdateGrade}
+        selectedGrade={selectedGrade}
+        gradeOptions={GRADE_LEVELS}
+        isEditMode={isEditMode}
+        canManageGrades={canManageGrades}
+      />
       
+      {/* Grades table */}
       <GradesTable 
         grades={grades}
         onGradeSelect={handleGradeSelect}
@@ -245,55 +220,16 @@ const Grades = () => {
         canManageGrades={canManageGrades}
       />
       
-      {selectedGradeId && canManageSections && (
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold mb-4">Sections for Selected Grade</h3>
-          
-          {sectionsLoading ? (
-            <div className="p-8 border border-dashed rounded-md text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2 mx-auto"></div>
-              <p className="text-sm text-muted-foreground">Loading sections data...</p>
-            </div>
-          ) : (
-            <React.Fragment>
-              {hookSections.length > 0 ? (
-                <SectionsManager
-                  sections={hookSections}
-                  isLoading={false}
-                  onAddSection={addSection}
-                  onUpdateSection={updateSection}
-                  onToggleStatus={toggleSectionStatus}
-                />
-              ) : (
-                <div className="p-4 border rounded-md text-center">
-                  <p className="text-muted-foreground">No sections found for this grade</p>
-                  <SectionsManager
-                    sections={[]}
-                    isLoading={false}
-                    onAddSection={addSection}
-                    onUpdateSection={updateSection}
-                    onToggleStatus={toggleSectionStatus}
-                  />
-                </div>
-              )}
-            </React.Fragment>
-          )}
-        </div>
-      )}
-      
-      {selectedGradeId && !canManageSections && (
-        <div className="mt-8 p-4 border rounded-md">
-          <p className="text-muted-foreground text-center">
-            Only school administrators can manage sections. Tenant administrators cannot manage sections directly.
-          </p>
-        </div>
-      )}
-      
-      {!selectedGradeId && (
-        <div className="text-center text-muted-foreground p-4 bg-background border rounded">
-          <p>Select a grade to view and manage its sections</p>
-        </div>
-      )}
+      {/* Sections area */}
+      <GradeSectionsArea 
+        selectedGradeId={selectedGradeId}
+        canManageSections={canManageSections}
+        sectionsLoading={sectionsLoading}
+        sections={hookSections}
+        addSection={addSection}
+        updateSection={updateSection}
+        toggleSectionStatus={toggleSectionStatus}
+      />
     </div>
   );
 };
