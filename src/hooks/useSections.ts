@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Section } from '@/types';
 import { toast } from 'sonner';
@@ -9,6 +9,12 @@ export const useSections = (gradeId: string, schoolId: string, academicSessionId
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchSections = async () => {
+    if (!gradeId || !schoolId || !academicSessionId) {
+      setSections([]);
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       setIsLoading(true);
       const { data, error } = await supabase
@@ -27,6 +33,10 @@ export const useSections = (gradeId: string, schoolId: string, academicSessionId
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchSections();
+  }, [gradeId, schoolId, academicSessionId]);
 
   const addSection = async (name: string) => {
     try {
