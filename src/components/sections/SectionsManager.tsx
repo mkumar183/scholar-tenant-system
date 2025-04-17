@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { Section } from '@/types';
 import { Button } from '@/components/ui/button';
-import { DialogTrigger } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
 import SectionDialog from './SectionDialog';
 import SectionsTable from './SectionsTable';
@@ -16,7 +15,7 @@ interface SectionsManagerProps {
   onToggleStatus: (id: string, isActive: boolean) => Promise<boolean>;
 }
 
-export const SectionsManager = ({
+const SectionsManager = ({
   sections,
   isLoading,
   onAddSection,
@@ -38,6 +37,11 @@ export const SectionsManager = ({
     setIsDialogOpen(true);
   };
 
+  const handleAddNew = () => {
+    setEditingSection(null);
+    setIsDialogOpen(true);
+  };
+
   if (isLoading) {
     return <SectionsLoading />;
   }
@@ -46,17 +50,10 @@ export const SectionsManager = ({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Sections</h3>
-        <DialogTrigger asChild>
-          <Button
-            onClick={() => {
-              setEditingSection(null);
-              setIsDialogOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Section
-          </Button>
-        </DialogTrigger>
+        <Button onClick={handleAddNew}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Section
+        </Button>
       </div>
 
       <SectionDialog 
