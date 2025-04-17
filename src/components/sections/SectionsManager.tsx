@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { Section } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import SectionDialog from './SectionDialog';
 import SectionsTable from './SectionsTable';
 import SectionsLoading from './SectionsLoading';
@@ -23,11 +24,7 @@ const SectionsManager = ({
 }: SectionsManagerProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<Section | null>(null);
-  
-  console.log("SectionsManager rendering with props:", { 
-    sections: sections?.length || 0, 
-    isLoading 
-  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   useEffect(() => {
     console.log("SectionsManager props changed:", { 
@@ -37,10 +34,15 @@ const SectionsManager = ({
   }, [sections, isLoading]);
 
   const handleSubmit = async (name: string) => {
-    if (editingSection) {
-      return await onUpdateSection(editingSection.id, name);
+    setIsSubmitting(true);
+    try {
+      if (editingSection) {
+        return await onUpdateSection(editingSection.id, name);
+      }
+      return await onAddSection(name);
+    } finally {
+      setIsSubmitting(false);
     }
-    return await onAddSection(name);
   };
 
   const handleEdit = (section: Section) => {
@@ -54,9 +56,11 @@ const SectionsManager = ({
   };
 
   if (isLoading) {
-    console.log("SectionsManager showing loading spinner");
     return <SectionsLoading />;
   }
+
+  const quickSectionButtons = ['A', 'B', 'C', 'D'];
+  const existingSectionNames = sections.map(s => s.name);
 
   return (
     <div className="space-y-4">
@@ -66,6 +70,32 @@ const SectionsManager = ({
           <Plus className="h-4 w-4 mr-2" />
           Add Section
         </Button>
+      </div>
+
+      {/* Quick section buttons */}
+      <div className="flex flex-wrap gap-2 mt-2">
+        {quickSectionButtons.map((sectionName) => (
+          <Button
+            key={sectionName}
+            variant="outline"
+            size="sm"
+            className={existingSectionNames.includes(sectionName) ? "opacity-50 cursor-not-allowed" : ""}
+            disabled={existingSectionNames.includes(sectionName) || isSubmitting}
+            onClick={async () => {
+              if (!existingSectionNames.includes(sectionName)) {
+                setIsSubmitting(true);
+                try {
+                  await onAddSection(sectionName);
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }
+            }}
+          >
+            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-1" />}
+            Section {sectionName}
+          </Button>
+        ))}
       </div>
 
       <SectionDialog 

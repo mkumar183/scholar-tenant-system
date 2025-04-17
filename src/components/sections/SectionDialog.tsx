@@ -7,8 +7,10 @@ import {
   Dialog, 
   DialogContent, 
   DialogHeader, 
-  DialogTitle 
+  DialogTitle,
+  DialogDescription
 } from '@/components/ui/dialog';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription } from '@/components/ui/form';
 
 interface SectionDialogProps {
   isOpen: boolean;
@@ -16,6 +18,8 @@ interface SectionDialogProps {
   onSubmit: (name: string) => Promise<boolean>;
   editingSection: Section | null;
 }
+
+const commonSectionNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 
 const SectionDialog = ({
   isOpen,
@@ -50,25 +54,54 @@ const SectionDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
             {editingSection ? 'Edit Section' : 'Add New Section'}
           </DialogTitle>
+          <DialogDescription>
+            {editingSection 
+              ? 'Update the section details below.' 
+              : 'Sections help organize students within the same grade (e.g., "A", "B", "C").'
+            }
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium">Section Name</label>
+            <FormLabel>Section Name</FormLabel>
             <Input
               value={sectionName}
               onChange={(e) => setSectionName(e.target.value)}
               placeholder="Enter section name (e.g., A, B, C)"
               disabled={isSubmitting}
+              autoFocus
+              className="mt-1.5"
             />
+            <p className="text-sm text-muted-foreground mt-1.5">
+              Typically sections are named with single letters or numbers.
+            </p>
           </div>
+          
+          {!editingSection && (
+            <div className="grid grid-cols-5 gap-2">
+              {commonSectionNames.map(name => (
+                <Button 
+                  key={name}
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setSectionName(name)}
+                >
+                  {name}
+                </Button>
+              ))}
+            </div>
+          )}
+          
           <Button 
             onClick={handleSubmit} 
             disabled={!sectionName.trim() || isSubmitting}
+            className="w-full"
           >
             {isSubmitting 
               ? 'Processing...' 

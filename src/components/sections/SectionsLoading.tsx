@@ -1,4 +1,6 @@
+
 import { useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 
 const SectionsLoading = () => {
   useEffect(() => {
@@ -11,7 +13,7 @@ const SectionsLoading = () => {
   
   return (
     <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-md">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
+      <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
       <p className="text-sm text-muted-foreground">Loading sections data...</p>
     </div>
   );
