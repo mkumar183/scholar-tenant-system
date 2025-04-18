@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -39,6 +40,7 @@ interface AddUserDialogProps {
     schoolId: string;
     grade: string;
     guardianName: string;
+    dateOfBirth: string;
   };
   setNewStudent: React.Dispatch<React.SetStateAction<{
     name: string;
@@ -47,6 +49,7 @@ interface AddUserDialogProps {
     schoolId: string;
     grade: string;
     guardianName: string;
+    dateOfBirth: string;
   }>>;
   handleAddTeacher: () => void;
   handleAddStudent: () => void;
