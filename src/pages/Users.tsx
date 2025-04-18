@@ -60,7 +60,6 @@ const Users = () => {
           handleAddTeacher={handleAddTeacher}
           handleAddStudent={handleAddStudent}
           schools={schools}
-          grades={GRADES}
         />
       </div>
       
@@ -81,7 +80,7 @@ const Users = () => {
             </TabsContent>
             
             <TabsContent value="students">
-              <StudentsList students={filteredStudents} />
+              <StudentsList students={filteredStudents as any} />
             </TabsContent>
           </>
         )}
