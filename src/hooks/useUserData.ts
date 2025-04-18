@@ -3,11 +3,12 @@ import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { School, Teacher, Student } from '@/types';
 
 export const useUserData = (
-  setTeachers: (teachers: any[]) => void,
-  setStudents: (students: any[]) => void,
-  setSchools: (schools: any[]) => void,
+  setTeachers: (teachers: Teacher[]) => void,
+  setStudents: (students: Student[]) => void,
+  setSchools: (schools: School[]) => void,
   setIsLoading: (isLoading: boolean) => void
 ) => {
   const { user } = useAuth();
@@ -24,7 +25,7 @@ export const useUserData = (
         
         if (schoolsError) throw schoolsError;
         
-        const formattedSchools = schoolsData.map(school => ({
+        const formattedSchools: School[] = schoolsData.map(school => ({
           id: school.id,
           name: school.name
         }));
@@ -83,7 +84,7 @@ export const useUserData = (
 
         const studentEmailMap = new Map(studentEmailData?.map(user => [user.id, user.email]) || []);
         
-        const formattedTeachers = (teachersData || []).map(teacher => ({
+        const formattedTeachers: Teacher[] = (teachersData || []).map(teacher => ({
           id: teacher.id,
           name: teacher.name || 'No Name',
           email: emailMap.get(teacher.id) || 'Not provided',
@@ -94,12 +95,12 @@ export const useUserData = (
           subjects: [],
         }));
         
-        const formattedStudents = (studentsData || []).map(student => ({
+        const formattedStudents: Student[] = (studentsData || []).map(student => ({
           id: student.id,
           name: student.name || 'No Name',
           email: studentEmailMap.get(student.id) || 'Not provided',
           phone: 'Not provided',
-          role: student.role,
+          role: 'student',
           schoolId: student.school_id || '',
           schoolName: student.school?.name || 'No School',
           grade: 'Not specified',

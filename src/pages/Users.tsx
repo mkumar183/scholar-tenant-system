@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GRADES } from '@/components/users/usersData';
+import { Teacher, Student, School } from '@/types';
 
 // Import components
 import SearchBar from '@/components/users/SearchBar';

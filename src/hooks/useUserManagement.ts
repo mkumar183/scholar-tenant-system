@@ -3,12 +3,13 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { Teacher, Student, School } from '@/types';
 
 export const useUserManagement = () => {
   const { user } = useAuth();
-  const [teachers, setTeachers] = useState<any[]>([]);
-  const [students, setStudents] = useState<any[]>([]);
-  const [schools, setSchools] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [schools, setSchools] = useState<School[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -71,12 +72,12 @@ export const useUserManagement = () => {
       if (error) throw error;
       
       if (data && data[0]) {
-        const newTeacherData = {
+        const newTeacherData: Teacher = {
           id: data[0].id,
           name: newTeacher.name,
           email: newTeacher.email,
           phone: newTeacher.phone || 'Not provided',
-          role: newTeacher.role,
+          role: newTeacher.role as 'teacher' | 'staff' | 'school_admin',
           schoolId: newTeacher.schoolId,
           schoolName: schoolName,
           subjects: [],
@@ -142,7 +143,7 @@ export const useUserManagement = () => {
       if (error) throw error;
       
       if (data && data[0]) {
-        const newStudentData = {
+        const newStudentData: Student = {
           id: data[0].id,
           name: newStudent.name,
           email: newStudent.email,

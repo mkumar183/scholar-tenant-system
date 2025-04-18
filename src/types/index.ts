@@ -22,21 +22,36 @@ export type Grade = {
 export type Student = {
   id: string;
   name: string;
+  email: string;
+  phone: string;
   role: 'student';
-  tenant_id: string;
-  school_id: string;
-  created_at: string;
-  updated_at: string;
-  // Add other student-specific properties as needed
+  schoolId: string;
+  schoolName: string;
+  grade: string;
+  guardianName: string;
+  dateOfBirth?: string;
+  tenant_id?: string;
+  school_id?: string;
+  created_at?: string;
+  updated_at?: string;
 };
 
 export type Teacher = {
   id: string;
   name: string;
+  email: string;
+  phone: string;
   role: 'teacher' | 'staff' | 'school_admin';
-  tenant_id: string;
-  school_id: string;
-  created_at: string;
-  updated_at: string;
-  // Add other teacher-specific properties as needed
+  schoolId: string;
+  schoolName: string;
+  subjects: string[];
+  tenant_id?: string;
+  school_id?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type School = {
+  id: string;
+  name: string;
 };

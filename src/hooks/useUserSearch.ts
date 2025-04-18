@@ -1,27 +1,5 @@
 
-type Teacher = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: string;
-  schoolId: string;
-  schoolName: string;
-  subjects: string[];
-};
-
-type Student = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: string;
-  schoolId: string;
-  schoolName: string;
-  grade: string;
-  guardianName: string;
-  dateOfBirth?: string;
-};
+import { Teacher, Student } from '@/types';
 
 export const useUserSearch = (
   searchTerm: string, 
