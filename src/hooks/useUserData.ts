@@ -1,0 +1,123 @@
+
+import { useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+
+export const useUserData = (
+  setTeachers: (teachers: any[]) => void,
+  setStudents: (students: any[]) => void,
+  setSchools: (schools: any[]) => void,
+  setIsLoading: (isLoading: boolean) => void
+) => {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      
+      try {
+        // Fetch schools
+        const { data: schoolsData, error: schoolsError } = await supabase
+          .from('schools')
+          .select('id, name');
+        
+        if (schoolsError) throw schoolsError;
+        
+        const formattedSchools = schoolsData.map(school => ({
+          id: school.id,
+          name: school.name
+        }));
+        
+        setSchools(formattedSchools);
+        
+        // Fetch teachers
+        const { data: teachersData, error: teachersError } = await supabase
+          .from('users')
+          .select(`
+            id, 
+            name, 
+            role,
+            school_id,
+            tenant_id,
+            school:schools!users_school_id_fkey(name)
+          `)
+          .in('role', ['teacher', 'staff', 'school_admin'])
+          .eq('tenant_id', user?.tenantId);
+        
+        if (teachersError) throw teachersError;
+
+        const teacherIds = (teachersData || []).map(teacher => teacher.id);
+        const { data: emailData, error: emailError } = await supabase
+          .rpc('get_user_emails', { user_ids: teacherIds });
+
+        if (emailError) {
+          console.error('Error fetching emails:', emailError);
+        }
+
+        const emailMap = new Map(emailData?.map(user => [user.id, user.email]) || []);
+        
+        // Fetch students
+        const { data: studentsData, error: studentsError } = await supabase
+          .from('users')
+          .select(`
+            id, 
+            name, 
+            role,
+            school_id,
+            tenant_id,
+            date_of_birth,
+            school:schools!users_school_id_fkey(name)
+          `)
+          .eq('role', 'student');
+        
+        if (studentsError) throw studentsError;
+        
+        const studentIds = (studentsData || []).map(student => student.id);
+        const { data: studentEmailData, error: studentEmailError } = await supabase
+          .rpc('get_user_emails', { user_ids: studentIds });
+
+        if (studentEmailError) {
+          console.error('Error fetching student emails:', studentEmailError);
+        }
+
+        const studentEmailMap = new Map(studentEmailData?.map(user => [user.id, user.email]) || []);
+        
+        const formattedTeachers = (teachersData || []).map(teacher => ({
+          id: teacher.id,
+          name: teacher.name || 'No Name',
+          email: emailMap.get(teacher.id) || 'Not provided',
+          phone: 'Not provided',
+          role: teacher.role,
+          schoolId: teacher.school_id || '',
+          schoolName: teacher.school?.name || 'No School',
+          subjects: [],
+        }));
+        
+        const formattedStudents = (studentsData || []).map(student => ({
+          id: student.id,
+          name: student.name || 'No Name',
+          email: studentEmailMap.get(student.id) || 'Not provided',
+          phone: 'Not provided',
+          role: student.role,
+          schoolId: student.school_id || '',
+          schoolName: student.school?.name || 'No School',
+          grade: 'Not specified',
+          guardianName: 'Not specified',
+          dateOfBirth: student.date_of_birth || '',
+        }));
+        
+        setTeachers(formattedTeachers);
+        setStudents(formattedStudents);
+
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        toast.error('Failed to load users');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchUsers();
+  }, [user?.tenantId, setTeachers, setStudents, setSchools, setIsLoading]);
+};
