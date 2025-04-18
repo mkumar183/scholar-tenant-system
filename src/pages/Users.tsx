@@ -38,7 +38,7 @@ const Users = () => {
     handleAddStudent,
   } = useUserManagement();
 
-  // Initialize data fetching
+  // Initialize data fetching - pass each function separately
   useUserData(setTeachers, setStudents, setSchools, setIsLoading);
 
   // Handle search
@@ -81,7 +81,7 @@ const Users = () => {
             </TabsContent>
             
             <TabsContent value="students">
-              <StudentsList students={filteredStudents} />
+              <StudentsList students={filteredStudents as any} />
             </TabsContent>
           </>
         )}

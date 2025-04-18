@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -49,6 +50,7 @@ interface AddUserDialogProps {
   handleAddTeacher: () => void;
   handleAddStudent: () => void;
   schools: { id: string; name: string }[];
+  grades?: string[]; // Add the optional grades property
 }
 
 const AddUserDialog = ({
@@ -61,7 +63,8 @@ const AddUserDialog = ({
   setNewStudent,
   handleAddTeacher,
   handleAddStudent,
-  schools
+  schools,
+  grades // Add it to the component props
 }: AddUserDialogProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

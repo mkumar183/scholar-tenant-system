@@ -1,3 +1,4 @@
+
 export type Section = {
   id: string;
   name: string;
@@ -24,8 +25,8 @@ export type Student = {
   email: string;
   phone: string;
   role: 'student';
-  schoolId?: string;
-  schoolName?: string;
+  schoolId: string; // Changed from optional to required
+  schoolName: string; // Changed from optional to required
   grade?: string;
   guardianName: string;
   dateOfBirth?: string;
