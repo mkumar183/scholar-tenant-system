@@ -1,11 +1,14 @@
+
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Teacher, Student, School } from '@/types';
+import { useStudentAdmissions } from './useStudentAdmissions';
 
 export const useUserManagement = () => {
   const { user } = useAuth();
+  const { createStudentAdmission } = useStudentAdmissions();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
@@ -27,6 +30,9 @@ export const useUserManagement = () => {
     phone: '',
     guardianName: '',
     dateOfBirth: '',
+    gradeId: '',
+    schoolId: '',
+    remarks: '',
   });
 
   const handleAddTeacher = async () => {
@@ -101,14 +107,18 @@ export const useUserManagement = () => {
 
   const handleAddStudent = async () => {
     try {
-      if (!newStudent.name || !newStudent.email) {
+      if (!newStudent.name || !newStudent.email || !newStudent.schoolId || !newStudent.gradeId) {
         toast.error('Please fill in all required fields');
         return;
       }
       
+      const school = schools.find(s => s.id === newStudent.schoolId);
+      const schoolName = school ? school.name : '';
+      
+      // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newStudent.email,
-        password: 'Password123',
+        password: 'Password123', // default password
         options: {
           data: {
             name: newStudent.name,
@@ -122,6 +132,7 @@ export const useUserManagement = () => {
       
       const userId = authData.user.id;
       
+      // Create user record
       const { data, error } = await supabase
         .from('users')
         .insert({
@@ -129,6 +140,7 @@ export const useUserManagement = () => {
           name: newStudent.name,
           role: 'student',
           tenant_id: user?.tenantId,
+          school_id: newStudent.schoolId,
           date_of_birth: newStudent.dateOfBirth || null,
         })
         .select();
@@ -136,16 +148,31 @@ export const useUserManagement = () => {
       if (error) throw error;
       
       if (data && data[0]) {
+        // Create student admission record
+        const admission = await createStudentAdmission(
+          userId,
+          newStudent.schoolId,
+          newStudent.gradeId,
+          newStudent.remarks
+        );
+        
+        if (!admission) {
+          throw new Error('Failed to create student admission record');
+        }
+        
         const newStudentData: Student = {
           id: data[0].id,
           name: newStudent.name,
           email: newStudent.email,
           phone: newStudent.phone,
           role: 'student',
-          schoolId: '',
-          schoolName: '',
+          schoolId: newStudent.schoolId,
+          schoolName: schoolName,
           guardianName: newStudent.guardianName,
           dateOfBirth: newStudent.dateOfBirth,
+          gradeId: newStudent.gradeId,
+          admissionStatus: 'active',
+          admittedBy: user?.id,
         };
         
         setStudents([...students, newStudentData]);
@@ -155,9 +182,12 @@ export const useUserManagement = () => {
           phone: '',
           guardianName: '',
           dateOfBirth: '',
+          gradeId: '',
+          schoolId: '',
+          remarks: '',
         });
         setIsAddDialogOpen(false);
-        toast.success('Student added successfully');
+        toast.success('Student admitted successfully');
       }
     } catch (error: any) {
       console.error('Error adding student:', error);

@@ -1,3 +1,4 @@
+
 export type Section = {
   id: string;
   name: string;
@@ -27,12 +28,15 @@ export type Student = {
   schoolId?: string;
   schoolName?: string;
   grade?: string;
+  gradeId?: string;
   guardianName: string;
   dateOfBirth?: string;
   tenant_id?: string;
   school_id?: string;
   created_at?: string;
   updated_at?: string;
+  admissionStatus?: string;
+  admittedBy?: string;
 };
 
 export type Teacher = {
@@ -53,4 +57,17 @@ export type Teacher = {
 export type School = {
   id: string;
   name: string;
+};
+
+export type StudentAdmission = {
+  id: string;
+  student_id: string;
+  school_id: string;
+  grade_id: string;
+  admission_date: string;
+  status: 'active' | 'inactive' | 'pending';
+  admitted_by: string;
+  remarks?: string;
+  created_at: string;
+  updated_at: string;
 };

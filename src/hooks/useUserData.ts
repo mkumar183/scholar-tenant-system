@@ -98,6 +98,36 @@ export const useUserData = (
           });
         }
         
+        // Fetch student admissions
+        const { data: admissionsData, error: admissionsError } = await supabase
+          .from('student_admissions')
+          .select(`
+            id,
+            student_id,
+            school_id,
+            grade_id,
+            status,
+            admitted_by,
+            grade:grades(id, name)
+          `);
+        
+        if (admissionsError) {
+          console.error('Error fetching student admissions:', admissionsError);
+        }
+        
+        // Create a map of student admissions
+        const admissionsMap = new Map();
+        if (admissionsData) {
+          admissionsData.forEach(admission => {
+            admissionsMap.set(admission.student_id, {
+              status: admission.status,
+              gradeId: admission.grade_id,
+              gradeName: admission.grade?.name || 'Unknown Grade',
+              admittedBy: admission.admitted_by
+            });
+          });
+        }
+        
         const formattedTeachers: Teacher[] = (teachersData || []).map(teacher => ({
           id: teacher.id,
           name: teacher.name || 'No Name',
@@ -109,18 +139,24 @@ export const useUserData = (
           subjects: [],
         }));
         
-        const formattedStudents: Student[] = (studentsData || []).map(student => ({
-          id: student.id,
-          name: student.name || 'No Name',
-          email: studentEmailMap.get(student.id) || 'Not provided',
-          phone: 'Not provided',
-          role: 'student',
-          schoolId: student.school_id || '',
-          schoolName: student.school?.name || 'No School',
-          grade: 'Not specified',
-          guardianName: 'Not specified',
-          dateOfBirth: student.date_of_birth || '',
-        }));
+        const formattedStudents: Student[] = (studentsData || []).map(student => {
+          const admission = admissionsMap.get(student.id);
+          return {
+            id: student.id,
+            name: student.name || 'No Name',
+            email: studentEmailMap.get(student.id) || 'Not provided',
+            phone: 'Not provided',
+            role: 'student',
+            schoolId: student.school_id || '',
+            schoolName: student.school?.name || 'No School',
+            grade: admission ? admission.gradeName : 'Not specified',
+            gradeId: admission ? admission.gradeId : undefined,
+            guardianName: 'Not specified',
+            dateOfBirth: student.date_of_birth || '',
+            admissionStatus: admission ? admission.status : undefined,
+            admittedBy: admission ? admission.admittedBy : undefined,
+          };
+        });
         
         setTeachers(formattedTeachers);
         setStudents(formattedStudents);

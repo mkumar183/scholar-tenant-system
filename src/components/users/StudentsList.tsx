@@ -1,22 +1,13 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Mail, Phone, School, GraduationCap, User, Calendar } from 'lucide-react';
+import { Mail, Phone, School, GraduationCap, User, Calendar, CheckCircle, XCircle } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
 import EmptyState from './EmptyState';
 import { format } from 'date-fns';
+import { Student } from "@/types";
 
 interface StudentsListProps {
-  students: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-    role: string;
-    schoolId: string;
-    schoolName: string;
-    grade: string;
-    guardianName: string;
-    dateOfBirth?: string;
-  }[];
+  students: Student[];
 }
 
 const StudentsList = ({ students }: StudentsListProps) => {
@@ -35,6 +26,7 @@ const StudentsList = ({ students }: StudentsListProps) => {
             <TableHead>Grade</TableHead>
             <TableHead>School</TableHead>
             <TableHead>Guardian</TableHead>
+            <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -54,13 +46,13 @@ const StudentsList = ({ students }: StudentsListProps) => {
               <TableCell>
                 <div className="flex items-center">
                   <GraduationCap className="mr-2 h-4 w-4 text-muted-foreground" />
-                  {student.grade}
+                  {student.grade || 'Not assigned'}
                 </div>
               </TableCell>
               <TableCell>
                 <div className="flex items-center">
                   <School className="mr-2 h-4 w-4 text-muted-foreground" />
-                  {student.schoolName}
+                  {student.schoolName || 'Not assigned'}
                 </div>
               </TableCell>
               <TableCell>
@@ -68,6 +60,21 @@ const StudentsList = ({ students }: StudentsListProps) => {
                   <User className="mr-2 h-4 w-4 text-muted-foreground" />
                   {student.guardianName}
                 </div>
+              </TableCell>
+              <TableCell>
+                {student.admissionStatus ? (
+                  <Badge variant={student.admissionStatus === 'active' ? 'success' : 
+                          student.admissionStatus === 'pending' ? 'warning' : 'error'}>
+                    {student.admissionStatus === 'active' ? (
+                      <CheckCircle className="mr-1 h-3 w-3" />
+                    ) : (
+                      <XCircle className="mr-1 h-3 w-3" />
+                    )}
+                    {student.admissionStatus.charAt(0).toUpperCase() + student.admissionStatus.slice(1)}
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary">Not admitted</Badge>
+                )}
               </TableCell>
             </TableRow>
           ))}

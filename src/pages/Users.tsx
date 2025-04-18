@@ -1,8 +1,7 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GRADES } from '@/components/users/usersData';
-import { Teacher, Student, School } from '@/types';
+import { Teacher, Student, School, Grade } from '@/types';
 
 // Import components
 import SearchBar from '@/components/users/SearchBar';
@@ -14,9 +13,12 @@ import StudentsList from '@/components/users/StudentsList';
 import { useUserManagement } from '@/hooks/useUserManagement';
 import { useUserData } from '@/hooks/useUserData';
 import { useUserSearch } from '@/hooks/useUserSearch';
+import { useGrades } from '@/hooks/useGrades';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Users = () => {
   const [activeTab, setActiveTab] = useState('teachers');
+  const { user } = useAuth();
   const {
     teachers,
     setTeachers,
@@ -37,6 +39,9 @@ const Users = () => {
     handleAddTeacher,
     handleAddStudent,
   } = useUserManagement();
+
+  // Fetch grades for the tenant
+  const { grades, isLoading: gradesLoading } = useGrades(user?.tenantId || '');
 
   // Initialize data fetching
   useUserData(setTeachers, setStudents, setSchools, setIsLoading);
@@ -60,7 +65,7 @@ const Users = () => {
           handleAddTeacher={handleAddTeacher}
           handleAddStudent={handleAddStudent}
           schools={schools}
-          grades={GRADES}
+          grades={grades}
         />
       </div>
       
@@ -70,7 +75,7 @@ const Users = () => {
           <TabsTrigger value="students">Students</TabsTrigger>
         </TabsList>
         
-        {isLoading ? (
+        {isLoading || gradesLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>

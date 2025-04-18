@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,6 +12,7 @@ import {
 import { Plus } from 'lucide-react';
 import AddTeacherForm from './AddTeacherForm';
 import AddStudentForm from './AddStudentForm';
+import { Grade, School } from '@/types';
 
 interface AddUserDialogProps {
   activeTab: string;
@@ -38,6 +40,9 @@ interface AddUserDialogProps {
     phone: string;
     guardianName: string;
     dateOfBirth: string;
+    gradeId: string;
+    schoolId: string;
+    remarks: string;
   };
   setNewStudent: React.Dispatch<React.SetStateAction<{
     name: string;
@@ -45,10 +50,14 @@ interface AddUserDialogProps {
     phone: string;
     guardianName: string;
     dateOfBirth: string;
+    gradeId: string;
+    schoolId: string;
+    remarks: string;
   }>>;
   handleAddTeacher: () => void;
   handleAddStudent: () => void;
-  schools: { id: string; name: string }[];
+  schools: School[];
+  grades: Grade[];
 }
 
 const AddUserDialog = ({
@@ -61,7 +70,8 @@ const AddUserDialog = ({
   setNewStudent,
   handleAddTeacher,
   handleAddStudent,
-  schools
+  schools,
+  grades
 }: AddUserDialogProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -88,6 +98,8 @@ const AddUserDialog = ({
           <AddStudentForm 
             newStudent={newStudent} 
             setNewStudent={setNewStudent}
+            schools={schools}
+            grades={grades}
           />
         )}
         
