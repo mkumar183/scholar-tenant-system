@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +20,23 @@ export const useStudentAdmissions = () => {
       if (!user?.id) {
         throw new Error('User not authenticated');
       }
+
+      // First, get the active academic session
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('academic_sessions')
+        .select('id')
+        .eq('tenant_id', user.tenantId)
+        .eq('is_active', true)
+        .single();
+
+      if (sessionError) {
+        console.error('Error fetching active academic session:', sessionError);
+        throw new Error('No active academic session found. Please set an active academic session first.');
+      }
+
+      if (!sessionData) {
+        throw new Error('No active academic session found');
+      }
       
       const { data, error } = await supabase
         .from('student_admissions')
@@ -28,6 +44,7 @@ export const useStudentAdmissions = () => {
           student_id: studentId,
           school_id: schoolId,
           grade_id: gradeId,
+          academic_session_id: sessionData.id,
           admitted_by: user.id,
           status: 'active',
           remarks: remarks || null
