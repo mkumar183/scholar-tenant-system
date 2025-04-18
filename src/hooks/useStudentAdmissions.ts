@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,7 +12,8 @@ export const useStudentAdmissions = () => {
     studentId: string,
     schoolId: string,
     gradeId: string,
-    remarks?: string
+    remarks?: string,
+    academicSessionId?: string
   ) => {
     try {
       setIsLoading(true);
@@ -30,7 +30,8 @@ export const useStudentAdmissions = () => {
           grade_id: gradeId,
           admitted_by: user.id,
           status: 'active',
-          remarks: remarks || null
+          remarks: remarks || null,
+          academic_session_id: academicSessionId
         })
         .select()
         .single();

@@ -33,6 +33,7 @@ export const useUserManagement = () => {
     schoolId: '',
     remarks: '',
   });
+  const [currentAcademicSession, setCurrentAcademicSession] = useState<string | null>(null);
 
   const handleAddTeacher = async () => {
     try {
@@ -118,6 +119,18 @@ export const useUserManagement = () => {
       const school = schools.find(s => s.id === newStudent.schoolId);
       const schoolName = school ? school.name : '';
       
+      // Get current academic session
+      const { data: academicSession, error: sessionError } = await supabase
+        .from('academic_sessions')
+        .select('id')
+        .eq('tenant_id', user?.tenantId)
+        .eq('is_active', true)
+        .single();
+
+      if (sessionError || !academicSession) {
+        throw new Error('No active academic session found');
+      }
+      
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newStudent.email,
@@ -179,12 +192,13 @@ export const useUserManagement = () => {
       console.log('User record created:', userData);
       
       if (userData) {
-        // Create student admission record
+        // Create student admission record with academic session
         const admission = await createStudentAdmission(
           userId,
           newStudent.schoolId,
           newStudent.gradeId,
-          newStudent.remarks
+          newStudent.remarks,
+          academicSession.id
         );
         
         if (!admission) {
