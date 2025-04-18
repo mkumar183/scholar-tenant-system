@@ -1,4 +1,4 @@
-
+import React, { useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -28,9 +28,25 @@ interface AddStudentFormProps {
   }>>;
   grades: Grade[];
   schools: School[];
+  userRole?: string;
+  userSchoolId?: string;
 }
 
-const AddStudentForm = ({ newStudent, setNewStudent, grades, schools }: AddStudentFormProps) => {
+const AddStudentForm = ({ 
+  newStudent, 
+  setNewStudent, 
+  grades, 
+  schools,
+  userRole,
+  userSchoolId 
+}: AddStudentFormProps) => {
+  // Set the school ID automatically for school admins
+  useEffect(() => {
+    if (userRole === 'school_admin' && userSchoolId) {
+      setNewStudent(prev => ({ ...prev, schoolId: userSchoolId }));
+    }
+  }, [userRole, userSchoolId, setNewStudent]);
+
   return (
     <div className="grid gap-4 py-4">
       <div>
@@ -85,22 +101,24 @@ const AddStudentForm = ({ newStudent, setNewStudent, grades, schools }: AddStude
         />
       </div>
       
-      <div>
-        <Label htmlFor="school">School</Label>
-        <Select
-          value={newStudent.schoolId}
-          onValueChange={(value) => setNewStudent({...newStudent, schoolId: value})}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select school" />
-          </SelectTrigger>
-          <SelectContent>
-            {schools.map((school) => (
-              <SelectItem key={school.id} value={school.id}>{school.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {userRole !== 'school_admin' && (
+        <div>
+          <Label htmlFor="school">School</Label>
+          <Select
+            value={newStudent.schoolId}
+            onValueChange={(value) => setNewStudent({...newStudent, schoolId: value})}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select school" />
+            </SelectTrigger>
+            <SelectContent>
+              {schools.map((school) => (
+                <SelectItem key={school.id} value={school.id}>{school.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       
       <div>
         <Label htmlFor="grade">Grade</Label>

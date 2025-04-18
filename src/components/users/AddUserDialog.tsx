@@ -13,6 +13,7 @@ import { Plus } from 'lucide-react';
 import AddTeacherForm from './AddTeacherForm';
 import AddStudentForm from './AddStudentForm';
 import { Grade, School } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AddUserDialogProps {
   activeTab: string;
@@ -73,6 +74,8 @@ const AddUserDialog = ({
   schools,
   grades
 }: AddUserDialogProps) => {
+  const { user } = useAuth();
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -100,6 +103,8 @@ const AddUserDialog = ({
             setNewStudent={setNewStudent}
             schools={schools}
             grades={grades}
+            userRole={user?.role}
+            userSchoolId={user?.schoolId}
           />
         )}
         
