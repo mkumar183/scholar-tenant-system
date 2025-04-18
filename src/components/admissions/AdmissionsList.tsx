@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { StudentAdmission } from '@/types';
+import { StudentAdmission, Student } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +20,7 @@ import { Check, X } from 'lucide-react';
 interface AdmissionsListProps {
   admissions: StudentAdmission[];
   isLoading: boolean;
-  students: any[];
+  students: Student[];
   onUpdateStatus: (id: string, status: 'approved' | 'rejected') => Promise<boolean>;
   onAdmitStudent: (values: any) => Promise<boolean>;
   schoolId: string;
@@ -82,7 +82,7 @@ const AdmissionsList = ({
       {isSchoolAdmin && (
         <div className="flex justify-end">
           <AdmitStudentDialog
-            students={students.filter(s => !s.schoolId)}
+            students={students}
             grades={grades || []}
             schoolId={schoolId}
             onSubmit={onAdmitStudent}
