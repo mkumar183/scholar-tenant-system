@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
+import react from '@vitejs/plugin-react'
 import path from 'path'
 import { componentTagger } from "lovable-tagger";
 
@@ -39,5 +39,40 @@ export default defineConfig(({ mode }) => ({
     proxy: {
       // your proxy configuration if any
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Vendor chunks
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor-react';
+            }
+            if (id.includes('@radix-ui')) {
+              return 'vendor-radix';
+            }
+            if (id.includes('lucide-react') || id.includes('sonner') || id.includes('date-fns')) {
+              return 'vendor-utils';
+            }
+            return 'vendor';
+          }
+          
+          // App chunks
+          if (id.includes('src/components')) {
+            return 'components';
+          }
+          if (id.includes('src/hooks') || id.includes('src/contexts')) {
+            return 'hooks';
+          }
+          if (id.includes('src/pages')) {
+            return 'pages';
+          }
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000,
+    target: 'esnext',
+    minify: 'esbuild'
   }
 }));
