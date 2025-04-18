@@ -33,6 +33,7 @@ interface StudentData {
   school_id: string;
   tenant_id: string;
   school: School;
+  date_of_birth: string | null;
 }
 
 interface Teacher {
@@ -56,6 +57,7 @@ interface Student {
   schoolName: string;
   grade: string;
   guardianName: string;
+  dateOfBirth: string;
 }
 
 interface NewTeacher {
@@ -93,6 +95,7 @@ const Users = () => {
     schoolId: '',
     grade: '',
     guardianName: '',
+    dateOfBirth: '',
   });
 
   // Fetch users from Supabase
@@ -158,6 +161,7 @@ const Users = () => {
             role,
             school_id,
             tenant_id,
+            date_of_birth,
             school:schools!users_school_id_fkey(name)
           `)
           .eq('role', 'student') as { data: StudentData[] | null, error: any };
@@ -203,6 +207,7 @@ const Users = () => {
           schoolName: student.school?.name || 'No School',
           grade: 'Not specified',
           guardianName: 'Not specified',
+          dateOfBirth: student.date_of_birth || '',
         }));
         
         setTeachers(formattedTeachers);
@@ -349,27 +354,21 @@ const Users = () => {
         }
       });
       
-      if (authError) {
-        console.error('Error creating auth user:', authError);
-        throw new Error(`Failed to create auth user: ${authError.message}`);
-      }
+      if (authError) throw new Error(`Failed to create auth user: ${authError.message}`);
+      if (!authData.user) throw new Error('Failed to create auth user, no user returned');
       
-      if (!authData.user) {
-        throw new Error('Failed to create auth user, no user returned');
-      }
-      
-      console.log('Auth user created:', authData.user);
       const userId = authData.user.id;
       
-      // Create user in Supabase
+      // Now insert into public.users table with the same ID
       const { data, error } = await supabase
         .from('users')
         .insert({
-          id: userId, // Use the ID from auth.users
+          id: userId,
           name: newStudent.name,
           role: 'student',
           school_id: newStudent.schoolId,
-          tenant_id: user?.tenantId
+          tenant_id: user?.tenantId,
+          date_of_birth: newStudent.dateOfBirth || null,
         })
         .select();
       
@@ -380,13 +379,14 @@ const Users = () => {
         const newStudentData = {
           id: data[0].id,
           name: newStudent.name,
-          email: newStudent.email, // This won't be stored in the DB, just for display
+          email: newStudent.email,
           phone: newStudent.phone,
           role: 'student',
           schoolId: newStudent.schoolId,
           schoolName: schoolName,
           grade: newStudent.grade,
           guardianName: newStudent.guardianName,
+          dateOfBirth: newStudent.dateOfBirth,
         };
         
         setStudents([...students, newStudentData]);
@@ -397,13 +397,14 @@ const Users = () => {
           schoolId: '',
           grade: '',
           guardianName: '',
+          dateOfBirth: '',
         });
         setIsAddDialogOpen(false);
         toast.success('Student added successfully');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding student:', error);
-      toast.error('Failed to add student');
+      toast.error(`Failed to add student: ${error.message || 'Unknown error'}`);
     }
   };
 

@@ -1,4 +1,3 @@
-
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,6 +10,7 @@ interface AddStudentFormProps {
     schoolId: string;
     grade: string;
     guardianName: string;
+    dateOfBirth: string;
   };
   setNewStudent: React.Dispatch<React.SetStateAction<{
     name: string;
@@ -19,6 +19,7 @@ interface AddStudentFormProps {
     schoolId: string;
     grade: string;
     guardianName: string;
+    dateOfBirth: string;
   }>>;
   schools: { id: string; name: string }[];
   grades: string[];
@@ -36,6 +37,18 @@ const AddStudentForm = ({ newStudent, setNewStudent, schools, grades }: AddStude
           className="mt-1"
         />
       </div>
+      
+      <div>
+        <Label htmlFor="date-of-birth">Date of Birth</Label>
+        <Input
+          id="date-of-birth"
+          type="date"
+          value={newStudent.dateOfBirth}
+          onChange={(e) => setNewStudent({...newStudent, dateOfBirth: e.target.value})}
+          className="mt-1"
+        />
+      </div>
+
       <div>
         <Label htmlFor="student-email">Email</Label>
         <Input

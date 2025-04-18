@@ -1,6 +1,8 @@
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Mail, Phone, School, GraduationCap, User } from 'lucide-react';
+import { Mail, Phone, School, GraduationCap, User, Calendar } from 'lucide-react';
 import EmptyState from './EmptyState';
+import { format } from 'date-fns';
 
 interface StudentsListProps {
   students: {
@@ -13,6 +15,7 @@ interface StudentsListProps {
     schoolName: string;
     grade: string;
     guardianName: string;
+    dateOfBirth?: string;
   }[];
 }
 
@@ -27,6 +30,7 @@ const StudentsList = ({ students }: StudentsListProps) => {
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
+            <TableHead>Date of Birth</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Grade</TableHead>
             <TableHead>School</TableHead>
@@ -37,6 +41,12 @@ const StudentsList = ({ students }: StudentsListProps) => {
           {students.map((student) => (
             <TableRow key={student.id}>
               <TableCell className="font-medium">{student.name}</TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                  {student.dateOfBirth ? format(new Date(student.dateOfBirth), 'MMM d, yyyy') : 'Not provided'}
+                </div>
+              </TableCell>
               <TableCell className="flex items-center">
                 <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
                 {student.email}
