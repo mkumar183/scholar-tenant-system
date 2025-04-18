@@ -56,7 +56,14 @@ export const useUserData = (
           console.error('Error fetching emails:', emailError);
         }
 
-        const emailMap = new Map(emailData?.map(user => [user.id, user.email]) || []);
+        const emailMap = new Map<string, string>();
+        if (emailData) {
+          emailData.forEach(userData => {
+            if (userData.id && userData.email) {
+              emailMap.set(userData.id, userData.email);
+            }
+          });
+        }
         
         // Fetch students
         const { data: studentsData, error: studentsError } = await supabase
@@ -82,14 +89,21 @@ export const useUserData = (
           console.error('Error fetching student emails:', studentEmailError);
         }
 
-        const studentEmailMap = new Map(studentEmailData?.map(user => [user.id, user.email]) || []);
+        const studentEmailMap = new Map<string, string>();
+        if (studentEmailData) {
+          studentEmailData.forEach(userData => {
+            if (userData.id && userData.email) {
+              studentEmailMap.set(userData.id, userData.email);
+            }
+          });
+        }
         
         const formattedTeachers: Teacher[] = (teachersData || []).map(teacher => ({
           id: teacher.id,
           name: teacher.name || 'No Name',
           email: emailMap.get(teacher.id) || 'Not provided',
           phone: 'Not provided',
-          role: teacher.role,
+          role: teacher.role as 'teacher' | 'staff' | 'school_admin',
           schoolId: teacher.school_id || '',
           schoolName: teacher.school?.name || 'No School',
           subjects: [],

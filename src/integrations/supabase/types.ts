@@ -123,48 +123,6 @@ export type Database = {
           },
         ]
       }
-      parent_student_relationships: {
-        Row: {
-          created_at: string | null
-          id: string
-          parent_id: string
-          relationship_type: string
-          student_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          parent_id: string
-          relationship_type?: string
-          student_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          parent_id?: string
-          relationship_type?: string
-          student_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "parent_student_relationships_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "parent_student_relationships_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           age: number | null
@@ -285,6 +243,74 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_admissions: {
+        Row: {
+          admission_date: string
+          admitted_by: string
+          created_at: string
+          grade_id: string
+          id: string
+          remarks: string | null
+          school_id: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          admission_date?: string
+          admitted_by: string
+          created_at?: string
+          grade_id: string
+          id?: string
+          remarks?: string | null
+          school_id: string
+          status: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          admission_date?: string
+          admitted_by?: string
+          created_at?: string
+          grade_id?: string
+          id?: string
+          remarks?: string | null
+          school_id?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_admissions_admitted_by_fkey"
+            columns: ["admitted_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_admissions_grade_id_fkey"
+            columns: ["grade_id"]
+            isOneToOne: false
+            referencedRelation: "grades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_admissions_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_admissions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
