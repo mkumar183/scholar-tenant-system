@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -117,7 +116,6 @@ export const useUserData = (
           role: 'student',
           schoolId: student.school_id || '',
           schoolName: student.school?.name || 'No School',
-          grade: 'Not specified',
           guardianName: 'Not specified',
           dateOfBirth: student.date_of_birth || '',
         }));

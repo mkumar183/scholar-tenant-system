@@ -1,4 +1,3 @@
-
 export type Section = {
   id: string;
   name: string;
@@ -54,4 +53,17 @@ export type Teacher = {
 export type School = {
   id: string;
   name: string;
+};
+
+export type StudentAdmission = {
+  id: string;
+  student_id: string;
+  school_id: string;
+  grade_id: string;
+  admission_date: string;
+  status: 'pending' | 'approved' | 'rejected';
+  remarks?: string;
+  admitted_by: string;
+  created_at: string;
+  updated_at: string;
 };
