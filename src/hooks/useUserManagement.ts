@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -112,6 +111,10 @@ export const useUserManagement = () => {
         return;
       }
       
+      // Store the current auth session to restore it after student creation
+      const { data: currentSession } = await supabase.auth.getSession();
+      console.log('Current session before signup:', currentSession);
+      
       const school = schools.find(s => s.id === newStudent.schoolId);
       const schoolName = school ? school.name : '';
       
@@ -126,14 +129,36 @@ export const useUserManagement = () => {
           }
         }
       });
-      
+
       if (authError) throw new Error(`Failed to create auth user: ${authError.message}`);
       if (!authData.user) throw new Error('Failed to create auth user, no user returned');
-      
+
       const userId = authData.user.id;
+      console.log('New user created with ID:', userId);
       
-      // Create user record
-      const { data, error } = await supabase
+      // Get session after signup
+      const { data: sessionAfterSignup } = await supabase.auth.getSession();
+      console.log('Session after signup:', sessionAfterSignup);
+      
+      // Restore the original session and wait for it to complete
+      if (currentSession?.session) {
+        const { error: restoreError } = await supabase.auth.setSession(currentSession.session);
+        if (restoreError) {
+          console.error('Error restoring session:', restoreError);
+          throw restoreError;
+        }
+        
+        // Verify session restoration
+        const { data: restoredSession } = await supabase.auth.getSession();
+        console.log('Session after restoration:', restoredSession);
+        
+        if (!restoredSession?.session) {
+          throw new Error('Failed to restore session');
+        }
+      }
+      
+      // Create user record with explicit select
+      const { data: userData, error: userError } = await supabase
         .from('users')
         .insert({
           id: userId,
@@ -143,11 +168,17 @@ export const useUserManagement = () => {
           school_id: newStudent.schoolId,
           date_of_birth: newStudent.dateOfBirth || null,
         })
-        .select();
+        .select('*')
+        .single();
       
-      if (error) throw error;
+      if (userError) {
+        console.error('Error creating user record:', userError);
+        throw userError;
+      }
       
-      if (data && data[0]) {
+      console.log('User record created:', userData);
+      
+      if (userData) {
         // Create student admission record
         const admission = await createStudentAdmission(
           userId,
@@ -161,15 +192,15 @@ export const useUserManagement = () => {
         }
         
         const newStudentData: Student = {
-          id: data[0].id,
-          name: newStudent.name,
+          id: userData.id,
+          name: userData.name,
           email: newStudent.email,
           phone: newStudent.phone,
           role: 'student',
-          schoolId: newStudent.schoolId,
+          schoolId: userData.school_id,
           schoolName: schoolName,
           guardianName: newStudent.guardianName,
-          dateOfBirth: newStudent.dateOfBirth,
+          dateOfBirth: userData.date_of_birth,
           gradeId: newStudent.gradeId,
           admissionStatus: 'active',
           admittedBy: user?.id,

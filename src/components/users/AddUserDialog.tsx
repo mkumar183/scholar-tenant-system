@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -77,14 +77,14 @@ const AddUserDialog = ({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="mr-2 h-4 w-4" /> Add {activeTab === 'teachers' ? 'Staff' : 'Student'}
+          <Plus className="mr-2 h-4 w-4" /> {activeTab === 'teachers' ? 'Add Staff' : 'Admit Student'}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add New {activeTab === 'teachers' ? 'Staff' : 'Student'}</DialogTitle>
+          <DialogTitle>{activeTab === 'teachers' ? 'Add New Staff' : 'Admit New Student'}</DialogTitle>
           <DialogDescription>
-            Register a new {activeTab === 'teachers' ? 'staff member' : 'student'} in the system
+            {activeTab === 'teachers' ? 'Register a new staff member in the system' : 'Admit a new student to the school'}
           </DialogDescription>
         </DialogHeader>
         
@@ -108,7 +108,7 @@ const AddUserDialog = ({
             Cancel
           </Button>
           <Button onClick={activeTab === 'teachers' ? handleAddTeacher : handleAddStudent}>
-            Add {activeTab === 'teachers' ? 'Staff' : 'Student'}
+            {activeTab === 'teachers' ? 'Add Staff' : 'Admit Student'}
           </Button>
         </DialogFooter>
       </DialogContent>
