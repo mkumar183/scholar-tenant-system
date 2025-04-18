@@ -1,4 +1,3 @@
-
 export type Section = {
   id: string;
   name: string;
@@ -25,9 +24,9 @@ export type Student = {
   email: string;
   phone: string;
   role: 'student';
-  schoolId: string;
-  schoolName: string;
-  grade: string;
+  schoolId?: string;
+  schoolName?: string;
+  grade?: string;
   guardianName: string;
   dateOfBirth?: string;
   tenant_id?: string;

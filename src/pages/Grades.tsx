@@ -191,14 +191,14 @@ const Grades = () => {
   return (
     <div className="space-y-6">
       {/* Debug info panel */}
-      <DebugPanel 
+      {/* <DebugPanel 
         userRole={debugInfo.userRole}
         hasSchoolId={debugInfo.hasSchoolId}
         schoolId={debugInfo.schoolId}
         canManageSections={debugInfo.canManageSections}
         selectedGradeId={selectedGradeId}
         activeSession={!!activeAcademicSession}
-      />
+      /> */}
       
       {/* Grades header */}
       <GradesHeader 

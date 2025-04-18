@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,8 +25,6 @@ export const useUserManagement = () => {
     name: '',
     email: '',
     phone: '',
-    schoolId: '',
-    grade: '',
     guardianName: '',
     dateOfBirth: '',
   });
@@ -104,13 +101,10 @@ export const useUserManagement = () => {
 
   const handleAddStudent = async () => {
     try {
-      if (!newStudent.name || !newStudent.email || !newStudent.schoolId) {
+      if (!newStudent.name || !newStudent.email) {
         toast.error('Please fill in all required fields');
         return;
       }
-      
-      const school = schools.find(s => s.id === newStudent.schoolId);
-      const schoolName = school ? school.name : '';
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newStudent.email,
@@ -134,7 +128,6 @@ export const useUserManagement = () => {
           id: userId,
           name: newStudent.name,
           role: 'student',
-          school_id: newStudent.schoolId,
           tenant_id: user?.tenantId,
           date_of_birth: newStudent.dateOfBirth || null,
         })
@@ -149,9 +142,8 @@ export const useUserManagement = () => {
           email: newStudent.email,
           phone: newStudent.phone,
           role: 'student',
-          schoolId: newStudent.schoolId,
-          schoolName: schoolName,
-          grade: newStudent.grade,
+          schoolId: '',
+          schoolName: '',
           guardianName: newStudent.guardianName,
           dateOfBirth: newStudent.dateOfBirth,
         };
@@ -161,8 +153,6 @@ export const useUserManagement = () => {
           name: '',
           email: '',
           phone: '',
-          schoolId: '',
-          grade: '',
           guardianName: '',
           dateOfBirth: '',
         });

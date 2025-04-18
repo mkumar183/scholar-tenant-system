@@ -7,8 +7,6 @@ interface AddStudentFormProps {
     name: string;
     email: string;
     phone: string;
-    schoolId: string;
-    grade: string;
     guardianName: string;
     dateOfBirth: string;
   };
@@ -16,16 +14,12 @@ interface AddStudentFormProps {
     name: string;
     email: string;
     phone: string;
-    schoolId: string;
-    grade: string;
     guardianName: string;
     dateOfBirth: string;
   }>>;
-  schools: { id: string; name: string }[];
-  grades: string[];
 }
 
-const AddStudentForm = ({ newStudent, setNewStudent, schools, grades }: AddStudentFormProps) => {
+const AddStudentForm = ({ newStudent, setNewStudent }: AddStudentFormProps) => {
   return (
     <div className="grid gap-4 py-4">
       <div>
@@ -67,42 +61,6 @@ const AddStudentForm = ({ newStudent, setNewStudent, schools, grades }: AddStude
           onChange={(e) => setNewStudent({...newStudent, phone: e.target.value})}
           className="mt-1"
         />
-      </div>
-      <div>
-        <Label htmlFor="student-school">School</Label>
-        <Select 
-          value={newStudent.schoolId} 
-          onValueChange={(value) => setNewStudent({...newStudent, schoolId: value})}
-        >
-          <SelectTrigger className="mt-1">
-            <SelectValue placeholder="Select school" />
-          </SelectTrigger>
-          <SelectContent>
-            {schools.map((school) => (
-              <SelectItem key={school.id} value={school.id}>
-                {school.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label htmlFor="student-grade">Grade</Label>
-        <Select 
-          value={newStudent.grade} 
-          onValueChange={(value) => setNewStudent({...newStudent, grade: value})}
-        >
-          <SelectTrigger className="mt-1">
-            <SelectValue placeholder="Select grade" />
-          </SelectTrigger>
-          <SelectContent>
-            {grades.map((grade) => (
-              <SelectItem key={grade} value={grade}>
-                {grade}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
       <div>
         <Label htmlFor="guardian-name">Guardian Name</Label>

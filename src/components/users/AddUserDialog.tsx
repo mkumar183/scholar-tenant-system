@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -37,8 +36,6 @@ interface AddUserDialogProps {
     name: string;
     email: string;
     phone: string;
-    schoolId: string;
-    grade: string;
     guardianName: string;
     dateOfBirth: string;
   };
@@ -46,15 +43,12 @@ interface AddUserDialogProps {
     name: string;
     email: string;
     phone: string;
-    schoolId: string;
-    grade: string;
     guardianName: string;
     dateOfBirth: string;
   }>>;
   handleAddTeacher: () => void;
   handleAddStudent: () => void;
   schools: { id: string; name: string }[];
-  grades: string[];
 }
 
 const AddUserDialog = ({
@@ -67,8 +61,7 @@ const AddUserDialog = ({
   setNewStudent,
   handleAddTeacher,
   handleAddStudent,
-  schools,
-  grades
+  schools
 }: AddUserDialogProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -94,9 +87,7 @@ const AddUserDialog = ({
         ) : (
           <AddStudentForm 
             newStudent={newStudent} 
-            setNewStudent={setNewStudent} 
-            schools={schools} 
-            grades={grades} 
+            setNewStudent={setNewStudent}
           />
         )}
         
