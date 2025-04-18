@@ -105,7 +105,7 @@ export const useUserData = (
           phone: 'Not provided',
           role: teacher.role as 'teacher' | 'staff' | 'school_admin',
           schoolId: teacher.school_id || '',
-          schoolName: teacher.school?.name || 'No School',
+          schoolName: teacher.school[0]?.name || 'No School',
           subjects: [],
         }));
         
@@ -116,7 +116,7 @@ export const useUserData = (
           phone: 'Not provided',
           role: 'student',
           schoolId: student.school_id || '',
-          schoolName: student.school?.name || 'No School',
+          schoolName: student.school[0]?.name || 'No School',
           guardianName: 'Not specified',
           dateOfBirth: student.date_of_birth || '',
         }));
