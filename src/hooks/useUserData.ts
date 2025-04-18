@@ -58,7 +58,7 @@ export const useUserData = (
 
         const emailMap = new Map<string, string>();
         if (emailData) {
-          emailData.forEach((userData: any) => {
+          emailData.forEach(userData => {
             if (userData.id && userData.email) {
               emailMap.set(userData.id, userData.email);
             }
@@ -91,7 +91,7 @@ export const useUserData = (
 
         const studentEmailMap = new Map<string, string>();
         if (studentEmailData) {
-          studentEmailData.forEach((userData: any) => {
+          studentEmailData.forEach(userData => {
             if (userData.id && userData.email) {
               studentEmailMap.set(userData.id, userData.email);
             }
@@ -117,6 +117,7 @@ export const useUserData = (
           role: 'student',
           schoolId: student.school_id || '',
           schoolName: student.school?.name || 'No School',
+          grade: 'Not specified',
           guardianName: 'Not specified',
           dateOfBirth: student.date_of_birth || '',
         }));

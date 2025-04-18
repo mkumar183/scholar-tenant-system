@@ -15,7 +15,7 @@ import {
 } from 'recharts';
 import { useTenantAdminStats } from '@/hooks/useTenantAdminStats';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { School, Users, GraduationCap, ArrowUpRight } from 'lucide-react';
+import { School, Users, GraduationCap, BookOpen, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   Table, 
@@ -60,7 +60,7 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Stats cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Schools</CardTitle>
@@ -94,6 +94,18 @@ const AdminDashboard: React.FC = () => {
             <div className="text-2xl font-bold">{stats.studentsCount}</div>
             <p className="text-xs text-muted-foreground">
               Enrolled in your schools
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Classes</CardTitle>
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.classesCount}</div>
+            <p className="text-xs text-muted-foreground">
+              Active classes
             </p>
           </CardContent>
         </Card>
