@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -8,7 +7,6 @@ export interface TenantAdminStats {
   schoolsCount: number;
   teachersCount: number;
   studentsCount: number;
-  classesCount: number; // Added the missing property
   schools: {
     id: string;
     name: string;
@@ -22,7 +20,6 @@ export const useTenantAdminStats = () => {
     schoolsCount: 0,
     teachersCount: 0,
     studentsCount: 0,
-    classesCount: 0, // Initialize with 0
     schools: []
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -63,14 +60,6 @@ export const useTenantAdminStats = () => {
           .eq('role', 'student');
 
         if (studentsError) throw studentsError;
-        
-        // Fetch sections count (classes)
-        const { count: classesCount, error: classesError } = await supabase
-          .from('sections')
-          .select('*', { count: 'exact', head: true })
-          .in('school_id', schools?.map(school => school.id) || []);
-          
-        if (classesError) throw classesError;
 
         // Calculate student count per school
         const schoolsWithStats = await Promise.all(
@@ -94,7 +83,6 @@ export const useTenantAdminStats = () => {
           schoolsCount: schools?.length || 0,
           teachersCount: teachersCount || 0,
           studentsCount: studentsCount || 0,
-          classesCount: classesCount || 0, // Add the classes count
           schools: schoolsWithStats
         });
       } catch (error) {
