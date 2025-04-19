@@ -13,6 +13,8 @@ interface SectionsManagerProps {
   onAddSection: (name: string) => Promise<boolean>;
   onUpdateSection: (id: string, name: string) => Promise<boolean>;
   onToggleStatus: (id: string, isActive: boolean) => Promise<boolean>;
+  onEnrollStudents: (sectionId: string, studentIds: string[]) => Promise<void>;
+  gradeId: string;
 }
 
 const SectionsManager = ({
@@ -21,6 +23,8 @@ const SectionsManager = ({
   onAddSection,
   onUpdateSection,
   onToggleStatus,
+  onEnrollStudents,
+  gradeId,
 }: SectionsManagerProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<Section | null>(null);
@@ -116,6 +120,8 @@ const SectionsManager = ({
         sections={sections}
         onEdit={handleEdit}
         onToggleStatus={onToggleStatus}
+        onEnrollStudents={onEnrollStudents}
+        gradeId={gradeId}
       />
     </div>
   );

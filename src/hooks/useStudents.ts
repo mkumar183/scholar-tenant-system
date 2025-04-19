@@ -1,17 +1,25 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Student } from '@/types';
 
-export const useStudents = () => {
+export const useStudents = (gradeId?: string) => {
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchStudents = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('users')
-        .select('*')
-        .eq('role', 'student');
+        .select('*, student_admissions!inner(*)')
+        .eq('role', 'student')
+        .eq('student_admissions.status', 'active');
+
+      if (gradeId) {
+        query = query.eq('student_admissions.grade_id', gradeId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setStudents(data || []);
@@ -22,21 +30,9 @@ export const useStudents = () => {
     }
   };
 
-  const addStudent = async (student: Student) => {
-    try {
-      const { error } = await supabase.from('users').insert([student]);
-      if (error) throw error;
-      await fetchStudents();
-      return true;
-    } catch (error) {
-      console.error('Error adding student:', error);
-      return false;
-    }
-  };
-
   useEffect(() => {
     fetchStudents();
-  }, []);
+  }, [gradeId]);
 
-  return { students, isLoading, addStudent };
-}; 
+  return { students, isLoading };
+};

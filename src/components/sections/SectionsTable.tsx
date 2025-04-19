@@ -13,6 +13,7 @@ interface SectionsTableProps {
   onEdit: (section: Section) => void;
   onToggleStatus: (id: string, isActive: boolean) => Promise<boolean>;
   onEnrollStudents: (sectionId: string, studentIds: string[]) => Promise<void>;
+  gradeId: string;
 }
 
 const SectionsTable = ({ 
@@ -20,6 +21,7 @@ const SectionsTable = ({
   onEdit, 
   onToggleStatus,
   onEnrollStudents,
+  gradeId,
 }: SectionsTableProps) => {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
 
@@ -29,6 +31,7 @@ const SectionsTable = ({
         isOpen={!!selectedSectionId}
         onClose={() => setSelectedSectionId(null)}
         sectionId={selectedSectionId || ''}
+        gradeId={gradeId}
         onEnroll={async (studentIds) => {
           if (selectedSectionId) {
             await onEnrollStudents(selectedSectionId, studentIds);

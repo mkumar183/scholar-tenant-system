@@ -10,6 +10,7 @@ interface EnrollStudentsDialogProps {
   isOpen: boolean;
   onClose: () => void;
   sectionId: string;
+  gradeId: string;
   onEnroll: (studentIds: string[]) => Promise<void>;
 }
 
@@ -17,9 +18,10 @@ export const EnrollStudentsDialog = ({
   isOpen,
   onClose,
   sectionId,
+  gradeId,
   onEnroll,
 }: EnrollStudentsDialogProps) => {
-  const { students, isLoading } = useStudents();
+  const { students, isLoading } = useStudents(gradeId);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 
   const handleSubmit = async () => {

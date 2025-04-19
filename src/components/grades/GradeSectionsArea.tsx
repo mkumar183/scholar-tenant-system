@@ -64,6 +64,7 @@ const GradeSectionsArea = ({
               onUpdateSection={updateSection}
               onToggleStatus={toggleSectionStatus}
               onEnrollStudents={handleEnrollStudents}
+              gradeId={selectedGradeId}
             />
           ) : (
             <div className="p-4 border rounded-md text-center">
@@ -75,6 +76,7 @@ const GradeSectionsArea = ({
                 onUpdateSection={updateSection}
                 onToggleStatus={toggleSectionStatus}
                 onEnrollStudents={handleEnrollStudents}
+                gradeId={selectedGradeId}
               />
             </div>
           )}
