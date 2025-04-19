@@ -27,7 +27,7 @@ export const useUserData = (
         
         const formattedSchools: School[] = schoolsData.map(school => ({
           id: school.id,
-          name: school.name
+          name: school.name || 'Unnamed School'
         }));
         
         setSchools(formattedSchools);
@@ -48,7 +48,7 @@ export const useUserData = (
         
         if (teachersError) throw teachersError;
 
-        const teacherIds = (teachersData || []).map(teacher => teacher.id);
+        const teacherIds = teachersData.map(teacher => teacher.id);
         const { data: emailData, error: emailError } = await supabase
           .rpc('get_user_emails', { user_ids: teacherIds });
 
@@ -56,9 +56,9 @@ export const useUserData = (
           console.error('Error fetching emails:', emailError);
         }
 
-        const emailMap = new Map<string, string>();
+        const emailMap = new Map();
         if (emailData) {
-          emailData.forEach(userData => {
+          emailData.forEach((userData: { id: string, email: string }) => {
             if (userData.id && userData.email) {
               emailMap.set(userData.id, userData.email);
             }
@@ -81,7 +81,7 @@ export const useUserData = (
         
         if (studentsError) throw studentsError;
         
-        const studentIds = (studentsData || []).map(student => student.id);
+        const studentIds = studentsData.map(student => student.id);
         const { data: studentEmailData, error: studentEmailError } = await supabase
           .rpc('get_user_emails', { user_ids: studentIds });
 
@@ -89,46 +89,38 @@ export const useUserData = (
           console.error('Error fetching student emails:', studentEmailError);
         }
 
-        const studentEmailMap = new Map<string, string>();
+        const studentEmailMap = new Map();
         if (studentEmailData) {
-          studentEmailData.forEach(userData => {
+          studentEmailData.forEach((userData: { id: string, email: string }) => {
             if (userData.id && userData.email) {
               studentEmailMap.set(userData.id, userData.email);
             }
           });
         }
-        
-        // Fetch student admissions
-        const { data: admissionsData, error: admissionsError } = await supabase
-          .from('student_admissions')
-          .select(`
-            id,
-            student_id,
-            school_id,
-            grade_id,
-            status,
-            admitted_by,
-            grade:grades(id, name)
-          `);
-        
-        if (admissionsError) {
-          console.error('Error fetching student admissions:', admissionsError);
+
+        // Fetch current section enrollments for students
+        const { data: enrollmentsData, error: enrollmentsError } = await supabase
+          .from('current_section_enrollments')
+          .select('*')
+          .in('student_id', studentIds);
+
+        if (enrollmentsError) {
+          console.error('Error fetching enrollments:', enrollmentsError);
         }
-        
-        // Create a map of student admissions
-        const admissionsMap = new Map();
-        if (admissionsData) {
-          admissionsData.forEach(admission => {
-            admissionsMap.set(admission.student_id, {
-              status: admission.status,
-              gradeId: admission.grade_id,
-              gradeName: admission.grade?.name || 'Unknown Grade',
-              admittedBy: admission.admitted_by
+
+        // Create a map of student enrollments
+        const enrollmentsMap = new Map();
+        if (enrollmentsData) {
+          enrollmentsData.forEach(enrollment => {
+            enrollmentsMap.set(enrollment.student_id, {
+              sectionName: enrollment.section_name,
+              gradeName: enrollment.grade_name,
+              status: enrollment.status
             });
           });
         }
         
-        const formattedTeachers: Teacher[] = (teachersData || []).map(teacher => ({
+        const formattedTeachers: Teacher[] = teachersData.map(teacher => ({
           id: teacher.id,
           name: teacher.name || 'No Name',
           email: emailMap.get(teacher.id) || 'Not provided',
@@ -139,8 +131,8 @@ export const useUserData = (
           subjects: [],
         }));
         
-        const formattedStudents: Student[] = (studentsData || []).map(student => {
-          const admission = admissionsMap.get(student.id);
+        const formattedStudents: Student[] = studentsData.map(student => {
+          const enrollment = enrollmentsMap.get(student.id);
           return {
             id: student.id,
             name: student.name || 'No Name',
@@ -149,12 +141,10 @@ export const useUserData = (
             role: 'student',
             schoolId: student.school_id || '',
             schoolName: student.school?.name || 'No School',
-            grade: admission ? admission.gradeName : 'Not specified',
-            gradeId: admission ? admission.gradeId : undefined,
+            grade: enrollment ? enrollment.gradeName : 'Not specified',
             guardianName: 'Not specified',
             dateOfBirth: student.date_of_birth || '',
-            admissionStatus: admission ? admission.status : undefined,
-            admittedBy: admission ? admission.admittedBy : undefined,
+            admissionStatus: enrollment ? enrollment.status : undefined,
           };
         });
         
