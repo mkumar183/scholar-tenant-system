@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 import { Enrollment } from '@/hooks/useEnrollments';
-import EnrollmentStatusBadge from './EnrollmentStatusBadge';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { EnrollmentStatusBadge } from './EnrollmentStatusBadge';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 interface EnrolledStudentsListProps {
   enrollments: Enrollment[];

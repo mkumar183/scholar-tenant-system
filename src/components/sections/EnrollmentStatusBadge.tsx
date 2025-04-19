@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Check, AlertTriangle, ArrowRight } from "lucide-react";
 

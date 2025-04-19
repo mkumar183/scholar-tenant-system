@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -19,6 +19,11 @@ export const useEnrollments = (sectionId: string, currentUserId: string) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchEnrollments = async () => {
+    if (!sectionId) {
+      setEnrollments([]);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -28,7 +33,7 @@ export const useEnrollments = (sectionId: string, currentUserId: string) => {
         .order('enrolled_at', { ascending: false });
 
       if (error) throw error;
-      setEnrollments(data);
+      setEnrollments(data || []);
     } catch (error) {
       console.error('Error fetching enrollments:', error);
       toast.error('Failed to fetch enrollments');
@@ -37,13 +42,15 @@ export const useEnrollments = (sectionId: string, currentUserId: string) => {
     }
   };
 
+  useEffect(() => {
+    fetchEnrollments();
+  }, [sectionId]);
+
   const enrollStudents = async (studentIds: string[], targetSectionId: string) => {
-    console.log('Enrolling students with:', {
-      studentIds,
-      targetSectionId,
-      currentUserId,
-      sectionId
-    });
+    if (!targetSectionId) {
+      toast.error('Invalid section ID');
+      return false;
+    }
 
     try {
       const enrollments = studentIds.map(studentId => ({
