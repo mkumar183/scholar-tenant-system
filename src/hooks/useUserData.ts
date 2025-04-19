@@ -40,8 +40,8 @@ export const useUserData = (
             name, 
             role,
             school_id,
-            tenant_id,
-            school:schools!users_school_id_fkey(name)
+            tenant_id,            
+            school:schools!inner(id, name)
           `)
           .in('role', ['teacher', 'staff', 'school_admin'])
           .eq('tenant_id', user?.tenantId);
@@ -74,8 +74,8 @@ export const useUserData = (
             role,
             school_id,
             tenant_id,
-            date_of_birth,
-            school:schools!users_school_id_fkey(name)
+            date_of_birth,            
+            school:schools!inner(id, name)
           `)
           .eq('role', 'student');
         
@@ -108,7 +108,7 @@ export const useUserData = (
             grade_id,
             status,
             admitted_by,
-            grade:grades(id, name)
+            grade:grades!inner(id, name)
           `);
         
         if (admissionsError) {
@@ -122,7 +122,7 @@ export const useUserData = (
             admissionsMap.set(admission.student_id, {
               status: admission.status,
               gradeId: admission.grade_id,
-              gradeName: admission.grade?.name || 'Unknown Grade',
+              gradeName: admission.grade[0]?.name || 'Unknown Grade',
               admittedBy: admission.admitted_by
             });
           });
@@ -135,7 +135,7 @@ export const useUserData = (
           phone: 'Not provided',
           role: teacher.role as 'teacher' | 'staff' | 'school_admin',
           schoolId: teacher.school_id || '',
-          schoolName: teacher.school?.name || 'No School',
+          schoolName: teacher.school[0]?.name || 'No School',
           subjects: [],
         }));
         
@@ -148,7 +148,7 @@ export const useUserData = (
             phone: 'Not provided',
             role: 'student',
             schoolId: student.school_id || '',
-            schoolName: student.school?.name || 'No School',
+            schoolName: student.school[0]?.name || 'No School',
             grade: admission ? admission.gradeName : 'Not specified',
             gradeId: admission ? admission.gradeId : undefined,
             guardianName: 'Not specified',
