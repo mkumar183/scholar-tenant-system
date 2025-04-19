@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -80,8 +79,8 @@ const Layout = ({ children }: LayoutProps) => {
             </Button>
           )}
 
-          {/* Grades menu item - visible to school admins, tenant admins, and teachers */}
-          {(user.role === 'school_admin' || user.role === 'tenant_admin' || user.role === 'teacher') && (
+          {/* Grades menu item - visible to school admins and teachers only */}
+          {(user.role === 'school_admin' || user.role === 'teacher') && (
             <Button 
               variant="ghost" 
               className="w-full justify-start text-primary-foreground hover:text-primary-foreground hover:bg-primary/80"

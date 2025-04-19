@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StreamManagement } from '@/components/settings/StreamManagement';
+import { GradesManager } from '@/components/grades/GradesManager';
 
 const Settings = () => {
   const { user } = useAuth();
@@ -324,7 +325,27 @@ const Settings = () => {
         </TabsContent>
         
         <TabsContent value="academic">
-          <StreamManagement />
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium">Academic Structure</h3>
+              <p className="text-sm text-muted-foreground">
+                Manage your institution's academic structure including grades and streams.
+              </p>
+            </div>
+
+            <Tabs defaultValue="streams">
+              <TabsList>
+                <TabsTrigger value="streams">Streams</TabsTrigger>
+                <TabsTrigger value="grades">Grades</TabsTrigger>
+              </TabsList>
+              <TabsContent value="streams">
+                <StreamManagement />
+              </TabsContent>
+              <TabsContent value="grades">
+                <GradesManager />
+              </TabsContent>
+            </Tabs>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
