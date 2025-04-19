@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Section } from '@/types';
 import SectionsManager from '@/components/sections/SectionsManager';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useEnrollments } from '@/hooks/useEnrollments';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface GradeSectionsAreaProps {
   selectedGradeId: string | null;
@@ -24,10 +24,16 @@ const GradeSectionsArea = ({
   updateSection,
   toggleSectionStatus,
 }: GradeSectionsAreaProps) => {
-  const { enrollStudents } = useEnrollments(selectedGradeId || '');
+  const { user } = useAuth();
+  const { enrollStudents } = useEnrollments(selectedGradeId || '', user?.id || '');
 
   const handleEnrollStudents = async (sectionId: string, studentIds: string[]) => {
-    await enrollStudents(studentIds);
+    console.log('GradeSectionsArea - Enrolling students:', {
+      sectionId,
+      studentIds,
+      selectedGradeId
+    });
+    await enrollStudents(studentIds, sectionId);
   };
 
   if (!selectedGradeId) {

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -15,7 +14,7 @@ export interface Enrollment {
   notes?: string;
 }
 
-export const useEnrollments = (sectionId: string) => {
+export const useEnrollments = (sectionId: string, currentUserId: string) => {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -38,12 +37,20 @@ export const useEnrollments = (sectionId: string) => {
     }
   };
 
-  const enrollStudents = async (studentIds: string[]) => {
+  const enrollStudents = async (studentIds: string[], targetSectionId: string) => {
+    console.log('Enrolling students with:', {
+      studentIds,
+      targetSectionId,
+      currentUserId,
+      sectionId
+    });
+
     try {
       const enrollments = studentIds.map(studentId => ({
         student_id: studentId,
-        section_id: sectionId,
+        section_id: targetSectionId,
         status: 'active',
+        enrolled_by: currentUserId
       }));
 
       const { error } = await supabase
