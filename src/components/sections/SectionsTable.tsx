@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Section } from '@/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
@@ -24,6 +23,10 @@ const SectionsTable = ({
   gradeId,
 }: SectionsTableProps) => {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    console.log('SectionsTable - gradeId:', gradeId);
+  }, [gradeId]);
 
   return (
     <div className="border rounded-md">

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Section } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -31,12 +30,13 @@ const SectionsManager = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   useEffect(() => {
-    console.log("SectionsManager rendered with sections:", { 
+    console.log("SectionsManager rendered with:", { 
       sectionsCount: sections?.length || 0, 
       isLoading,
+      gradeId,
       renderingButtons: true
     });
-  }, [sections, isLoading]);
+  }, [sections, isLoading, gradeId]);
 
   const handleSubmit = async (name: string) => {
     setIsSubmitting(true);

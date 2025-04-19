@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -24,6 +23,12 @@ export const EnrollStudentsDialog = ({
   const { students, isLoading } = useStudents(gradeId);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 
+  useEffect(() => {
+    console.log('EnrollStudentsDialog - gradeId:', gradeId);
+    console.log('EnrollStudentsDialog - students:', students);
+    console.log('EnrollStudentsDialog - isLoading:', isLoading);
+  }, [gradeId, students, isLoading]);
+
   const handleSubmit = async () => {
     await onEnroll(selectedStudents);
     setSelectedStudents([]);
@@ -43,24 +48,30 @@ export const EnrollStudentsDialog = ({
           <>
             <ScrollArea className="h-[300px] pr-4">
               <div className="space-y-4">
-                {students.map((student) => (
-                  <div key={student.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={student.id}
-                      checked={selectedStudents.includes(student.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedStudents([...selectedStudents, student.id]);
-                        } else {
-                          setSelectedStudents(selectedStudents.filter(id => id !== student.id));
-                        }
-                      }}
-                    />
-                    <label htmlFor={student.id} className="text-sm font-medium">
-                      {student.name}
-                    </label>
+                {students.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-4">
+                    No students found for this grade.
                   </div>
-                ))}
+                ) : (
+                  students.map((student) => (
+                    <div key={student.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={student.id}
+                        checked={selectedStudents.includes(student.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedStudents([...selectedStudents, student.id]);
+                          } else {
+                            setSelectedStudents(selectedStudents.filter(id => id !== student.id));
+                          }
+                        }}
+                      />
+                      <label htmlFor={student.id} className="text-sm font-medium">
+                        {student.name}
+                      </label>
+                    </div>
+                  ))
+                )}
               </div>
             </ScrollArea>
 
