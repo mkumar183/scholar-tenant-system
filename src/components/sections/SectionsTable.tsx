@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Section } from '@/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -6,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Pencil, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { EnrollStudentsDialog } from './EnrollStudentsDialog';
-import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { useEnrollments } from '@/hooks/useEnrollments';
 import { useAuth } from '@/contexts/AuthContext';
 import EnrolledStudentsButton from './EnrolledStudentsButton';
@@ -58,7 +58,7 @@ const SectionsTable = ({
         </TableHeader>
         <TableBody>
           {sections.map((section) => (
-            <Collapsible key={section.id}>
+            <React.Fragment key={section.id}>
               <TableRow>
                 <TableCell>
                   <div className="flex items-center">
@@ -79,7 +79,6 @@ const SectionsTable = ({
                 </TableCell>
                 <TableCell>
                   <EnrolledStudentsButton
-                    count={enrollments?.length || 0}
                     isOpen={openSectionId === section.id}
                     onClick={() => {
                       if (openSectionId === section.id) {
@@ -112,15 +111,17 @@ const SectionsTable = ({
                   </div>
                 </TableCell>
               </TableRow>
-              <CollapsibleContent>
-                {openSectionId === section.id && (
-                  <EnrolledStudentsList 
-                    enrollments={enrollments} 
-                    isLoading={isLoading} 
-                  />
-                )}
-              </CollapsibleContent>
-            </Collapsible>
+              {openSectionId === section.id && (
+                <TableRow>
+                  <TableCell colSpan={4} className="p-0 border-t-0">
+                    <EnrolledStudentsList 
+                      enrollments={enrollments} 
+                      isLoading={isLoading} 
+                    />
+                  </TableCell>
+                </TableRow>
+              )}
+            </React.Fragment>
           ))}
           {sections.length === 0 && (
             <TableRow>

@@ -4,12 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
 
 interface EnrolledStudentsButtonProps {
-  count: number;
   isOpen: boolean;
   onClick: () => void;
 }
 
-const EnrolledStudentsButton = ({ count, isOpen, onClick }: EnrolledStudentsButtonProps) => {
+const EnrolledStudentsButton = ({ isOpen, onClick }: EnrolledStudentsButtonProps) => {
   return (
     <Button
       variant="outline"
@@ -18,7 +17,7 @@ const EnrolledStudentsButton = ({ count, isOpen, onClick }: EnrolledStudentsButt
       className="min-w-[140px]"
     >
       <Users className="h-4 w-4 mr-1" />
-      {count} Students {isOpen ? '▼' : '▶'}
+      View Students {isOpen ? '▼' : '▶'}
     </Button>
   );
 };
