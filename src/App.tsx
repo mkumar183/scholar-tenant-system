@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,7 +19,6 @@ import SchoolDetails from "./pages/SchoolDetails";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import AcademicSessions from "./pages/AcademicSessions";
-import Grades from "./pages/Grades";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,7 +44,6 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Changed this route to render the Login component directly */}
             <Route path="/" element={<Login />} />
             <Route path="/login" element={<Login />} />
             
@@ -100,14 +99,6 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <AcademicSessions />
-                </Layout>
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/grades" element={
-              <ProtectedRoute>
-                <Layout>
-                  <Grades />
                 </Layout>
               </ProtectedRoute>
             } />

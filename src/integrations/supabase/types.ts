@@ -352,6 +352,67 @@ export type Database = {
           },
         ]
       }
+      student_section_enrollments: {
+        Row: {
+          effective_from: string
+          effective_to: string | null
+          enrolled_at: string
+          enrolled_by: string
+          id: string
+          notes: string | null
+          section_id: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          effective_from?: string
+          effective_to?: string | null
+          enrolled_at?: string
+          enrolled_by: string
+          id?: string
+          notes?: string | null
+          section_id: string
+          status: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          effective_from?: string
+          effective_to?: string | null
+          enrolled_at?: string
+          enrolled_by?: string
+          id?: string
+          notes?: string | null
+          section_id?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_section_enrollments_enrolled_by_fkey"
+            columns: ["enrolled_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_section_enrollments_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_section_enrollments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           admin_email: string | null
@@ -487,7 +548,46 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      current_section_enrollments: {
+        Row: {
+          effective_from: string | null
+          effective_to: string | null
+          enrolled_at: string | null
+          enrolled_by: string | null
+          grade_name: string | null
+          id: string | null
+          notes: string | null
+          section_id: string | null
+          section_name: string | null
+          status: string | null
+          student_id: string | null
+          student_name: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_section_enrollments_enrolled_by_fkey"
+            columns: ["enrolled_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_section_enrollments_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_section_enrollments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_user_emails: {
