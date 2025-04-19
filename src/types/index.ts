@@ -1,3 +1,4 @@
+
 export type Section = {
   id: string;
   name: string;
@@ -13,9 +14,9 @@ export type Grade = {
   id: string;
   name: string;
   level: number;
-  tenant_id: string;
-  created_at: string;
-  updated_at: string;
+  tenantId: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type Student = {

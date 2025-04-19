@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGrades } from '@/hooks/useGrades';
@@ -143,12 +144,12 @@ const Grades = () => {
     if (isEditMode && selectedGrade) {
       success = await updateGrade(selectedGrade.id, {
         ...newGradeData,
-        tenant_id: user.tenantId,
+        tenantId: user.tenantId,
       });
     } else {
       success = await addGrade({
         ...newGradeData,
-        tenant_id: user.tenantId,
+        tenantId: user.tenantId,
       } as Omit<Grade, 'id' | 'createdAt' | 'updatedAt'>);
     }
 

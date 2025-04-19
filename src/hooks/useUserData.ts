@@ -21,19 +21,18 @@ export const useUserData = (
         // Fetch schools
         const { data: schoolsData, error: schoolsError } = await supabase
           .from('schools')
-          .select('id, name')
-          .returns<Array<{ id: string; name: string }>>();
+          .select('id, name');
         
         if (schoolsError) throw schoolsError;
         
-        const formattedSchools: School[] = (schoolsData || []).map(school => ({
+        const formattedSchools: School[] = schoolsData.map(school => ({
           id: school.id,
           name: school.name
         }));
         
         setSchools(formattedSchools);
         
-        // Fetch teachers with proper type annotations
+        // Fetch teachers
         const { data: teachersData, error: teachersError } = await supabase
           .from('users')
           .select(`
@@ -42,7 +41,7 @@ export const useUserData = (
             role,
             school_id,
             tenant_id,
-            school:schools!users_school_id_fkey(id, name)
+            school:schools!users_school_id_fkey(name)
           `)
           .in('role', ['teacher', 'staff', 'school_admin'])
           .eq('tenant_id', user?.tenantId);
@@ -59,8 +58,73 @@ export const useUserData = (
 
         const emailMap = new Map<string, string>();
         if (emailData) {
-          emailData.forEach(email => {
-            emailMap.set(email.id, email.email);
+          emailData.forEach(userData => {
+            if (userData.id && userData.email) {
+              emailMap.set(userData.id, userData.email);
+            }
+          });
+        }
+        
+        // Fetch students
+        const { data: studentsData, error: studentsError } = await supabase
+          .from('users')
+          .select(`
+            id, 
+            name, 
+            role,
+            school_id,
+            tenant_id,
+            date_of_birth,
+            school:schools!users_school_id_fkey(name)
+          `)
+          .eq('role', 'student');
+        
+        if (studentsError) throw studentsError;
+        
+        const studentIds = (studentsData || []).map(student => student.id);
+        const { data: studentEmailData, error: studentEmailError } = await supabase
+          .rpc('get_user_emails', { user_ids: studentIds });
+
+        if (studentEmailError) {
+          console.error('Error fetching student emails:', studentEmailError);
+        }
+
+        const studentEmailMap = new Map<string, string>();
+        if (studentEmailData) {
+          studentEmailData.forEach(userData => {
+            if (userData.id && userData.email) {
+              studentEmailMap.set(userData.id, userData.email);
+            }
+          });
+        }
+        
+        // Fetch student admissions
+        const { data: admissionsData, error: admissionsError } = await supabase
+          .from('student_admissions')
+          .select(`
+            id,
+            student_id,
+            school_id,
+            grade_id,
+            status,
+            admitted_by,
+            grade:grades(id, name)
+          `);
+        
+        if (admissionsError) {
+          console.error('Error fetching student admissions:', admissionsError);
+        }
+        
+        // Create a map of student admissions
+        const admissionsMap = new Map();
+        if (admissionsData) {
+          admissionsData.forEach(admission => {
+            admissionsMap.set(admission.student_id, {
+              status: admission.status,
+              gradeId: admission.grade_id,
+              gradeName: admission.grade?.name || 'Unknown Grade',
+              admittedBy: admission.admitted_by
+            });
           });
         }
         
@@ -75,41 +139,8 @@ export const useUserData = (
           subjects: [],
         }));
         
-        setTeachers(formattedTeachers);
-
-        // Fetch students with proper type annotations
-        const { data: studentsData, error: studentsError } = await supabase
-          .from('users')
-          .select(`
-            id, 
-            name, 
-            role,
-            school_id,
-            tenant_id,
-            date_of_birth,
-            school:schools!users_school_id_fkey(id, name)
-          `)
-          .eq('role', 'student')
-          .eq('tenant_id', user?.tenantId);
-        
-        if (studentsError) throw studentsError;
-
-        const studentIds = (studentsData || []).map(student => student.id);
-        const { data: studentEmailData, error: studentEmailError } = await supabase
-          .rpc('get_user_emails', { user_ids: studentIds });
-
-        if (studentEmailError) {
-          console.error('Error fetching student emails:', studentEmailError);
-        }
-
-        const studentEmailMap = new Map<string, string>();
-        if (studentEmailData) {
-          studentEmailData.forEach(email => {
-            studentEmailMap.set(email.id, email.email);
-          });
-        }
-        
         const formattedStudents: Student[] = (studentsData || []).map(student => {
+          const admission = admissionsMap.get(student.id);
           return {
             id: student.id,
             name: student.name || 'No Name',
@@ -118,15 +149,18 @@ export const useUserData = (
             role: 'student',
             schoolId: student.school_id || '',
             schoolName: student.school?.name || 'No School',
-            grade: 'Not specified',
+            grade: admission ? admission.gradeName : 'Not specified',
+            gradeId: admission ? admission.gradeId : undefined,
             guardianName: 'Not specified',
             dateOfBirth: student.date_of_birth || '',
-            tenant_id: student.tenant_id || undefined,
-            school_id: student.school_id || undefined,
+            admissionStatus: admission ? admission.status : undefined,
+            admittedBy: admission ? admission.admittedBy : undefined,
           };
         });
         
+        setTeachers(formattedTeachers);
         setStudents(formattedStudents);
+
       } catch (error) {
         console.error('Error fetching users:', error);
         toast.error('Failed to load users');
