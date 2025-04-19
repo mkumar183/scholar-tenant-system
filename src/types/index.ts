@@ -1,4 +1,3 @@
-
 export interface Tenant {
   id: string;
   name: string;
@@ -143,6 +142,26 @@ export interface StudentAdmission {
   admitted_by: string;
   remarks: string | null;
   academic_session_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Grade {
+  id: string;
+  name: string;
+  level: number;
+  tenant_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Section {
+  id: string;
+  name: string;
+  grade_id: string;
+  school_id: string;
+  academic_session_id: string;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }

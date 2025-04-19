@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -73,7 +72,8 @@ export const useUserData = (
             date_of_birth,
             school:schools!users_school_id_fkey(name)
           `)
-          .eq('role', 'student');
+          .eq('role', 'student')
+          .eq('tenant_id', user?.tenantId);
         
         if (studentsError) throw studentsError;
         
@@ -162,10 +162,6 @@ export const useUserData = (
           const admission = admissionsMap.get(student.id);
           const enrollment = enrollmentsMap.get(student.id);
           
-          // Prefer admission grade info, but fall back to enrollment if available
-          const gradeName = admission?.gradeName || enrollment?.gradeName || 'Not specified';
-          const gradeId = admission?.gradeId || '';
-          
           return {
             id: student.id,
             name: student.name || 'No Name',
@@ -174,8 +170,8 @@ export const useUserData = (
             role: 'student',
             schoolId: student.school_id || '',
             schoolName: student.school?.name || 'No School',
-            grade: gradeName,
-            gradeId: gradeId,
+            grade: admission?.gradeName || enrollment?.gradeName || 'Not specified',
+            gradeId: admission?.gradeId || '',
             guardianName: 'Not specified',
             dateOfBirth: student.date_of_birth || '',
             admissionStatus: admission?.status || undefined,
@@ -185,7 +181,7 @@ export const useUserData = (
         
         setTeachers(formattedTeachers);
         setStudents(formattedStudents);
-
+        setSchools(formattedSchools);
       } catch (error) {
         console.error('Error fetching users:', error);
         toast.error('Failed to load users');
@@ -196,4 +192,15 @@ export const useUserData = (
     
     fetchUsers();
   }, [user?.tenantId, setTeachers, setStudents, setSchools, setIsLoading]);
+  
+  return {
+    teachers,
+    students,
+    schools,
+    isLoading,
+    setTeachers,
+    setStudents,
+    setSchools,
+    setIsLoading
+  };
 };
