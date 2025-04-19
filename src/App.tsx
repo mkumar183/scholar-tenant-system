@@ -1,161 +1,132 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import ProtectedRoute from './components/ProtectedRoute';
-import Layout from './components/Layout';
-import Tenants from './pages/Tenants';
-import Schools from './pages/Schools';
-import Users from './pages/Users';
-import Classes from './pages/Classes';
-import Enrollments from './pages/Enrollments';
-import AcademicSessions from './pages/AcademicSessions';
-import Terms from './pages/Terms';
-import Holidays from './pages/Holidays';
-import Teachers from './pages/Teachers';
-import Students from './pages/Students';
-import Grades from './pages/Grades';
-import Sections from './pages/Sections';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import Layout from "@/components/Layout";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { useEffect } from "react";
 
-function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Dashboard />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/tenants"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Tenants />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/schools"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Schools />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/users"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Users />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/classes"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Classes />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/enrollments"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Enrollments />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/academic-sessions"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <AcademicSessions />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/terms"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Terms />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/holidays"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Holidays />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teachers"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Teachers />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/students"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Students />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/grades"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Grades />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route 
-          path="/sections" 
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Sections />
-              </Layout>
-            </ProtectedRoute>
-          } 
-        />
-      </Routes>
-    </Router>
-  );
-}
+// Pages
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import Tenants from "./pages/Tenants";
+import TenantDetails from "./pages/TenantDetails";
+import Schools from "./pages/Schools";
+import SchoolDetails from "./pages/SchoolDetails";
+import Users from "./pages/Users";
+import Settings from "./pages/Settings";
+import AcademicSessions from "./pages/AcademicSessions";
+import Grades from "./pages/Grades";
+import NotFound from "./pages/NotFound";
+
+const queryClient = new QueryClient();
+
+// Create a component to handle redirects based on authentication
+const AuthRedirects = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  useEffect(() => {
+    // This ensures we log any navigation issues
+    console.log('Current path:', location.pathname);
+  }, [location.pathname]);
+  
+  return null;
+};
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <AuthProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Changed this route to render the Login component directly */}
+            <Route path="/" element={<Login />} />
+            <Route path="/login" element={<Login />} />
+            
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/tenants" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Tenants />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/tenants/:id" element={
+              <ProtectedRoute>
+                <Layout>
+                  <TenantDetails />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/schools" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Schools />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/schools/:id" element={
+              <ProtectedRoute>
+                <Layout>
+                  <SchoolDetails />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/users" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Users />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/academic-sessions" element={
+              <ProtectedRoute>
+                <Layout>
+                  <AcademicSessions />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/grades" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Grades />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Settings />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <AuthRedirects />
+        </BrowserRouter>
+      </AuthProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

@@ -207,16 +207,15 @@ export const useUserManagement = () => {
         
         const newStudentData: Student = {
           id: userData.id,
-          name: userData.name || 'No Name',
+          name: userData.name,
           email: newStudent.email,
-          phone: newStudent.phone || 'Not provided',
+          phone: newStudent.phone,
           role: 'student',
-          schoolId: userData.school_id || '',
+          schoolId: userData.school_id,
           schoolName: schoolName,
-          grade: 'Newly Admitted', // We'll fetch the actual grade name on refresh
+          guardianName: newStudent.guardianName,
+          dateOfBirth: userData.date_of_birth,
           gradeId: newStudent.gradeId,
-          guardianName: newStudent.guardianName || 'Not specified',
-          dateOfBirth: userData.date_of_birth || '',
           admissionStatus: 'active',
           admittedBy: user?.id,
         };
