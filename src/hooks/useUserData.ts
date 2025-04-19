@@ -21,15 +21,11 @@ export const useUserData = (
         // Fetch schools
         const { data: schoolsData, error: schoolsError } = await supabase
           .from('schools')
-          .select('id, name');
+          .select('id, name, tenant_id, address, type, created_at, updated_at');
         
         if (schoolsError) throw schoolsError;
         
-        const formattedSchools: School[] = schoolsData.map(school => ({
-          id: school.id,
-          name: school.name || 'Unnamed School'
-        }));
-        
+        const formattedSchools: School[] = schoolsData;
         setSchools(formattedSchools);
         
         // Fetch teachers
@@ -98,6 +94,37 @@ export const useUserData = (
           });
         }
 
+        // Fetch student admissions for students
+        const { data: admissionsData, error: admissionsError } = await supabase
+          .from('student_admissions')
+          .select(`
+            id,
+            student_id,
+            school_id,
+            grade_id,
+            status,
+            admitted_by,
+            grade:grade_id(id, name)
+          `)
+          .in('student_id', studentIds);
+
+        if (admissionsError) {
+          console.error('Error fetching admissions:', admissionsError);
+        }
+
+        // Create a map of student admissions
+        const admissionsMap = new Map();
+        if (admissionsData) {
+          admissionsData.forEach(admission => {
+            admissionsMap.set(admission.student_id, {
+              gradeName: admission.grade?.name,
+              gradeId: admission.grade_id,
+              status: admission.status,
+              admittedBy: admission.admitted_by
+            });
+          });
+        }
+
         // Fetch current section enrollments for students
         const { data: enrollmentsData, error: enrollmentsError } = await supabase
           .from('current_section_enrollments')
@@ -108,7 +135,7 @@ export const useUserData = (
           console.error('Error fetching enrollments:', enrollmentsError);
         }
 
-        // Create a map of student enrollments
+        // Create a map of student enrollments (will use alongside admissions)
         const enrollmentsMap = new Map();
         if (enrollmentsData) {
           enrollmentsData.forEach(enrollment => {
@@ -132,7 +159,13 @@ export const useUserData = (
         }));
         
         const formattedStudents: Student[] = studentsData.map(student => {
+          const admission = admissionsMap.get(student.id);
           const enrollment = enrollmentsMap.get(student.id);
+          
+          // Prefer admission grade info, but fall back to enrollment if available
+          const gradeName = admission?.gradeName || enrollment?.gradeName || 'Not specified';
+          const gradeId = admission?.gradeId || '';
+          
           return {
             id: student.id,
             name: student.name || 'No Name',
@@ -141,10 +174,12 @@ export const useUserData = (
             role: 'student',
             schoolId: student.school_id || '',
             schoolName: student.school?.name || 'No School',
-            grade: enrollment ? enrollment.gradeName : 'Not specified',
+            grade: gradeName,
+            gradeId: gradeId,
             guardianName: 'Not specified',
             dateOfBirth: student.date_of_birth || '',
-            admissionStatus: enrollment ? enrollment.status : undefined,
+            admissionStatus: admission?.status || undefined,
+            admittedBy: admission?.admittedBy || undefined,
           };
         });
         

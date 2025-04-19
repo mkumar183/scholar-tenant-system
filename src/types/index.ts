@@ -1,3 +1,4 @@
+
 export interface Tenant {
   id: string;
   name: string;
@@ -109,34 +110,39 @@ export interface Student {
   admittedBy?: string;
 }
 
-export interface School {
-  id: string;
-  name: string;
-}
-
-export interface Grade {
-  id: string;
-  name: string;
-  level: number;
-  tenantId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Section {
-  id: string;
-  created_at: string;
-  name: string;
-  grade_id: string;
-  school_id: string;
-  academic_session_id: string;
-  is_active: boolean;
-}
-
 export interface TenantAdminStats {
   totalSchools: number;
   totalTeachers: number;
   totalStudents: number;
   totalGrades: number;
   classesCount: number;
+}
+
+export interface SectionEnrollment {
+  id: string;
+  student_id: string;
+  section_id: string;
+  status: 'active' | 'transferred' | 'withdrawn';
+  enrolled_by: string;
+  enrolled_at: string;
+  effective_from: string;
+  effective_to: string | null;
+  notes: string | null;
+  student_name?: string;
+  section_name?: string;
+  grade_name?: string;
+}
+
+export interface StudentAdmission {
+  id: string;
+  student_id: string;
+  school_id: string;
+  grade_id: string;
+  admission_date: string;
+  status: 'active' | 'inactive' | 'pending';
+  admitted_by: string;
+  remarks: string | null;
+  academic_session_id?: string;
+  created_at: string;
+  updated_at: string;
 }

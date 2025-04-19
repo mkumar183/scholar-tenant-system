@@ -2,22 +2,11 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-
-interface Enrollment {
-  id: string;
-  student_id: string;
-  section_id: string;
-  status: 'active' | 'transferred' | 'withdrawn';
-  enrolled_by: string;
-  enrolled_at: string;
-  effective_from: string;
-  effective_to: string | null;
-  notes: string | null;
-}
+import { SectionEnrollment } from '@/types';
 
 export const useSectionEnrollments = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [enrollments, setEnrollments] = useState<SectionEnrollment[]>([]);
 
   const fetchEnrollments = async (sectionId: string) => {
     setIsLoading(true);
