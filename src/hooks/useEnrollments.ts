@@ -12,6 +12,7 @@ export interface Enrollment {
   effective_from: string;
   effective_to?: string;
   notes?: string;
+  student_name?: string;
 }
 
 export const useEnrollments = (sectionId: string, currentUserId: string) => {
@@ -28,12 +29,24 @@ export const useEnrollments = (sectionId: string, currentUserId: string) => {
     try {
       const { data, error } = await supabase
         .from('student_section_enrollments')
-        .select('*')
+        .select(`
+          *,
+          student:users!student_id (
+            name
+          )
+        `)
         .eq('section_id', sectionId)
         .order('enrolled_at', { ascending: false });
 
       if (error) throw error;
-      setEnrollments(data || []);
+      
+      // Transform the data to include student name
+      const transformedData = data?.map(enrollment => ({
+        ...enrollment,
+        student_name: enrollment.student?.name
+      })) || [];
+
+      setEnrollments(transformedData);
     } catch (error) {
       console.error('Error fetching enrollments:', error);
       toast.error('Failed to fetch enrollments');

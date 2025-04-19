@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
@@ -29,7 +28,7 @@ const EnrolledStudentsList = ({ enrollments, isLoading }: EnrolledStudentsListPr
         <TableBody>
           {enrollments.map((enrollment) => (
             <TableRow key={enrollment.id}>
-              <TableCell>{enrollment.student_id}</TableCell>
+              <TableCell>{enrollment.student_name || 'Unknown Student'}</TableCell>
               <TableCell>
                 {format(new Date(enrollment.enrolled_at), 'MMM dd, yyyy')}
               </TableCell>

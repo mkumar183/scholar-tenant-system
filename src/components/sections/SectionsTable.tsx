@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Section } from '@/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
@@ -58,7 +57,7 @@ const SectionsTable = ({
         </TableHeader>
         <TableBody>
           {sections.map((section) => (
-            <React.Fragment key={section.id}>
+            <Fragment key={section.id}>
               <TableRow>
                 <TableCell>
                   <div className="flex items-center">
@@ -121,7 +120,7 @@ const SectionsTable = ({
                   </TableCell>
                 </TableRow>
               )}
-            </React.Fragment>
+            </Fragment>
           ))}
           {sections.length === 0 && (
             <TableRow>
