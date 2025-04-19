@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAcademicSessions } from '@/hooks/useAcademicSessions';
@@ -19,7 +18,11 @@ const AcademicSessions = () => {
     createSession, 
     updateSession, 
     deleteSession,
-    setActiveSession 
+    setActiveSession,
+    sections,
+    addSection,
+    updateSection,
+    toggleSectionStatus
   } = useAcademicSessions();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
@@ -105,8 +108,11 @@ const AcademicSessions = () => {
             {user?.role === 'school_admin' && (
               <TabsContent value="sections" className="mt-4">
                 <SectionsManager 
-                  academicSessionId={selectedSession.id} 
-                  schoolId={user.schoolId || ''}
+                  sections={sections}
+                  isLoading={false}
+                  onAddSection={addSection}
+                  onUpdateSection={updateSection}
+                  onToggleStatus={toggleSectionStatus}
                 />
               </TabsContent>
             )}
