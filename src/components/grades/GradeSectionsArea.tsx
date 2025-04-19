@@ -3,6 +3,7 @@ import React from 'react';
 import { Section } from '@/types';
 import SectionsManager from '@/components/sections/SectionsManager';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { useEnrollments } from '@/hooks/useEnrollments';
 
 interface GradeSectionsAreaProps {
   selectedGradeId: string | null;
@@ -23,6 +24,12 @@ const GradeSectionsArea = ({
   updateSection,
   toggleSectionStatus,
 }: GradeSectionsAreaProps) => {
+  const { enrollStudents } = useEnrollments(selectedGradeId || '');
+
+  const handleEnrollStudents = async (sectionId: string, studentIds: string[]) => {
+    await enrollStudents(studentIds);
+  };
+
   if (!selectedGradeId) {
     return (
       <div className="text-center text-muted-foreground p-4 bg-background border rounded">
@@ -46,10 +53,7 @@ const GradeSectionsArea = ({
       <h3 className="text-lg font-semibold mb-4">Sections for Selected Grade</h3>
       
       {sectionsLoading ? (
-        <div className="p-8 border border-dashed rounded-md text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2 mx-auto"></div>
-          <p className="text-sm text-muted-foreground">Loading sections data...</p>
-        </div>
+        <LoadingSpinner message="Loading sections..." />
       ) : (
         <React.Fragment>
           {sections.length > 0 ? (
@@ -59,6 +63,7 @@ const GradeSectionsArea = ({
               onAddSection={addSection}
               onUpdateSection={updateSection}
               onToggleStatus={toggleSectionStatus}
+              onEnrollStudents={handleEnrollStudents}
             />
           ) : (
             <div className="p-4 border rounded-md text-center">
@@ -69,6 +74,7 @@ const GradeSectionsArea = ({
                 onAddSection={addSection}
                 onUpdateSection={updateSection}
                 onToggleStatus={toggleSectionStatus}
+                onEnrollStudents={handleEnrollStudents}
               />
             </div>
           )}

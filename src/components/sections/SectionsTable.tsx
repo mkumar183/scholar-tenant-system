@@ -1,20 +1,41 @@
 
+import { useState } from 'react';
 import { Section } from '@/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { Pencil, Check, X } from 'lucide-react';
+import { Pencil, Check, X, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { EnrollStudentsDialog } from './EnrollStudentsDialog';
 
 interface SectionsTableProps {
   sections: Section[];
   onEdit: (section: Section) => void;
   onToggleStatus: (id: string, isActive: boolean) => Promise<boolean>;
+  onEnrollStudents: (sectionId: string, studentIds: string[]) => Promise<void>;
 }
 
-const SectionsTable = ({ sections, onEdit, onToggleStatus }: SectionsTableProps) => {
+const SectionsTable = ({ 
+  sections, 
+  onEdit, 
+  onToggleStatus,
+  onEnrollStudents,
+}: SectionsTableProps) => {
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+
   return (
     <div className="border rounded-md">
+      <EnrollStudentsDialog
+        isOpen={!!selectedSectionId}
+        onClose={() => setSelectedSectionId(null)}
+        sectionId={selectedSectionId || ''}
+        onEnroll={async (studentIds) => {
+          if (selectedSectionId) {
+            await onEnrollStudents(selectedSectionId, studentIds);
+          }
+        }}
+      />
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -55,14 +76,24 @@ const SectionsTable = ({ sections, onEdit, onToggleStatus }: SectionsTableProps)
                 </div>
               </TableCell>
               <TableCell>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onEdit(section)}
-                >
-                  <Pencil className="h-4 w-4 mr-1" />
-                  Edit
-                </Button>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(section)}
+                  >
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedSectionId(section.id)}
+                  >
+                    <Users className="h-4 w-4 mr-1" />
+                    Enroll Students
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
