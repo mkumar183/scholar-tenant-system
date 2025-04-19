@@ -247,8 +247,36 @@ export type Database = {
           },
         ]
       }
+      streams: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       student_admissions: {
         Row: {
+          academic_session_id: string
           admission_date: string
           admitted_by: string
           created_at: string
@@ -261,6 +289,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          academic_session_id: string
           admission_date?: string
           admitted_by: string
           created_at?: string
@@ -273,6 +302,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          academic_session_id?: string
           admission_date?: string
           admitted_by?: string
           created_at?: string
@@ -285,6 +315,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "student_admissions_academic_session_id_fkey"
+            columns: ["academic_session_id"]
+            isOneToOne: false
+            referencedRelation: "academic_sessions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "student_admissions_admitted_by_fkey"
             columns: ["admitted_by"]
