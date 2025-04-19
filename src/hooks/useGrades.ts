@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Grade } from '@/types';
+import { toast } from 'sonner';
 
 export const useGrades = (tenantId: string) => {
   const [grades, setGrades] = useState<Grade[]>([]);
@@ -16,59 +18,61 @@ export const useGrades = (tenantId: string) => {
 
       if (error) throw error;
       
-      // Transform snake_case to camelCase for the frontend
-      const formattedGrades = (data || []).map(grade => ({
+      const formattedGrades: Grade[] = (data || []).map(grade => ({
         id: grade.id,
         name: grade.name,
         level: grade.level,
-        tenantId: grade.tenant_id,
-        createdAt: grade.created_at,
-        updatedAt: grade.updated_at
+        tenant_id: grade.tenant_id,
+        created_at: grade.created_at,
+        updated_at: grade.updated_at
       }));
       
       setGrades(formattedGrades);
     } catch (error) {
       console.error('Error fetching grades:', error);
+      toast.error('Failed to fetch grades');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const addGrade = async (grade: Omit<Grade, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const addGrade = async (grade: Omit<Grade, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      // Transform camelCase to snake_case for the database
       const { error } = await supabase.from('grades').insert([{
         name: grade.name,
         level: grade.level,
-        tenant_id: grade.tenantId
+        tenant_id: grade.tenant_id
       }]);
       
       if (error) throw error;
       await fetchGrades();
+      toast.success('Grade added successfully');
       return true;
     } catch (error) {
       console.error('Error adding grade:', error);
+      toast.error('Failed to add grade');
       return false;
     }
   };
 
   const updateGrade = async (id: string, grade: Partial<Grade>) => {
     try {
-      // Transform camelCase to snake_case for the database
       const { error } = await supabase
         .from('grades')
         .update({
           name: grade.name,
           level: grade.level,
-          tenant_id: grade.tenantId
+          tenant_id: grade.tenant_id
         })
         .eq('id', id);
         
       if (error) throw error;
       await fetchGrades();
+      toast.success('Grade updated successfully');
       return true;
     } catch (error) {
       console.error('Error updating grade:', error);
+      toast.error('Failed to update grade');
       return false;
     }
   };
@@ -81,9 +85,11 @@ export const useGrades = (tenantId: string) => {
         .eq('id', id);
       if (error) throw error;
       await fetchGrades();
+      toast.success('Grade deleted successfully');
       return true;
     } catch (error) {
       console.error('Error deleting grade:', error);
+      toast.error('Failed to delete grade');
       return false;
     }
   };

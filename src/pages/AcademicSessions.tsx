@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAcademicSessions } from '@/hooks/useAcademicSessions';
@@ -9,6 +8,7 @@ import { AcademicSessionDetails } from '@/components/academic-sessions/AcademicS
 import { CalendarRange } from 'lucide-react';
 import { AcademicSession } from '@/types/database.types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import SectionsManager from '@/components/sections/SectionsManager';
 
 const AcademicSessions = () => {
   const { user } = useAuth();
@@ -18,7 +18,11 @@ const AcademicSessions = () => {
     createSession, 
     updateSession, 
     deleteSession,
-    setActiveSession 
+    setActiveSession,
+    sections,
+    addSection,
+    updateSection,
+    toggleSectionStatus
   } = useAcademicSessions();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
@@ -44,18 +48,7 @@ const AcademicSessions = () => {
   };
 
   const selectedSession = sessions.find(s => s.id === selectedSessionId);
-
-  // Only tenant admins can access this page
-  if (user?.role !== 'tenant_admin') {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-muted-foreground">Only tenant administrators can access this page.</p>
-        </div>
-      </div>
-    );
-  }
+  const isReadOnly = user?.role === 'school_admin';
 
   return (
     <div className="space-y-6">
@@ -64,18 +57,27 @@ const AcademicSessions = () => {
           <CalendarRange className="h-6 w-6" />
           <h1 className="text-2xl font-bold">Academic Sessions</h1>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          Create New Session
-        </Button>
+        {!isReadOnly && (
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            Create New Session
+          </Button>
+        )}
       </div>
 
       <Tabs defaultValue="sessions" className="w-full">
         <TabsList>
           <TabsTrigger value="sessions">All Sessions</TabsTrigger>
           {selectedSession && (
-            <TabsTrigger value="details">
-              {selectedSession.name} Details
-            </TabsTrigger>
+            <>
+              <TabsTrigger value="details">
+                {selectedSession.name} Details
+              </TabsTrigger>
+              {user?.role === 'school_admin' && (
+                <TabsTrigger value="sections">
+                  Sections
+                </TabsTrigger>
+              )}
+            </>
           )}
         </TabsList>
         
@@ -88,9 +90,9 @@ const AcademicSessions = () => {
             ) : (
               <AcademicSessionsTable 
                 sessions={sessions} 
-                onEdit={handleUpdateSession} 
-                onDelete={handleDeleteSession}
-                onSetActive={handleSetActiveSession}
+                onEdit={!isReadOnly ? handleUpdateSession : undefined} 
+                onDelete={!isReadOnly ? handleDeleteSession : undefined}
+                onSetActive={!isReadOnly ? handleSetActiveSession : undefined}
                 onSelect={setSelectedSessionId}
               />
             )}
@@ -98,17 +100,33 @@ const AcademicSessions = () => {
         </TabsContent>
         
         {selectedSession && (
-          <TabsContent value="details" className="mt-4">
-            <AcademicSessionDetails session={selectedSession} />
-          </TabsContent>
+          <>
+            <TabsContent value="details" className="mt-4">
+              <AcademicSessionDetails session={selectedSession} />
+            </TabsContent>
+            
+            {user?.role === 'school_admin' && (
+              <TabsContent value="sections" className="mt-4">
+                <SectionsManager 
+                  sections={sections}
+                  isLoading={false}
+                  onAddSection={addSection}
+                  onUpdateSection={updateSection}
+                  onToggleStatus={toggleSectionStatus}
+                />
+              </TabsContent>
+            )}
+          </>
         )}
       </Tabs>
 
-      <AcademicSessionDialog
-        isOpen={isCreateDialogOpen}
-        onClose={() => setIsCreateDialogOpen(false)}
-        onSave={handleCreateSession}
-      />
+      {!isReadOnly && (
+        <AcademicSessionDialog
+          isOpen={isCreateDialogOpen}
+          onClose={() => setIsCreateDialogOpen(false)}
+          onSave={handleCreateSession}
+        />
+      )}
     </div>
   );
 };
