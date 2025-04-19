@@ -24,7 +24,35 @@ export const useStudents = (gradeId?: string) => {
     try {
       console.log('useStudents - Starting fetch with gradeId:', gradeId);
       
-      let query = supabase
+      if (!gradeId) {
+        setStudents([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // First get all sections for this grade
+      const { data: sections } = await supabase
+        .from('sections')
+        .select('id')
+        .eq('grade_id', gradeId);
+
+      if (!sections || sections.length === 0) {
+        setStudents([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Get all enrolled students in these sections
+      const { data: enrolledStudents } = await supabase
+        .from('student_section_enrollments')
+        .select('student_id')
+        .eq('status', 'active')
+        .in('section_id', sections.map(s => s.id));
+
+      const enrolledStudentIds = enrolledStudents?.map(e => e.student_id) || [];
+
+      // Get all admitted students for this grade
+      const { data, error } = await supabase
         .from('student_admissions')
         .select(`
           id,
@@ -39,14 +67,8 @@ export const useStudents = (gradeId?: string) => {
             date_of_birth
           )
         `)
-        .eq('status', 'active');
-
-      if (gradeId) {
-        console.log('useStudents - Adding grade filter:', gradeId);
-        query = query.eq('grade_id', gradeId);
-      }
-
-      const { data, error } = await query;
+        .eq('status', 'active')
+        .eq('grade_id', gradeId);
 
       if (error) {
         console.error('useStudents - Error in query:', error);
@@ -64,6 +86,10 @@ export const useStudents = (gradeId?: string) => {
             return null;
           }
           const student = admission.student;
+          // Skip if student is already enrolled
+          if (enrolledStudentIds.includes(student.id)) {
+            return null;
+          }
           return {
             id: student.id,
             name: student.name,
@@ -74,7 +100,7 @@ export const useStudents = (gradeId?: string) => {
             admissionStatus: admission.status,
             admittedBy: admission.admitted_by,
             guardianName: 'Not specified'
-          };
+          } as Student;
         })
         .filter((student): student is Student => student !== null);
 
