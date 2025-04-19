@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGrades } from '@/hooks/useGrades';
@@ -6,12 +5,12 @@ import { Grade } from '@/types';
 import { useSections } from '@/hooks/useSections';
 import AccessDenied from '@/components/common/AccessDenied';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import { supabase } from '@/lib/supabase';
-import GradesTable from '@/components/grades/GradesTable';
-import DebugPanel from '@/components/grades/DebugPanel';
 import NoActiveSessionMessage from '@/components/grades/NoActiveSessionMessage';
 import GradeSectionsArea from '@/components/grades/GradeSectionsArea';
 import GradesHeader from '@/components/grades/GradesHeader';
+import GradeButtons from '@/components/grades/GradeButtons';
+import GradesTableView from '@/components/grades/GradesTableView';
+import { supabase } from '@/lib/supabase';
 
 // Grade level definitions
 const GRADE_LEVELS = [
@@ -190,37 +189,35 @@ const Grades = () => {
   
   return (
     <div className="space-y-6">
-      {/* Debug info panel */}
-      {/* <DebugPanel 
-        userRole={debugInfo.userRole}
-        hasSchoolId={debugInfo.hasSchoolId}
-        schoolId={debugInfo.schoolId}
-        canManageSections={debugInfo.canManageSections}
-        selectedGradeId={selectedGradeId}
-        activeSession={!!activeAcademicSession}
-      /> */}
+      {canManageGrades ? (
+        <>
+          <GradesHeader 
+            isDialogOpen={isDialogOpen}
+            setIsDialogOpen={setIsDialogOpen}
+            handleAddOrUpdateGrade={handleAddOrUpdateGrade}
+            selectedGrade={selectedGrade}
+            gradeOptions={GRADE_LEVELS}
+            isEditMode={isEditMode}
+            canManageGrades={canManageGrades}
+          />
+          <GradesTableView 
+            grades={grades}
+            onGradeSelect={handleGradeSelect}
+            onGradeEdit={handleEditClick}
+            selectedGradeId={selectedGradeId}
+          />
+        </>
+      ) : (
+        <>
+          <h1 className="text-2xl font-bold mb-6">Grades</h1>
+          <GradeButtons 
+            grades={grades}
+            selectedGradeId={selectedGradeId}
+            onGradeSelect={handleGradeSelect}
+          />
+        </>
+      )}
       
-      {/* Grades header */}
-      <GradesHeader 
-        isDialogOpen={isDialogOpen}
-        setIsDialogOpen={setIsDialogOpen}
-        handleAddOrUpdateGrade={handleAddOrUpdateGrade}
-        selectedGrade={selectedGrade}
-        gradeOptions={GRADE_LEVELS}
-        isEditMode={isEditMode}
-        canManageGrades={canManageGrades}
-      />
-      
-      {/* Grades table */}
-      <GradesTable 
-        grades={grades}
-        onGradeSelect={handleGradeSelect}
-        onGradeEdit={canManageGrades ? handleEditClick : undefined}
-        selectedGradeId={selectedGradeId}
-        canManageGrades={canManageGrades}
-      />
-      
-      {/* Sections area */}
       <GradeSectionsArea 
         selectedGradeId={selectedGradeId}
         canManageSections={canManageSections}
