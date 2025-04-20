@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -37,12 +36,12 @@ const FeeAssignmentDialog = ({
     feeGroupId: '',
     gradeId: '',
     gradeName: '',
-    streamId: '',
-    streamName: '',
+    streamId: undefined,
+    streamName: undefined,
     academicSessionId: '',
     academicSessionName: '',
-    termId: '',
-    termName: '',
+    termId: undefined,
+    termName: undefined,
     tenantId: '1', // Default tenant ID for mock data
   });
 
@@ -69,12 +68,12 @@ const FeeAssignmentDialog = ({
         feeGroupId: '',
         gradeId: '',
         gradeName: '',
-        streamId: '',
-        streamName: '',
+        streamId: undefined,
+        streamName: undefined,
         academicSessionId: '',
         academicSessionName: '',
-        termId: '',
-        termName: '',
+        termId: undefined,
+        termName: undefined,
         tenantId: '1',
       });
     }
@@ -162,7 +161,7 @@ const FeeAssignmentDialog = ({
           <div>
             <label className="block text-sm font-medium mb-1">Fee Group*</label>
             <Select
-              value={assignment.feeGroupId}
+              value={assignment.feeGroupId || undefined}
               onValueChange={handleFeeGroupChange}
             >
               <SelectTrigger>
@@ -181,7 +180,7 @@ const FeeAssignmentDialog = ({
           <div>
             <label className="block text-sm font-medium mb-1">Grade*</label>
             <Select
-              value={assignment.gradeId}
+              value={assignment.gradeId || undefined}
               onValueChange={handleGradeChange}
             >
               <SelectTrigger>
@@ -200,14 +199,14 @@ const FeeAssignmentDialog = ({
           <div>
             <label className="block text-sm font-medium mb-1">Stream (Optional)</label>
             <Select
-              value={assignment.streamId || ''}
+              value={assignment.streamId}
               onValueChange={handleStreamChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a stream (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Streams</SelectItem>
+                <SelectItem value={undefined}>All Streams</SelectItem>
                 {mockStreams.map(stream => (
                   <SelectItem key={stream.id} value={stream.id}>
                     {stream.name}
@@ -220,7 +219,7 @@ const FeeAssignmentDialog = ({
           <div>
             <label className="block text-sm font-medium mb-1">Academic Session*</label>
             <Select
-              value={assignment.academicSessionId}
+              value={assignment.academicSessionId || undefined}
               onValueChange={handleAcademicSessionChange}
             >
               <SelectTrigger>
@@ -239,7 +238,7 @@ const FeeAssignmentDialog = ({
           <div>
             <label className="block text-sm font-medium mb-1">Term (Optional)</label>
             <Select
-              value={assignment.termId || ''}
+              value={assignment.termId}
               onValueChange={handleTermChange}
               disabled={!assignment.academicSessionId}
             >
@@ -247,7 +246,7 @@ const FeeAssignmentDialog = ({
                 <SelectValue placeholder={assignment.academicSessionId ? "Select a term (optional)" : "Select academic session first"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Terms</SelectItem>
+                <SelectItem value={undefined}>All Terms</SelectItem>
                 {filteredTerms.map(term => (
                   <SelectItem key={term.id} value={term.id}>
                     {term.name}
