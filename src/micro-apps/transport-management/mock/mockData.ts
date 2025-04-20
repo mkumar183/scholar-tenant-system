@@ -1,102 +1,101 @@
-import { Vehicle, Route, Stop, Personnel, StudentTransport } from '../types/transport.types';
-
-export const mockVehicles: Vehicle[] = [
-  {
-    id: '1',
-    vehicleNumber: 'KA01AB1234',
-    capacity: 40,
-    model: 'Ashok Leyland',
-    status: 'active',
-    school_id: '1'
-  },
-  {
-    id: '2',
-    vehicleNumber: 'KA01CD5678',
-    capacity: 35,
-    model: 'Tata',
-    status: 'active',
-    school_id: '1'
-  }
-];
+import { Route, Vehicle, Personnel, Schedule } from "../types/transport.types";
 
 export const mockRoutes: Route[] = [
   {
-    id: '1',
-    name: 'Route 1 - North',
-    description: 'Covers northern area of the city',
-    school_id: '1',
-    vehicle_id: '1',
-    status: 'active'
+    id: "route-1",
+    name: "Route A",
+    stops: ["Stop 1", "Stop 2", "Stop 3"],
+    school_id: "1",
   },
   {
-    id: '2',
-    name: 'Route 2 - South',
-    description: 'Covers southern area of the city',
-    school_id: '1',
-    vehicle_id: '2',
-    status: 'active'
-  }
+    id: "route-2",
+    name: "Route B",
+    stops: ["Stop 4", "Stop 5", "Stop 6"],
+    school_id: "1",
+  },
 ];
 
-export const mockStops: Stop[] = [
+export const mockVehicles: Vehicle[] = [
   {
-    id: '1',
-    route_id: '1',
-    name: 'Market Square',
-    order: 1,
-    estimated_arrival_time: '07:30'
+    id: "vehicle-1",
+    registration_number: "ABC-123",
+    type: "bus",
+    model: "Toyota Coaster",
+    capacity: 20,
+    school_id: "1",
   },
   {
-    id: '2',
-    route_id: '1',
-    name: 'Central Park',
-    order: 2,
-    estimated_arrival_time: '07:45'
+    id: "vehicle-2",
+    registration_number: "XYZ-789",
+    type: "van",
+    model: "Nissan Caravan",
+    capacity: 12,
+    school_id: "1",
   },
-  {
-    id: '3',
-    route_id: '1',
-    name: 'Library',
-    order: 3,
-    estimated_arrival_time: '08:00'
-  }
 ];
 
 export const mockPersonnel: Personnel[] = [
   {
-    id: '1',
-    name: 'John Doe',
-    type: 'driver',
-    contact: '9876543210',
-    license_number: 'DL123456',
-    school_id: '1',
-    route_id: '1',
-    status: 'active'
+    id: "personnel-1",
+    name: "John Doe",
+    type: "driver",
+    contact: "123-456-7890",
+    license_number: "DL12345",
+    school_id: "1",
+    route_id: "route-1",
+    status: "active",
   },
   {
-    id: '2',
-    name: 'Jane Smith',
-    type: 'conductor',
-    contact: '9876543211',
-    school_id: '1',
-    route_id: '1',
-    status: 'active'
-  }
+    id: "personnel-2",
+    name: "Jane Smith",
+    type: "conductor",
+    contact: "098-765-4321",
+    school_id: "1",
+    route_id: "route-1",
+    status: "active",
+  },
 ];
 
-export const mockStudentTransport: StudentTransport[] = [
+// Add schedules to the mock data
+export const mockSchedules: Schedule[] = [
   {
-    id: '1',
-    student_id: '1',
-    route_id: '1',
-    stop_id: '1',
-    type: 'both'
+    id: "schedule-1",
+    route_id: "route-1",
+    vehicle_id: "vehicle-1",
+    day_type: "weekday",
+    departure_time: "07:30",
+    arrival_time: "08:15",
+    status: "active",
+    school_id: "1"
   },
   {
-    id: '2',
-    student_id: '2',
-    route_id: '1',
-    stop_id: '2',
-    type: 'pickup'
+    id: "schedule-2",
+    route_id: "route-2",
+    vehicle_id: "vehicle-2",
+    day_type: "weekday",
+    departure_time: "07:45",
+    arrival_time: "08:30",
+    status: "active",
+    school_id: "1"
+  },
+  {
+    id: "schedule-3",
+    route_id: "route-1",
+    vehicle_id: "vehicle-1",
+    day_type: "weekday",
+    departure_time: "14:30",
+    arrival_time: "15:15",
+    status: "active",
+    school_id: "1"
+  },
+  {
+    id: "schedule-4",
+    route_id: "route-2",
+    vehicle_id: "vehicle-2",
+    day_type: "weekday",
+    departure_time: "14:45",
+    arrival_time: "15:30",
+    status: "active",
+    school_id: "1"
   }
 ];

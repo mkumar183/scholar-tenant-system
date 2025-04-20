@@ -5,6 +5,7 @@ import Vehicles from "./Vehicles";
 import RoutesPage from "./Routes";
 import Students from "./Students";
 import Personnel from "./Personnel";
+import Schedules from "./Schedules";
 
 const TransportManagement = () => {
   return (
@@ -17,6 +18,7 @@ const TransportManagement = () => {
           <Route path="/routes" element={<RoutesPage />} />
           <Route path="/students" element={<Students />} />
           <Route path="/personnel" element={<Personnel />} />
+          <Route path="/schedules" element={<Schedules />} />
           <Route path="/" element={<Vehicles />} />
         </Routes>
       </div>
