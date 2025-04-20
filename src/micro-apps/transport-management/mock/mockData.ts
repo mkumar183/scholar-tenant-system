@@ -1,4 +1,3 @@
-
 import { Vehicle, Route, Stop, Personnel, StudentTransport } from '../types/transport.types';
 
 export const mockVehicles: Vehicle[] = [
@@ -43,16 +42,23 @@ export const mockStops: Stop[] = [
   {
     id: '1',
     route_id: '1',
-    name: 'Stop 1 - Market',
+    name: 'Market Square',
     order: 1,
     estimated_arrival_time: '07:30'
   },
   {
     id: '2',
     route_id: '1',
-    name: 'Stop 2 - Park',
+    name: 'Central Park',
     order: 2,
     estimated_arrival_time: '07:45'
+  },
+  {
+    id: '3',
+    route_id: '1',
+    name: 'Library',
+    order: 3,
+    estimated_arrival_time: '08:00'
   }
 ];
 
