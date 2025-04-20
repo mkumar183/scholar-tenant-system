@@ -1,139 +1,92 @@
-
-import React, { useState, useEffect } from 'react';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Student } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useStudents } from '@/hooks/useStudents';
-import { Textarea } from '@/components/ui/textarea';
-import { useEnrollments } from '@/hooks/useEnrollments';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface EnrollStudentsDialogProps {
   isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
   sectionId: string;
   gradeId: string;
-  academicSessionId: string;
-  onSuccess?: () => void;
+  onEnroll: (studentIds: string[]) => Promise<void>;
 }
 
-const EnrollStudentsDialog = ({
+export const EnrollStudentsDialog = ({
   isOpen,
-  onOpenChange,
+  onClose,
   sectionId,
   gradeId,
-  academicSessionId,
-  onSuccess
+  onEnroll,
 }: EnrollStudentsDialogProps) => {
-  const { user } = useAuth();
-  const { enrollStudent } = useEnrollments();
-  const { getStudentsByGrade, isLoading } = useStudents();
-  const [students, setStudents] = useState<Student[]>([]);
-  const [selectedStudentId, setSelectedStudentId] = useState<string>('');
-  const [notes, setNotes] = useState<string>('');
+  const { students, isLoading } = useStudents(gradeId);
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 
   useEffect(() => {
-    if (isOpen && gradeId) {
-      getStudentsByGrade(gradeId)
-        .then(fetchedStudents => {
-          setStudents(fetchedStudents || []);
-          // Reset selection when dialog opens or grade changes
-          setSelectedStudentId('');
-        })
-        .catch(error => {
-          console.error('Error fetching students:', error);
-          toast.error('Failed to load students');
-        });
-    }
-  }, [isOpen, gradeId, getStudentsByGrade]);
+    console.log('EnrollStudentsDialog - gradeId:', gradeId);
+    console.log('EnrollStudentsDialog - students:', students);
+    console.log('EnrollStudentsDialog - isLoading:', isLoading);
+  }, [gradeId, students, isLoading]);
 
-  useEffect(() => {
-    if (!isOpen) {
-      // Reset form when dialog closes
-      setSelectedStudentId('');
-      setNotes('');
-    }
-  }, [isOpen]);
-
-  const handleEnroll = async () => {
-    if (!selectedStudentId) {
-      toast.error('Please select a student');
-      return;
-    }
-
-    try {
-      await enrollStudent({
-        studentId: selectedStudentId,
-        sectionId,
-        notes,
-        status: 'active'
-      });
-      
-      toast.success('Student enrolled successfully');
-      onOpenChange(false);
-      if (onSuccess) {
-        onSuccess();
-      }
-    } catch (error) {
-      console.error('Error enrolling student:', error);
-      toast.error('Failed to enroll student');
-    }
+  const handleSubmit = async () => {
+    await onEnroll(selectedStudents);
+    setSelectedStudents([]);
+    onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Enroll Student</DialogTitle>
+          <DialogTitle>Enroll Students</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Select Student</label>
-            <Select
-              value={selectedStudentId}
-              onValueChange={setSelectedStudentId}
-              disabled={isLoading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a student" />
-              </SelectTrigger>
-              <SelectContent>
+
+        {isLoading ? (
+          <div className="py-4 text-center">Loading students...</div>
+        ) : (
+          <>
+            <ScrollArea className="h-[300px] pr-4">
+              <div className="space-y-4">
                 {students.length === 0 ? (
-                  <SelectItem value="no-students" disabled>No students available</SelectItem>
+                  <div className="text-center text-muted-foreground py-4">
+                    No students found for this grade.
+                  </div>
                 ) : (
-                  students.map(student => (
-                    <SelectItem key={student.id} value={student.id}>
-                      {student.name}
-                    </SelectItem>
+                  students.map((student) => (
+                    <div key={student.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={student.id}
+                        checked={selectedStudents.includes(student.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedStudents([...selectedStudents, student.id]);
+                          } else {
+                            setSelectedStudents(selectedStudents.filter(id => id !== student.id));
+                          }
+                        }}
+                      />
+                      <label htmlFor={student.id} className="text-sm font-medium">
+                        {student.name}
+                      </label>
+                    </div>
                   ))
                 )}
-              </SelectContent>
-            </Select>
-          </div>
+              </div>
+            </ScrollArea>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Notes (Optional)</label>
-            <Textarea 
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add any notes about this enrollment"
-              rows={3}
-            />
-          </div>
-
-          <Button 
-            onClick={handleEnroll} 
-            disabled={!selectedStudentId || isLoading}
-            className="w-full"
-          >
-            Enroll Student
-          </Button>
-        </div>
+            <div className="flex justify-end space-x-2 mt-4">
+              <Button variant="outline" onClick={onClose}>Cancel</Button>
+              <Button 
+                onClick={handleSubmit}
+                disabled={selectedStudents.length === 0}
+              >
+                Enroll Selected Students
+              </Button>
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
 };
-
-export default EnrollStudentsDialog;
