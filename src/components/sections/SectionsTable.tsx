@@ -1,50 +1,73 @@
-import { Fragment, useState } from 'react';
-import { Section } from '@/types';
+
+import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { Pencil, Users } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { EnrollStudentsDialog } from './EnrollStudentsDialog';
-import { useEnrollments } from '@/hooks/useEnrollments';
+import { Section } from '@/types';
+import { Pencil, PlusCircle, Users } from 'lucide-react';
+import SectionDialog from './SectionDialog';
+import EnrollStudentsDialog from './EnrollStudentsDialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEnrollments } from '@/hooks/useEnrollments';
 import EnrolledStudentsButton from './EnrolledStudentsButton';
 import EnrolledStudentsList from './EnrolledStudentsList';
 
 interface SectionsTableProps {
   sections: Section[];
-  onEdit: (section: Section) => void;
-  onToggleStatus: (id: string, isActive: boolean) => Promise<boolean>;
-  onEnrollStudents: (sectionId: string, studentIds: string[]) => Promise<void>;
+  onSectionAdded: () => void;
+  onSectionUpdated: () => void;
   gradeId: string;
+  academicSessionId: string;
+  schoolId: string;
 }
 
-const SectionsTable = ({ 
-  sections, 
-  onEdit, 
-  onToggleStatus,
-  onEnrollStudents,
+const SectionsTable: React.FC<SectionsTableProps> = ({
+  sections,
+  onSectionAdded,
+  onSectionUpdated,
   gradeId,
-}: SectionsTableProps) => {
+  academicSessionId,
+  schoolId,
+}) => {
   const { user } = useAuth();
-  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
-  const [openSectionId, setOpenSectionId] = useState<string | null>(null);
-  
-  const { enrollments, isLoading, fetchEnrollments } = useEnrollments(openSectionId || '', user?.id || '');
+  const { refreshEnrollments } = useEnrollments();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEnrollDialogOpen, setIsEnrollDialogOpen] = useState(false);
+  const [editingSection, setEditingSection] = useState<Section | null>(null);
+  const [enrollingSectionId, setEnrollingSectionId] = useState<string>('');
+  const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
+
+  const handleAddSection = () => {
+    setEditingSection(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleEditSection = (section: Section) => {
+    setEditingSection(section);
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenEnrollDialog = (sectionId: string) => {
+    setEnrollingSectionId(sectionId);
+    setIsEnrollDialogOpen(true);
+  };
+
+  const handleEnrollSuccess = () => {
+    refreshEnrollments();
+  };
+
+  const toggleExpandSection = (sectionId: string) => {
+    setExpandedSectionId(expandedSectionId === sectionId ? null : sectionId);
+  };
 
   return (
-    <div className="border rounded-md">
-      <EnrollStudentsDialog
-        isOpen={!!selectedSectionId}
-        onClose={() => setSelectedSectionId(null)}
-        sectionId={selectedSectionId || ''}
-        gradeId={gradeId}
-        onEnroll={async (studentIds) => {
-          if (selectedSectionId) {
-            await onEnrollStudents(selectedSectionId, studentIds);
-          }
-        }}
-      />
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium">Sections</h3>
+        <Button onClick={handleAddSection}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Add Section
+        </Button>
+      </div>
 
       <Table>
         <TableHeader>
@@ -52,88 +75,90 @@ const SectionsTable = ({
             <TableHead>Name</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Enrolled Students</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sections.map((section) => (
-            <Fragment key={section.id}>
-              <TableRow>
-                <TableCell>
-                  <div className="flex items-center">
-                    <Badge variant="outline" className="mr-2 font-bold">
-                      {section.name}
-                    </Badge>
-                    <span>Section {section.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={section.is_active}
-                      onCheckedChange={(checked) => onToggleStatus(section.id, checked)}
-                    />
-                    <span>{section.is_active ? 'Active' : 'Inactive'}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <EnrolledStudentsButton
-                    isOpen={openSectionId === section.id}
-                    onClick={() => {
-                      if (openSectionId === section.id) {
-                        setOpenSectionId(null);
-                      } else {
-                        setOpenSectionId(section.id);
-                        fetchEnrollments();
-                      }
-                    }}
-                  />
-                </TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onEdit(section)}
-                    >
-                      <Pencil className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedSectionId(section.id)}
-                    >
-                      <Users className="h-4 w-4 mr-1" />
-                      Enroll Students
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-              {openSectionId === section.id && (
-                <TableRow>
-                  <TableCell colSpan={4} className="p-0 border-t-0">
-                    <EnrolledStudentsList 
-                      enrollments={enrollments} 
-                      isLoading={isLoading} 
-                    />
-                  </TableCell>
-                </TableRow>
-              )}
-            </Fragment>
-          ))}
-          {sections.length === 0 && (
+          {sections.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={4} className="text-center py-6">
-                <div className="text-muted-foreground space-y-1">
-                  <p>No sections found</p>
-                  <p className="text-sm">Add a section using the button above</p>
-                </div>
+              <TableCell colSpan={4} className="text-center py-4">
+                No sections found. Click "Add Section" to create your first section.
               </TableCell>
             </TableRow>
+          ) : (
+            sections.map((section) => (
+              <>
+                <TableRow key={section.id}>
+                  <TableCell className="font-medium">{section.name}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      section.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {section.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <EnrolledStudentsButton 
+                      sectionId={section.id}
+                      onClick={() => toggleExpandSection(section.id)}
+                    />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditSection(section)}
+                      >
+                        <Pencil className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenEnrollDialog(section.id)}
+                      >
+                        <Users className="h-4 w-4 mr-1" />
+                        Enroll
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+                {expandedSectionId === section.id && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="p-0">
+                      <div className="bg-muted/30 p-4">
+                        <EnrolledStudentsList sectionId={section.id} />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </>
+            ))
           )}
         </TableBody>
       </Table>
+
+      <SectionDialog
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        initialSection={editingSection}
+        onSubmit={onSectionUpdated}
+        gradeId={gradeId}
+        academicSessionId={academicSessionId}
+        schoolId={schoolId}
+      />
+
+      {isEnrollDialogOpen && (
+        <EnrollStudentsDialog
+          isOpen={isEnrollDialogOpen}
+          onOpenChange={setIsEnrollDialogOpen}
+          sectionId={enrollingSectionId}
+          gradeId={gradeId}
+          academicSessionId={academicSessionId}
+          onSuccess={handleEnrollSuccess}
+        />
+      )}
     </div>
   );
 };
