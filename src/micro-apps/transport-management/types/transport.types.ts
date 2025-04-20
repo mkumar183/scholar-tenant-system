@@ -1,3 +1,4 @@
+
 export interface Route {
   id: string;
   name: string;
@@ -53,4 +54,13 @@ export interface Schedule {
   arrival_time: string;
   status: "active" | "inactive";
   school_id: string;
+}
+
+// Adding StudentTransport type
+export interface StudentTransport {
+  id: string;
+  student_id: string;
+  route_id: string;
+  stop_id: string;
+  type: "pickup" | "drop" | "both";
 }
