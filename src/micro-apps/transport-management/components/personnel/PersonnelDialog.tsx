@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Personnel, Route } from "../../types/transport.types";
@@ -113,7 +112,7 @@ export const PersonnelDialog = ({
                   <SelectValue placeholder="Assign to route" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Not Assigned</SelectItem>
+                  <SelectItem value="unassigned">Not Assigned</SelectItem>
                   {routes.map((route) => (
                     <SelectItem key={route.id} value={route.id}>
                       {route.name}
