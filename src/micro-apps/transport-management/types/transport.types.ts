@@ -1,4 +1,3 @@
-
 export interface Vehicle {
   id: string;
   vehicleNumber: string;
