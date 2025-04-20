@@ -31,7 +31,7 @@ export const StudentTransportDialog = ({
 }: StudentTransportDialogProps) => {
   const [selectedRoute, setSelectedRoute] = useState(studentTransport?.route_id || "");
   const [selectedStop, setSelectedStop] = useState(studentTransport?.stop_id || "");
-  const [type, setType] = useState(studentTransport?.type || "both");
+  const [type, setType] = useState<"pickup" | "drop" | "both">(studentTransport?.type || "both");
 
   const filteredStops = stops.filter((stop) => stop.route_id === selectedRoute);
 
@@ -93,7 +93,10 @@ export const StudentTransportDialog = ({
 
           <div>
             <Label>Transport Type</Label>
-            <Select value={type} onValueChange={setType}>
+            <Select
+              value={type}
+              onValueChange={(value: "pickup" | "drop" | "both") => setType(value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>

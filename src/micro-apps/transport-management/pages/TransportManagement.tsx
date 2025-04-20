@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import { TransportNav } from "../components/TransportNav";
 import Vehicles from "./Vehicles";
 import RoutesPage from "./Routes";
+import Students from "./Students";
 
 const TransportManagement = () => {
   return (
@@ -13,6 +14,7 @@ const TransportManagement = () => {
         <Routes>
           <Route path="/vehicles" element={<Vehicles />} />
           <Route path="/routes" element={<RoutesPage />} />
+          <Route path="/students" element={<Students />} />
           <Route path="/" element={<Vehicles />} />
         </Routes>
       </div>

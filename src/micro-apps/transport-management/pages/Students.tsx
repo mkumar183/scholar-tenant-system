@@ -6,6 +6,14 @@ import { StudentTransportDialog } from "../components/assignments/StudentTranspo
 import { TransportNav } from "../components/TransportNav";
 import { mockRoutes, mockStops, mockStudentTransport } from "../mock/mockData";
 import { StudentTransport } from "../types/transport.types";
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table";
 
 const Students = () => {
   const [open, setOpen] = useState(false);
@@ -35,7 +43,7 @@ const Students = () => {
   };
 
   return (
-    <div>
+    <div className="container mx-auto p-6">
       <TransportNav />
       
       <div className="space-y-4">
@@ -48,43 +56,51 @@ const Students = () => {
         </div>
 
         <div className="rounded-md border">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="p-4 text-left">Student ID</th>
-                <th className="p-4 text-left">Route</th>
-                <th className="p-4 text-left">Stop</th>
-                <th className="p-4 text-left">Type</th>
-                <th className="p-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {studentTransports.map((transport) => (
-                <tr key={transport.id} className="border-b">
-                  <td className="p-4">{transport.student_id}</td>
-                  <td className="p-4">
-                    {mockRoutes.find((r) => r.id === transport.route_id)?.name}
-                  </td>
-                  <td className="p-4">
-                    {mockStops.find((s) => s.id === transport.stop_id)?.name}
-                  </td>
-                  <td className="p-4 capitalize">{transport.type}</td>
-                  <td className="p-4 text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setEditingTransport(transport);
-                        setOpen(true);
-                      }}
-                    >
-                      Edit
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Student ID</TableHead>
+                <TableHead>Route</TableHead>
+                <TableHead>Stop</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {studentTransports.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-4">
+                    No student transport assignments found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                studentTransports.map((transport) => (
+                  <TableRow key={transport.id}>
+                    <TableCell>{transport.student_id}</TableCell>
+                    <TableCell>
+                      {mockRoutes.find((r) => r.id === transport.route_id)?.name || 'Unknown Route'}
+                    </TableCell>
+                    <TableCell>
+                      {mockStops.find((s) => s.id === transport.stop_id)?.name || 'Unknown Stop'}
+                    </TableCell>
+                    <TableCell className="capitalize">{transport.type}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditingTransport(transport);
+                          setOpen(true);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
 
