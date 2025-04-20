@@ -1,12 +1,19 @@
 
+import { Routes, Route } from "react-router-dom";
 import { TransportNav } from "../components/TransportNav";
+import Vehicles from "./Vehicles";
 
 const TransportManagement = () => {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Transport Management</h1>
       <TransportNav />
-      {/* Content will be rendered by child routes */}
+      <div className="mt-6">
+        <Routes>
+          <Route path="/vehicles" element={<Vehicles />} />
+          <Route path="/" element={<Vehicles />} />
+        </Routes>
+      </div>
     </div>
   );
 };
