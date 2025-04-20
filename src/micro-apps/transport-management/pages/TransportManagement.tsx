@@ -4,6 +4,7 @@ import { TransportNav } from "../components/TransportNav";
 import Vehicles from "./Vehicles";
 import RoutesPage from "./Routes";
 import Students from "./Students";
+import Personnel from "./Personnel";
 
 const TransportManagement = () => {
   return (
@@ -15,6 +16,7 @@ const TransportManagement = () => {
           <Route path="/vehicles" element={<Vehicles />} />
           <Route path="/routes" element={<RoutesPage />} />
           <Route path="/students" element={<Students />} />
+          <Route path="/personnel" element={<Personnel />} />
           <Route path="/" element={<Vehicles />} />
         </Routes>
       </div>
