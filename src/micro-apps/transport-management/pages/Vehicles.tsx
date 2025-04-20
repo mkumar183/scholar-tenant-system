@@ -13,7 +13,12 @@ const Vehicles = () => {
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
 
   const handleAddVehicle = (vehicle: Vehicle) => {
-    setVehicles((prev) => [...prev, { ...vehicle, id: String(prev.length + 1) }]);
+    const newVehicle: Vehicle = {
+      ...vehicle,
+      id: String(vehicles.length + 1),
+      school_id: "1"
+    };
+    setVehicles((prev) => [...prev, newVehicle]);
     setOpen(false);
   };
 
@@ -33,7 +38,10 @@ const Vehicles = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Vehicles</h2>
-        <Button onClick={() => setOpen(true)}>
+        <Button onClick={() => {
+          setEditingVehicle(null);
+          setOpen(true);
+        }}>
           <Plus className="mr-2 h-4 w-4" />
           Add Vehicle
         </Button>

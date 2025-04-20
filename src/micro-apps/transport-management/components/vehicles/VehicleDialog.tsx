@@ -38,6 +38,7 @@ export const VehicleDialog = ({
       capacity: 0,
       status: "active",
       school_id: "1",
+      id: ""  // Add an empty id for new vehicles
     },
   });
 
@@ -51,6 +52,7 @@ export const VehicleDialog = ({
         capacity: 0,
         status: "active",
         school_id: "1",
+        id: ""
       });
     }
   }, [vehicle, form]);
