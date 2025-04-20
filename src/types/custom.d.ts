@@ -26,9 +26,11 @@ declare module '@/hooks/useSchools' {
 
 declare module '@/hooks/useUserSearch' {
   import { Teacher, Student } from '@/types';
-  export const useUserSearch: (users: Teacher[] | Student[]) => {
-    searchTerm: string;
-    setSearchTerm: (term: string) => void;
+  export const useUserSearch: (
+    searchTerm: string,
+    teachers: Teacher[],
+    students: Student[]
+  ) => {
     filteredTeachers: Teacher[];
     filteredStudents: Student[];
   };

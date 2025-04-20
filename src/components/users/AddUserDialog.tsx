@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,6 +12,8 @@ import {
 import { Plus } from 'lucide-react';
 import AddTeacherForm from './AddTeacherForm';
 import AddStudentForm from './AddStudentForm';
+import { Grade, School } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AddUserDialogProps {
   activeTab: string;
@@ -36,22 +39,26 @@ interface AddUserDialogProps {
     name: string;
     email: string;
     phone: string;
-    schoolId: string;
-    grade: string;
     guardianName: string;
+    dateOfBirth: string;
+    gradeId: string;
+    schoolId: string;
+    remarks: string;
   };
   setNewStudent: React.Dispatch<React.SetStateAction<{
     name: string;
     email: string;
     phone: string;
-    schoolId: string;
-    grade: string;
     guardianName: string;
+    dateOfBirth: string;
+    gradeId: string;
+    schoolId: string;
+    remarks: string;
   }>>;
   handleAddTeacher: () => void;
   handleAddStudent: () => void;
-  schools: { id: string; name: string }[];
-  grades: string[];
+  schools: School[];
+  grades: Grade[];
 }
 
 const AddUserDialog = ({
@@ -67,18 +74,20 @@ const AddUserDialog = ({
   schools,
   grades
 }: AddUserDialogProps) => {
+  const { user } = useAuth();
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="mr-2 h-4 w-4" /> Add {activeTab === 'teachers' ? 'Staff' : 'Student'}
+          <Plus className="mr-2 h-4 w-4" /> {activeTab === 'teachers' ? 'Add Staff' : 'Admit Student'}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add New {activeTab === 'teachers' ? 'Staff' : 'Student'}</DialogTitle>
+          <DialogTitle>{activeTab === 'teachers' ? 'Add New Staff' : 'Admit New Student'}</DialogTitle>
           <DialogDescription>
-            Register a new {activeTab === 'teachers' ? 'staff member' : 'student'} in the system
+            {activeTab === 'teachers' ? 'Register a new staff member in the system' : 'Admit a new student to the school'}
           </DialogDescription>
         </DialogHeader>
         
@@ -91,9 +100,11 @@ const AddUserDialog = ({
         ) : (
           <AddStudentForm 
             newStudent={newStudent} 
-            setNewStudent={setNewStudent} 
-            schools={schools} 
-            grades={grades} 
+            setNewStudent={setNewStudent}
+            schools={schools}
+            grades={grades}
+            userRole={user?.role}
+            userSchoolId={user?.schoolId}
           />
         )}
         
@@ -102,7 +113,7 @@ const AddUserDialog = ({
             Cancel
           </Button>
           <Button onClick={activeTab === 'teachers' ? handleAddTeacher : handleAddStudent}>
-            Add {activeTab === 'teachers' ? 'Staff' : 'Student'}
+            {activeTab === 'teachers' ? 'Add Staff' : 'Admit Student'}
           </Button>
         </DialogFooter>
       </DialogContent>

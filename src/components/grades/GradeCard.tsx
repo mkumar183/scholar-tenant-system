@@ -33,7 +33,7 @@ const GradeCard = ({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">{name}</CardTitle>
-          <Badge variant="grade">{name}</Badge>
+          <Badge variant="outline">{name}</Badge>
         </div>
       </CardHeader>
       <CardContent className="flex-1">

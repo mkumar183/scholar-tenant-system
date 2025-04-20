@@ -1,139 +1,124 @@
-
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-export interface GradeFormData {
-  name: string;
-  description: string;
-  academicYear: string;
-}
+import { useState, useEffect } from 'react';
+import { Grade } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface GradeDialogProps {
   isOpen: boolean;
-  onClose: () => void;
-  onSave: (data: GradeFormData) => void;
-  initialData?: Partial<GradeFormData>;
-  title?: string;
-  academicYears: string[];
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (grade: Partial<Grade>) => void;
+  initialGrade?: Grade | null;
+  gradeOptions: { name: string; level: number }[];
+  isEditMode: boolean;
+  existingGrades?: Grade[];
 }
 
 const GradeDialog = ({
   isOpen,
-  onClose,
-  onSave,
-  initialData,
-  title = "Add New Grade",
-  academicYears,
+  onOpenChange,
+  onSubmit,
+  initialGrade,
+  gradeOptions,
+  isEditMode,
+  existingGrades = [],
 }: GradeDialogProps) => {
-  const [formData, setFormData] = useState<GradeFormData>({
-    name: "",
-    description: "",
-    academicYear: "",
+  const [newGrade, setNewGrade] = useState<{
+    name: string;
+    level: number;
+  }>({
+    name: '',
+    level: 0,
   });
 
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
-        name: initialData.name || "",
-        description: initialData.description || "",
-        academicYear: initialData.academicYear || "",
-      });
+  const availableGradeOptions = gradeOptions.filter(option => {
+    if (isEditMode && initialGrade?.level === option.level) {
+      return true;
     }
-  }, [initialData]);
+    return !existingGrades.some(grade => grade.level === option.level);
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
+  // Get the name for the current level
+  const getGradeNameForLevel = (level: number) => {
+    return gradeOptions.find(option => option.level === level)?.name || '';
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  useEffect(() => {
+    if (initialGrade) {
+      setNewGrade({
+        name: initialGrade.name,
+        level: initialGrade.level,
+      });
+    } else if (!isOpen) {
+      // Only reset when dialog is closed
+      const firstAvailableOption = availableGradeOptions[0];
+      setNewGrade({ 
+        name: '', 
+        level: firstAvailableOption?.level || 0 
+      });
+    }
+  }, [initialGrade, isOpen, availableGradeOptions]);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewGrade(prev => ({
+      ...prev,
+      name: e.target.value
+    }));
+  };
+
+  const handleLevelChange = (value: string) => {
+    setNewGrade(prev => ({
+      ...prev,
+      level: parseInt(value)
+    }));
+  };
+
+  const handleSubmit = () => {
+    onSubmit(newGrade);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>
-              Enter the details for the grade/class below.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="col-span-3"
-                placeholder="Grade 1, Nursery, etc."
-                required
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
-                Description
-              </Label>
-              <Textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                className="col-span-3"
-                placeholder="Description of the grade/class"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="academicYear" className="text-right">
-                Academic Year
-              </Label>
-              <Select
-                value={formData.academicYear}
-                onValueChange={(value) => 
-                  setFormData((prev) => ({ ...prev, academicYear: value }))
-                }
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select academic year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {academicYears.map((year) => (
-                    <SelectItem key={year} value={year}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{isEditMode ? 'Edit Grade' : 'Add New Grade'}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Grade Name</label>
+            <Input
+              value={newGrade.name}
+              onChange={handleNameChange}
+              placeholder="Enter grade name"
+            />
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit">Save</Button>
-          </DialogFooter>
-        </form>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Grade Level</label>
+            <Select
+              value={newGrade.level.toString()}
+              onValueChange={handleLevelChange}
+            >
+              <SelectTrigger>
+                <SelectValue>
+                  {getGradeNameForLevel(newGrade.level)} (Level {newGrade.level})
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {availableGradeOptions.map((grade) => (
+                  <SelectItem key={grade.level} value={grade.level.toString()}>
+                    {grade.name} (Level {grade.level})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button onClick={handleSubmit} disabled={availableGradeOptions.length === 0}>
+            {isEditMode ? 'Update Grade' : 'Add Grade'}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

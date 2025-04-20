@@ -1,12 +1,18 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
 import { useGrades } from '@/hooks/useGrades';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Grade } from '@/types';
+import { useSections } from '@/hooks/useSections';
+import AccessDenied from '@/components/common/AccessDenied';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
+import NoActiveSessionMessage from '@/components/grades/NoActiveSessionMessage';
+import GradeSectionsArea from '@/components/grades/GradeSectionsArea';
+import GradesHeader from '@/components/grades/GradesHeader';
+import GradeButtons from '@/components/grades/GradeButtons';
+import GradesTableView from '@/components/grades/GradesTableView';
+import { supabase } from '@/lib/supabase';
 
+// Grade level definitions
 const GRADE_LEVELS = [
   { name: 'Nursery', level: 0 },
   { name: 'LKG', level: 1 },
@@ -30,164 +36,197 @@ const Grades = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedGrade, setSelectedGrade] = useState<Grade | null>(null);
-  const [newGrade, setNewGrade] = useState({
-    name: '',
-    level: 0,
+  const [selectedGradeId, setSelectedGradeId] = useState<string | null>(null);
+  const [activeAcademicSession, setActiveAcademicSession] = useState<string | null>(null);
+  const [isLoadingSession, setIsLoadingSession] = useState(true);
+  
+  // Debug info state
+  const [debugInfo, setDebugInfo] = useState({
+    userRole: '',
+    hasSchoolId: false,
+    schoolId: '',
+    canManageSections: false
   });
-
-  // Only tenant admins can access this page
-  if (user?.role !== 'tenant_admin') {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-muted-foreground">Only tenant administrators can access this page.</p>
-        </div>
-      </div>
-    );
-  }
-
-  const { grades, isLoading, addGrade, updateGrade, deleteGrade } = useGrades(user.tenantId);
-
-  const handleAddOrUpdateGrade = async () => {
+  
+  const { grades, isLoading, addGrade, updateGrade } = useGrades(user?.tenantId || '');
+  
+  // Update debug info whenever relevant user info changes
+  useEffect(() => {
+    if (user) {
+      setDebugInfo({
+        userRole: user.role,
+        hasSchoolId: !!user.schoolId,
+        schoolId: user.schoolId || 'none',
+        canManageSections: user.role === 'school_admin' && !!user.schoolId
+      });
+      
+      console.log('User info for sections access:', {
+        role: user.role,
+        schoolId: user.schoolId,
+        tenantId: user.tenantId,
+        canManageSections: user.role === 'school_admin' && !!user.schoolId
+      });
+    }
+  }, [user]);
+  
+  // Fetch active academic session
+  useEffect(() => {
+    const fetchActiveSession = async () => {
+      if (!user?.tenantId) {
+        setIsLoadingSession(false);
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('academic_sessions')
+          .select('id')
+          .eq('tenant_id', user.tenantId)
+          .eq('is_active', true)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching academic session:', error);
+          setActiveAcademicSession(null);
+        } else {
+          setActiveAcademicSession(data?.id || null);
+        }
+      } catch (error: any) {
+        console.error('Error in fetchActiveSession:', error);
+        setActiveAcademicSession(null);
+      } finally {
+        setIsLoadingSession(false);
+      }
+    };
+    
+    fetchActiveSession();
+  }, [user?.tenantId]);
+  
+  // Only load sections for school admins with a schoolId
+  const canManageSections = user?.role === 'school_admin' && !!user?.schoolId;
+  
+  // Use the sections hook only if the user is a school admin
+  const { 
+    sections: hookSections, 
+    isLoading: sectionsLoading, 
+    addSection, 
+    updateSection, 
+    toggleSectionStatus 
+  } = useSections(
+    selectedGradeId || '', 
+    user?.schoolId || '', 
+    activeAcademicSession || ''
+  );
+  
+  // Add logging for sections loading
+  useEffect(() => {
+    if (selectedGradeId) {
+      console.log('Sections loading state:', {
+        selectedGradeId,
+        sectionsCount: hookSections?.length || 0,
+        isLoading: sectionsLoading,
+        academicSession: activeAcademicSession
+      });
+    }
+  }, [selectedGradeId, hookSections, sectionsLoading, activeAcademicSession]);
+  
+  // Grade selection handler
+  const handleGradeSelect = (gradeId: string) => {
+    setSelectedGradeId(gradeId);
+    console.log('Grade selected:', gradeId);
+  };
+  
+  const handleAddOrUpdateGrade = async (newGradeData: Partial<Grade>) => {
     if (!user?.tenantId) return;
     
     let success;
     if (isEditMode && selectedGrade) {
       success = await updateGrade(selectedGrade.id, {
-        ...newGrade,
+        ...newGradeData,
         tenantId: user.tenantId,
       });
     } else {
       success = await addGrade({
-        ...newGrade,
+        ...newGradeData,
         tenantId: user.tenantId,
-      });
+      } as Omit<Grade, 'id' | 'createdAt' | 'updatedAt'>);
     }
 
     if (success) {
-      setNewGrade({ name: '', level: 0 });
+      setIsDialogOpen(false);
       setIsEditMode(false);
       setSelectedGrade(null);
-      setIsDialogOpen(false);
     }
   };
-
+  
   const handleEditClick = (grade: Grade) => {
     setSelectedGrade(grade);
-    setNewGrade({
-      name: grade.name,
-      level: grade.level,
-    });
     setIsEditMode(true);
     setIsDialogOpen(true);
   };
-
-  const handleDeleteClick = async (id: string) => {
-    if (confirm('Are you sure you want to delete this grade?')) {
-      await deleteGrade(id);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <p className="mt-2 text-muted-foreground">Loading grades...</p>
-        </div>
-      </div>
-    );
+  
+  // Basic access check
+  if (user?.role !== 'tenant_admin' && user?.role !== 'school_admin') {
+    return <AccessDenied message="Only tenant administrators and school administrators can access this page." />;
   }
-
+  
+  // Only tenant admins can add/edit grades
+  const canManageGrades = user?.role === 'tenant_admin';
+  
+  // Loading states
+  if (isLoading) {
+    return <LoadingSpinner message="Loading grades..." />;
+  }
+  
+  if (isLoadingSession) {
+    return <LoadingSpinner message="Loading academic session..." />;
+  }
+  
+  // Warning if no active session
+  if (!activeAcademicSession) {
+    return <NoActiveSessionMessage />;
+  }
+  
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Grades</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => {
-              setIsEditMode(false);
-              setSelectedGrade(null);
-              setNewGrade({ name: '', level: 0 });
-            }}>
-              Add Grade
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{isEditMode ? 'Edit Grade' : 'Add New Grade'}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Grade Name</label>
-                <Input
-                  value={newGrade.name}
-                  onChange={(e) => setNewGrade({ ...newGrade, name: e.target.value })}
-                  placeholder="Enter grade name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Grade Level</label>
-                <Select
-                  value={newGrade.level.toString()}
-                  onValueChange={(value) => setNewGrade({ ...newGrade, level: parseInt(value) })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select grade level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GRADE_LEVELS.map((grade) => (
-                      <SelectItem key={grade.level} value={grade.level.toString()}>
-                        {grade.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={handleAddOrUpdateGrade}>
-                {isEditMode ? 'Update Grade' : 'Add Grade'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Level</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {grades.map((grade) => (
-            <TableRow key={grade.id}>
-              <TableCell>{grade.name}</TableCell>
-              <TableCell>{grade.level}</TableCell>
-              <TableCell>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditClick(grade)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteClick(grade.id)}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      {canManageGrades ? (
+        <>
+          <GradesHeader 
+            isDialogOpen={isDialogOpen}
+            setIsDialogOpen={setIsDialogOpen}
+            handleAddOrUpdateGrade={handleAddOrUpdateGrade}
+            selectedGrade={selectedGrade}
+            gradeOptions={GRADE_LEVELS}
+            isEditMode={isEditMode}
+            canManageGrades={canManageGrades}
+          />
+          <GradesTableView 
+            grades={grades}
+            onGradeSelect={handleGradeSelect}
+            onGradeEdit={handleEditClick}
+            selectedGradeId={selectedGradeId}
+          />
+        </>
+      ) : (
+        <>
+          <h1 className="text-2xl font-bold mb-6">Grades</h1>
+          <GradeButtons 
+            grades={grades}
+            selectedGradeId={selectedGradeId}
+            onGradeSelect={handleGradeSelect}
+          />
+        </>
+      )}
+      
+      <GradeSectionsArea 
+        selectedGradeId={selectedGradeId}
+        canManageSections={canManageSections}
+        sectionsLoading={sectionsLoading}
+        sections={hookSections}
+        addSection={addSection}
+        updateSection={updateSection}
+        toggleSectionStatus={toggleSectionStatus}
+      />
     </div>
   );
 };

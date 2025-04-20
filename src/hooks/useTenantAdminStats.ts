@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -8,7 +7,6 @@ export interface TenantAdminStats {
   schoolsCount: number;
   teachersCount: number;
   studentsCount: number;
-  classesCount: number;
   schools: {
     id: string;
     name: string;
@@ -22,7 +20,6 @@ export const useTenantAdminStats = () => {
     schoolsCount: 0,
     teachersCount: 0,
     studentsCount: 0,
-    classesCount: 0,
     schools: []
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -64,41 +61,20 @@ export const useTenantAdminStats = () => {
 
         if (studentsError) throw studentsError;
 
-        // Fetch classes count
-        let classesCount = 0;
-        if (schools && schools.length > 0) {
-          const schoolIds = schools.map(school => school.id);
-          const { count: classes, error: classesError } = await supabase
-            .from('classes')
-            .select('*', { count: 'exact', head: true })
-            .in('school_id', schoolIds);
-
-          if (classesError) throw classesError;
-          classesCount = classes || 0;
-        }
-
-        // Get student count per school
-        const schoolsWithStudentCount = await Promise.all(
+        // Calculate student count per school
+        const schoolsWithStats = await Promise.all(
           (schools || []).map(async (school) => {
-            const { count, error } = await supabase
+            const { count: studentCount } = await supabase
               .from('users')
               .select('*', { count: 'exact', head: true })
               .eq('school_id', school.id)
               .eq('role', 'student');
-              
-            if (error) {
-              console.error('Error fetching student count for school:', error);
-              return {
-                ...school,
-                studentCount: 0
-              };
-            }
-            
+
             return {
               id: school.id,
               name: school.name,
               type: school.type,
-              studentCount: count || 0
+              studentCount: studentCount || 0
             };
           })
         );
@@ -107,12 +83,11 @@ export const useTenantAdminStats = () => {
           schoolsCount: schools?.length || 0,
           teachersCount: teachersCount || 0,
           studentsCount: studentsCount || 0,
-          classesCount: classesCount,
-          schools: schoolsWithStudentCount
+          schools: schoolsWithStats
         });
       } catch (error) {
         console.error('Error fetching tenant stats:', error);
-        toast.error('Failed to fetch dashboard statistics');
+        toast.error('Failed to fetch tenant statistics');
       } finally {
         setIsLoading(false);
       }

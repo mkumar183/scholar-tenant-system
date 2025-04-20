@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { StreamManagement } from '@/components/settings/StreamManagement';
+import { GradesManager } from '@/components/grades/GradesManager';
 
 const Settings = () => {
   const { user } = useAuth();
@@ -86,11 +87,12 @@ const Settings = () => {
   return (
     <div className="max-w-4xl mx-auto">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 mb-6">
+        <TabsList className="grid w-full grid-cols-5 mb-6">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="password">Password</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="display">Display</TabsTrigger>
+          <TabsTrigger value="academic">Academic</TabsTrigger>
         </TabsList>
         
         <TabsContent value="profile">
@@ -320,6 +322,30 @@ const Settings = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="academic">
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium">Academic Structure</h3>
+              <p className="text-sm text-muted-foreground">
+                Manage your institution's academic structure including grades and streams.
+              </p>
+            </div>
+
+            <Tabs defaultValue="streams">
+              <TabsList>
+                <TabsTrigger value="streams">Streams</TabsTrigger>
+                <TabsTrigger value="grades">Grades</TabsTrigger>
+              </TabsList>
+              <TabsContent value="streams">
+                <StreamManagement />
+              </TabsContent>
+              <TabsContent value="grades">
+                <GradesManager />
+              </TabsContent>
+            </Tabs>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
