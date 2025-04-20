@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -12,7 +11,8 @@ import {
   Settings,
   CalendarRange,
   GraduationCap,
-  CreditCard
+  CreditCard,
+  Bus, // Add this import
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -102,6 +102,18 @@ const Layout = ({ children }: LayoutProps) => {
             >
               <CreditCard className="mr-2 h-5 w-5" />
               Fee Management
+            </Button>
+          )}
+
+          {/* Transport Management - visible to tenant admins and school admins */}
+          {(user?.role === 'tenant_admin' || user?.role === 'school_admin') && (
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-primary-foreground hover:text-primary-foreground hover:bg-primary/80"
+              onClick={() => navigate('/transport-management')}
+            >
+              <Bus className="mr-2 h-5 w-5" />
+              Transport
             </Button>
           )}
 
