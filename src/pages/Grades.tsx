@@ -8,9 +8,10 @@ import LoadingSpinner from '@/components/common/LoadingSpinner';
 import NoActiveSessionMessage from '@/components/grades/NoActiveSessionMessage';
 import GradeSectionsArea from '@/components/grades/GradeSectionsArea';
 import GradesHeader from '@/components/grades/GradesHeader';
-import GradeButtons from '@/components/grades/GradeButtons';
-import GradesTableView from '@/components/grades/GradesTableView';
 import { supabase } from '@/lib/supabase';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 // Grade level definitions
 const GRADE_LEVELS = [
@@ -186,46 +187,60 @@ const Grades = () => {
   if (!activeAcademicSession) {
     return <NoActiveSessionMessage />;
   }
-  
+
   return (
     <div className="space-y-6">
-      {canManageGrades ? (
-        <>
-          <GradesHeader 
-            isDialogOpen={isDialogOpen}
-            setIsDialogOpen={setIsDialogOpen}
-            handleAddOrUpdateGrade={handleAddOrUpdateGrade}
-            selectedGrade={selectedGrade}
-            gradeOptions={GRADE_LEVELS}
-            isEditMode={isEditMode}
-            canManageGrades={canManageGrades}
-          />
-          <GradesTableView 
-            grades={grades}
-            onGradeSelect={handleGradeSelect}
-            onGradeEdit={handleEditClick}
-            selectedGradeId={selectedGradeId}
-          />
-        </>
-      ) : (
-        <>
-          <GradeButtons 
-            grades={grades}
-            selectedGradeId={selectedGradeId}
-            onGradeSelect={handleGradeSelect}
-          />
-        </>
+      {canManageGrades && (
+        <GradesHeader 
+          isDialogOpen={isDialogOpen}
+          setIsDialogOpen={setIsDialogOpen}
+          handleAddOrUpdateGrade={handleAddOrUpdateGrade}
+          selectedGrade={selectedGrade}
+          gradeOptions={GRADE_LEVELS}
+          isEditMode={isEditMode}
+          canManageGrades={canManageGrades}
+        />
       )}
-      
-      <GradeSectionsArea 
-        selectedGradeId={selectedGradeId}
-        canManageSections={canManageSections}
-        sectionsLoading={sectionsLoading}
-        sections={hookSections}
-        addSection={addSection}
-        updateSection={updateSection}
-        toggleSectionStatus={toggleSectionStatus}
-      />
+
+      <Card>
+        <CardContent className="p-6">
+          <Tabs
+            defaultValue={selectedGradeId || grades[0]?.id}
+            onValueChange={(value) => setSelectedGradeId(value)}
+            className="w-full"
+          >
+            <TabsList className="w-full justify-start border-b mb-4 bg-transparent">
+              {grades.map((grade) => (
+                <TabsTrigger
+                  key={grade.id}
+                  value={grade.id}
+                  className="data-[state=active]:bg-primary/5"
+                >
+                  Grade {grade.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            {grades.map((grade) => (
+              <TabsContent key={grade.id} value={grade.id}>
+                <div className="mt-4">
+                  <h3 className="text-lg font-semibold mb-4">Grade {grade.name} Management</h3>
+                  <Separator className="my-4" />
+                  <GradeSectionsArea 
+                    selectedGradeId={selectedGradeId}
+                    canManageSections={canManageSections}
+                    sectionsLoading={sectionsLoading}
+                    sections={hookSections}
+                    addSection={addSection}
+                    updateSection={updateSection}
+                    toggleSectionStatus={toggleSectionStatus}
+                  />
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };

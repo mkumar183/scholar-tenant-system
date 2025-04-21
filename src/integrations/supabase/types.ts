@@ -546,6 +546,39 @@ export type Database = {
           },
         ]
       }
+      users_backup: {
+        Row: {
+          created_at: string | null
+          date_of_birth: string | null
+          id: string | null
+          name: string | null
+          role: string | null
+          school_id: string | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date_of_birth?: string | null
+          id?: string | null
+          name?: string | null
+          role?: string | null
+          school_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date_of_birth?: string | null
+          id?: string | null
+          name?: string | null
+          role?: string | null
+          school_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       current_section_enrollments: {
