@@ -95,9 +95,6 @@ export const useUserData = (
         
         if (teachersError) throw teachersError;
 
-        console.log('Raw teachers data:', JSON.stringify(teachersData, null, 2));
-        console.log('Teacher school data structure:', teachersData?.[0]?.school);
-        
         const teacherIds = (teachersData || []).map(teacher => teacher.id);
         const { data: emailData, error: emailError } = await supabase
           .rpc('get_user_emails', { user_ids: teacherIds });
@@ -127,7 +124,7 @@ export const useUserData = (
             admitted_by,
             created_at,
             updated_at,
-            student:users!student_id (
+            student:users!student_id(
               id,
               name,
               role,
@@ -138,7 +135,7 @@ export const useUserData = (
               updated_at,
               school:schools!users_school_id_fkey(name)
             ),
-            grade:grades!grade_id (
+            grade:grades!grade_id(
               id,
               name,
               level,
@@ -149,8 +146,6 @@ export const useUserData = (
           `);
         
         if (admissionsError) throw admissionsError;
-
-        console.log('Raw admissions data:', JSON.stringify(admissionsData, null, 2));
 
         // Get student IDs to fetch emails
         const studentIds = (admissionsData || []).map(admission => admission.student_id);
@@ -169,12 +164,40 @@ export const useUserData = (
             }
           });
         }
+
+        // Get active enrollments for these students
+        const { data: enrollmentsData, error: enrollmentsError } = await supabase
+          .from('student_section_enrollments')
+          .select(`
+            student_id,
+            section:sections(
+              id,
+              name
+            )
+          `)
+          .eq('status', 'active');
+
+        if (enrollmentsError) {
+          console.error('Error fetching enrollments:', enrollmentsError);
+        }
+
+        const enrollmentMap = new Map<string, { id: string; name: string }>();
+        if (enrollmentsData) {
+          enrollmentsData.forEach(enrollment => {
+            if (enrollment.section) {
+              enrollmentMap.set(enrollment.student_id, {
+                id: enrollment.section.id,
+                name: enrollment.section.name
+              });
+            }
+          });
+        }
         
         // Format students from admissions data
         const formattedStudents: Student[] = (admissionsData || [])
           .filter(admission => admission.student !== null)
           .map((admission: any) => {
-            console.log('Processing admission:', JSON.stringify(admission, null, 2));
+            const enrollment = enrollmentMap.get(admission.student_id);
             const studentData = {
               id: admission.student.id,
               name: admission.student.name,
@@ -183,7 +206,9 @@ export const useUserData = (
               role: 'student' as const,
               schoolId: admission.student.school_id || '',
               schoolName: admission.student.school?.name || '',
-              grade: admission.grade?.name || 'Unknown Grade'
+              grade: admission.grade?.name || 'Unknown Grade',
+              sectionId: enrollment?.id || '',
+              sectionName: enrollment?.name || 'Not enrolled'
             };
             return {
               ...studentData,
@@ -195,15 +220,6 @@ export const useUserData = (
           });
         
         const formattedTeachers: Teacher[] = (teachersData || []).map((teacher: any) => {
-          console.log('Processing teacher:', {
-            id: teacher.id,
-            name: teacher.name,
-            role: teacher.role,
-            school_id: teacher.school_id,
-            school: teacher.school
-          });
-          
-          // Get the school name from the school object
           const schoolName = teacher.school?.name;
           
           return {
@@ -217,8 +233,6 @@ export const useUserData = (
             subjects: [],
           };
         });
-        
-        console.log('Formatted teachers:', formattedTeachers);
         
         setTeachers(formattedTeachers);
         setStudents(formattedStudents);

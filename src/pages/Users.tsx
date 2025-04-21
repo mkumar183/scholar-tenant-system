@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Teacher, Student, School, Grade } from '@/types';
@@ -49,6 +48,11 @@ const Users = () => {
   // Handle search
   const { filteredTeachers, filteredStudents } = useUserSearch(searchTerm, teachers, students);
 
+  const handleEditStudent = (student: Student) => {
+    // TODO: Implement student editing functionality
+    console.log('Editing student:', student);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -86,7 +90,10 @@ const Users = () => {
             </TabsContent>
             
             <TabsContent value="students">
-              <StudentsList students={filteredStudents} />
+              <StudentsList 
+                students={filteredStudents} 
+                onEdit={handleEditStudent}
+              />
             </TabsContent>
           </>
         )}
