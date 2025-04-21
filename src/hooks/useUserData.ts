@@ -1,9 +1,56 @@
-
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { School, Teacher, Student } from '@/types';
+
+interface StudentAdmission {
+  id: string;
+  student_id: string;
+  school_id: string;
+  grade_id: string;
+  status: string;
+  admitted_by: string;
+  created_at: string;
+  updated_at: string;
+  student: {
+    id: string;
+    name: string;
+    email: string | null;
+    role: string;
+    school_id: string;
+    school_name: string | null;
+    guardian_name: string | null;
+    date_of_birth: string | null;
+    tenant_id: string;
+    created_at: string;
+    updated_at: string;
+  };
+  grade: {
+    id: string;
+    name: string;
+    level: number;
+    tenant_id: string;
+    created_at: string;
+    updated_at: string;
+  };
+}
+
+interface StudentEmail {
+  id: string;
+  email: string;
+}
+
+interface TeacherData {
+  id: string;
+  name: string;
+  role: string;
+  school_id: string;
+  tenant_id: string;
+  school: {
+    name: string;
+  };
+}
 
 export const useUserData = (
   setTeachers: (teachers: Teacher[]) => void,
@@ -48,6 +95,9 @@ export const useUserData = (
         
         if (teachersError) throw teachersError;
 
+        console.log('Raw teachers data:', JSON.stringify(teachersData, null, 2));
+        console.log('Teacher school data structure:', teachersData?.[0]?.school);
+        
         const teacherIds = (teachersData || []).map(teacher => teacher.id);
         const { data: emailData, error: emailError } = await supabase
           .rpc('get_user_emails', { user_ids: teacherIds });
@@ -65,25 +115,47 @@ export const useUserData = (
           });
         }
         
-        // Fetch students
-        const { data: studentsData, error: studentsError } = await supabase
-          .from('users')
+        // Fetch student admissions with related data
+        const { data: admissionsData, error: admissionsError } = await supabase
+          .from('student_admissions')
           .select(`
-            id, 
-            name, 
-            role,
+            id,
+            student_id,
             school_id,
-            tenant_id,
-            date_of_birth,
-            school:schools!users_school_id_fkey(name)
-          `)
-          .eq('role', 'student');
+            grade_id,
+            status,
+            admitted_by,
+            created_at,
+            updated_at,
+            student:users!student_id (
+              id,
+              name,
+              role,
+              school_id,
+              date_of_birth,
+              tenant_id,
+              created_at,
+              updated_at,
+              school:schools!users_school_id_fkey(name)
+            ),
+            grade:grades!grade_id (
+              id,
+              name,
+              level,
+              tenant_id,
+              created_at,
+              updated_at
+            )
+          `);
         
-        if (studentsError) throw studentsError;
-        
-        const studentIds = (studentsData || []).map(student => student.id);
+        if (admissionsError) throw admissionsError;
+
+        console.log('Raw admissions data:', JSON.stringify(admissionsData, null, 2));
+
+        // Get student IDs to fetch emails
+        const studentIds = (admissionsData || []).map(admission => admission.student_id);
         const { data: studentEmailData, error: studentEmailError } = await supabase
-          .rpc('get_user_emails', { user_ids: studentIds });
+          .rpc('get_user_emails', { user_ids: studentIds }) as { data: StudentEmail[] | null, error: any };
 
         if (studentEmailError) {
           console.error('Error fetching student emails:', studentEmailError);
@@ -98,65 +170,55 @@ export const useUserData = (
           });
         }
         
-        // Fetch student admissions
-        const { data: admissionsData, error: admissionsError } = await supabase
-          .from('student_admissions')
-          .select(`
-            id,
-            student_id,
-            school_id,
-            grade_id,
-            status,
-            admitted_by,
-            grade:grades(id, name)
-          `);
-        
-        if (admissionsError) {
-          console.error('Error fetching student admissions:', admissionsError);
-        }
-        
-        // Create a map of student admissions
-        const admissionsMap = new Map();
-        if (admissionsData) {
-          admissionsData.forEach(admission => {
-            admissionsMap.set(admission.student_id, {
-              status: admission.status,
+        // Format students from admissions data
+        const formattedStudents: Student[] = (admissionsData || [])
+          .filter(admission => admission.student !== null)
+          .map((admission: any) => {
+            console.log('Processing admission:', JSON.stringify(admission, null, 2));
+            const studentData = {
+              id: admission.student.id,
+              name: admission.student.name,
+              email: studentEmailMap.get(admission.student_id) || '',
+              phone: '',
+              role: 'student' as const,
+              schoolId: admission.student.school_id || '',
+              schoolName: admission.student.school?.name || '',
+              grade: admission.grade?.name || 'Unknown Grade'
+            };
+            return {
+              ...studentData,
               gradeId: admission.grade_id,
-              gradeName: admission.grade?.name || 'Unknown Grade',
+              dateOfBirth: admission.student.date_of_birth || '',
+              admissionStatus: admission.status,
               admittedBy: admission.admitted_by
-            });
+            };
           });
-        }
         
-        const formattedTeachers: Teacher[] = (teachersData || []).map(teacher => ({
-          id: teacher.id,
-          name: teacher.name || 'No Name',
-          email: emailMap.get(teacher.id) || 'Not provided',
-          phone: 'Not provided',
-          role: teacher.role as 'teacher' | 'staff' | 'school_admin',
-          schoolId: teacher.school_id || '',
-          schoolName: teacher.school?.name || 'No School',
-          subjects: [],
-        }));
-        
-        const formattedStudents: Student[] = (studentsData || []).map(student => {
-          const admission = admissionsMap.get(student.id);
+        const formattedTeachers: Teacher[] = (teachersData || []).map((teacher: any) => {
+          console.log('Processing teacher:', {
+            id: teacher.id,
+            name: teacher.name,
+            role: teacher.role,
+            school_id: teacher.school_id,
+            school: teacher.school
+          });
+          
+          // Get the school name from the school object
+          const schoolName = teacher.school?.name;
+          
           return {
-            id: student.id,
-            name: student.name || 'No Name',
-            email: studentEmailMap.get(student.id) || 'Not provided',
+            id: teacher.id,
+            name: teacher.name || 'No Name',
+            email: emailMap.get(teacher.id) || 'Not provided',
             phone: 'Not provided',
-            role: 'student',
-            schoolId: student.school_id || '',
-            schoolName: student.school?.name || 'No School',
-            grade: admission ? admission.gradeName : 'Not specified',
-            gradeId: admission ? admission.gradeId : undefined,
-            guardianName: 'Not specified',
-            dateOfBirth: student.date_of_birth || '',
-            admissionStatus: admission ? admission.status : undefined,
-            admittedBy: admission ? admission.admittedBy : undefined,
+            role: teacher.role as 'teacher' | 'staff' | 'school_admin',
+            schoolId: teacher.school_id || '',
+            schoolName: schoolName || 'No School',
+            subjects: [],
           };
         });
+        
+        console.log('Formatted teachers:', formattedTeachers);
         
         setTeachers(formattedTeachers);
         setStudents(formattedStudents);
