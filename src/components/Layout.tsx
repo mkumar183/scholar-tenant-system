@@ -10,7 +10,9 @@ import {
   LayoutDashboard, 
   Settings,
   CalendarRange,
-  GraduationCap
+  GraduationCap,
+  CreditCard,
+  Bus, // Add this import
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -91,6 +93,30 @@ const Layout = ({ children }: LayoutProps) => {
             </Button>
           )}
 
+          {/* Fee Management menu item - visible to tenant admins */}
+          {user.role === 'tenant_admin' && (
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-primary-foreground hover:text-primary-foreground hover:bg-primary/80"
+              onClick={() => navigate('/fee-management')}
+            >
+              <CreditCard className="mr-2 h-5 w-5" />
+              Fee Management
+            </Button>
+          )}
+
+          {/* Transport Management - visible to tenant admins and school admins */}
+          {(user?.role === 'tenant_admin' || user?.role === 'school_admin') && (
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-primary-foreground hover:text-primary-foreground hover:bg-primary/80"
+              onClick={() => navigate('/transport-management')}
+            >
+              <Bus className="mr-2 h-5 w-5" />
+              Transport
+            </Button>
+          )}
+
           {/* Users menu item - hidden for superadmins, visible for all other roles except students */}
           {user.role !== 'superadmin' && user.role !== 'student' && (
             <Button 
@@ -138,7 +164,7 @@ const Layout = ({ children }: LayoutProps) => {
             <h1 className="text-2xl font-bold">
               {window.location.pathname === '/dashboard' ? 'Dashboard' : 
               window.location.pathname.split('/')[1].charAt(0).toUpperCase() + 
-              window.location.pathname.split('/')[1].slice(1)}
+              window.location.pathname.split('/')[1].slice(1).replace(/-/g, ' ')}
             </h1>
             <div className="flex items-center gap-2">
               <div className="text-right">

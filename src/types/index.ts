@@ -27,7 +27,7 @@ export type Student = {
   schoolName?: string;
   grade?: string;
   gradeId?: string;
-  guardianName: string;
+  guardianName?: string;
   dateOfBirth?: string;
   tenant_id?: string;
   school_id?: string;

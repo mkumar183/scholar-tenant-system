@@ -14,6 +14,11 @@ type AdmissionWithStudent = {
     school_id: string;
     date_of_birth: string;
   } | null;
+  grade: {
+    id: string;
+    name: string;
+    level: number;
+  } | null;
 };
 
 export const useStudents = (gradeId?: string) => {
@@ -65,6 +70,11 @@ export const useStudents = (gradeId?: string) => {
             role,
             school_id,
             date_of_birth
+          ),
+          grade:grades!grade_id (
+            id,
+            name,
+            level
           )
         `)
         .eq('status', 'active')
@@ -81,8 +91,8 @@ export const useStudents = (gradeId?: string) => {
       const formattedStudents = (data as unknown as AdmissionWithStudent[])
         .map(admission => {
           console.log('useStudents - Processing admission:', admission);
-          if (!admission.student) {
-            console.log('useStudents - Skipping admission with null student');
+          if (!admission.student || !admission.grade) {
+            console.log('useStudents - Skipping admission with null student or grade');
             return null;
           }
           const student = admission.student;
@@ -97,6 +107,7 @@ export const useStudents = (gradeId?: string) => {
             schoolId: student.school_id,
             dateOfBirth: student.date_of_birth,
             gradeId: admission.grade_id,
+            grade: admission.grade.name,
             admissionStatus: admission.status,
             admittedBy: admission.admitted_by,
             guardianName: 'Not specified'

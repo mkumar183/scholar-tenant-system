@@ -21,6 +21,13 @@ import AcademicSessions from "./pages/AcademicSessions";
 import Grades from "./pages/Grades";
 import NotFound from "./pages/NotFound";
 
+// Fee Management Micro App Pages
+import FeeManagement from "./micro-apps/fee-management/pages/FeeManagement";
+import FeeCategories from "./micro-apps/fee-management/pages/FeeCategories";
+import FeeGroups from "./micro-apps/fee-management/pages/FeeGroups";
+import FeeAssignments from "./micro-apps/fee-management/pages/FeeAssignments";
+import TransportManagement from "./micro-apps/transport-management/pages/TransportManagement";
+
 const queryClient = new QueryClient();
 
 // Create a component to handle redirects based on authentication
@@ -119,6 +126,48 @@ const App = () => (
                 </Layout>
               </ProtectedRoute>
             } />
+            
+            {/* Fee Management Routes */}
+            <Route path="/fee-management" element={
+              <ProtectedRoute>
+                <Layout>
+                  <FeeManagement />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/fee-management/categories" element={
+              <ProtectedRoute>
+                <Layout>
+                  <FeeCategories />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/fee-management/groups" element={
+              <ProtectedRoute>
+                <Layout>
+                  <FeeGroups />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/fee-management/assignments" element={
+              <ProtectedRoute>
+                <Layout>
+                  <FeeAssignments />
+                </Layout>
+              </ProtectedRoute>
+            } />
+
+          {/* Transport Management Routes */}
+          <Route path="/transport-management/*" element={
+            <ProtectedRoute>
+              <Layout>
+                <TransportManagement />
+              </Layout>
+            </ProtectedRoute>
+          } />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
