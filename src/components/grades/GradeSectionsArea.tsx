@@ -29,11 +29,6 @@ const GradeSectionsArea = ({
   const { enrollStudents } = useEnrollments(selectedGradeId || '', user?.id || '');
 
   const handleEnrollStudents = async (sectionId: string, studentIds: string[]) => {
-    console.log('GradeSectionsArea - Enrolling students:', {
-      sectionId,
-      studentIds,
-      selectedGradeId
-    });
     await enrollStudents(studentIds, sectionId);
   };
 
@@ -49,7 +44,7 @@ const GradeSectionsArea = ({
     return (
       <div className="mt-8 p-4 border rounded-md">
         <p className="text-muted-foreground text-center">
-          Only school administrators can manage sections. Tenant administrators cannot manage sections directly.
+          Only school administrators can manage sections.
         </p>
       </div>
     );
