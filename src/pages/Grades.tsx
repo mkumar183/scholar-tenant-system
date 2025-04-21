@@ -209,7 +209,6 @@ const Grades = () => {
         </>
       ) : (
         <>
-          <h1 className="text-2xl font-bold mb-6">Grades</h1>
           <GradeButtons 
             grades={grades}
             selectedGradeId={selectedGradeId}

@@ -56,7 +56,7 @@ const GradeSectionsArea = ({
 
   return (
     <div className="mt-8">
-      <h3 className="text-lg font-semibold mb-4">Sections for Selected Grade</h3>
+      <h3 className="text-lg font-semibold mb-4"></h3>
       
       {sectionsLoading ? (
         <LoadingSpinner message="Loading sections..." />
