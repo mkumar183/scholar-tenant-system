@@ -52,6 +52,14 @@ interface TeacherData {
   };
 }
 
+interface EnrollmentData {
+  student_id: string;
+  section: {
+    id: string;
+    name: string;
+  };
+}
+
 export const useUserData = (
   setTeachers: (teachers: Teacher[]) => void,
   setStudents: (students: Student[]) => void,
@@ -170,12 +178,15 @@ export const useUserData = (
           .from('student_section_enrollments')
           .select(`
             student_id,
-            section:sections(
+            section:sections!student_section_enrollments_section_id_fkey(
               id,
               name
             )
           `)
-          .eq('status', 'active');
+          .eq('status', 'active') as { data: EnrollmentData[] | null, error: any };
+
+        console.log('Enrollments data:', enrollmentsData);
+        console.log('Enrollments error:', enrollmentsError);
 
         if (enrollmentsError) {
           console.error('Error fetching enrollments:', enrollmentsError);
@@ -184,14 +195,17 @@ export const useUserData = (
         const enrollmentMap = new Map<string, { id: string; name: string }>();
         if (enrollmentsData) {
           enrollmentsData.forEach(enrollment => {
-            if (enrollment.section && enrollment.section.length > 0) {
+            console.log('Processing enrollment:', enrollment);
+            console.log('Section data:', enrollment.section);
+            if (enrollment.section && enrollment.section.id) {
               enrollmentMap.set(enrollment.student_id, {
-                id: enrollment.section[0].id,
-                name: enrollment.section[0].name
+                id: enrollment.section.id,
+                name: enrollment.section.name
               });
             }
           });
         }
+        console.log('Final enrollment map:', Array.from(enrollmentMap.entries()));
         
         // Format students from admissions data
         const formattedStudents: Student[] = (admissionsData || [])
