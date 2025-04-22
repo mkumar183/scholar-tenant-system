@@ -35,20 +35,17 @@ export interface Student {
   admittedBy: string;
 }
 
-export type Teacher = {
+export interface Teacher {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  role: 'teacher' | 'staff' | 'school_admin';
+  role: string;
   schoolId: string;
+  tenantId: string;
   schoolName: string;
-  subjects: string[];
-  tenant_id?: string;
-  school_id?: string;
-  created_at?: string;
-  updated_at?: string;
-};
+  email: string;
+  phone?: string;
+  subjects?: string[];
+}
 
 export type School = {
   id: string;

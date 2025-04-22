@@ -110,7 +110,10 @@ export const useStudents = (gradeId?: string) => {
             grade: admission.grade.name,
             admissionStatus: admission.status,
             admittedBy: admission.admitted_by,
-            guardianName: 'Not specified'
+            guardianName: 'Not specified',
+            email: '',
+            phone: '',
+            schoolName: ''
           } as Student;
         })
         .filter((student): student is Student => student !== null);

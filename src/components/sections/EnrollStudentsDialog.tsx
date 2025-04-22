@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useStudents } from '@/hooks/useStudents';
+import { Student } from '@/types';
 
 interface EnrollStudentsDialogProps {
   isOpen: boolean;
@@ -21,7 +22,7 @@ export const EnrollStudentsDialog = ({
   onEnroll,
 }: EnrollStudentsDialogProps) => {
   const { students, isLoading } = useStudents(gradeId);
-  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [selectedStudents, setSelectedStudents] = useState<Student[]>([]);
 
   useEffect(() => {
     console.log('EnrollStudentsDialog - gradeId:', gradeId);
@@ -30,7 +31,7 @@ export const EnrollStudentsDialog = ({
   }, [gradeId, students, isLoading]);
 
   const handleSubmit = async () => {
-    await onEnroll(selectedStudents);
+    await onEnroll(selectedStudents.map(student => student.id));
     setSelectedStudents([]);
     onClose();
   };
@@ -57,12 +58,12 @@ export const EnrollStudentsDialog = ({
                     <div key={student.id} className="flex items-center space-x-2">
                       <Checkbox
                         id={student.id}
-                        checked={selectedStudents.includes(student.id)}
+                        checked={selectedStudents.includes(student)}
                         onCheckedChange={(checked) => {
                           if (checked) {
-                            setSelectedStudents([...selectedStudents, student.id]);
+                            setSelectedStudents([...selectedStudents, student]);
                           } else {
-                            setSelectedStudents(selectedStudents.filter(id => id !== student.id));
+                            setSelectedStudents(selectedStudents.filter(s => s.id !== student.id));
                           }
                         }}
                       />

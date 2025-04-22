@@ -186,8 +186,8 @@ export const useUserData = (
           enrollmentsData.forEach(enrollment => {
             if (enrollment.section) {
               enrollmentMap.set(enrollment.student_id, {
-                id: enrollment.section.id,
-                name: enrollment.section.name
+                id: enrollment.section[0].id,
+                name: enrollment.section[0].name
               });
             }
           });
@@ -219,20 +219,17 @@ export const useUserData = (
             };
           });
         
-        const formattedTeachers: Teacher[] = (teachersData || []).map((teacher: any) => {
-          const schoolName = teacher.school?.name;
-          
-          return {
-            id: teacher.id,
-            name: teacher.name || 'No Name',
-            email: emailMap.get(teacher.id) || 'Not provided',
-            phone: 'Not provided',
-            role: teacher.role as 'teacher' | 'staff' | 'school_admin',
-            schoolId: teacher.school_id || '',
-            schoolName: schoolName || 'No School',
-            subjects: [],
-          };
-        });
+        const formattedTeachers = teachersData.map(teacher => ({
+          id: teacher.id,
+          name: teacher.name,
+          role: teacher.role,
+          schoolId: teacher.school_id,
+          tenantId: teacher.tenant_id,
+          schoolName: teacher.school?.[0]?.name || 'Not assigned',
+          email: emailMap.get(teacher.id) || '',
+          phone: '',
+          subjects: []
+        }));
         
         setTeachers(formattedTeachers);
         setStudents(formattedStudents);

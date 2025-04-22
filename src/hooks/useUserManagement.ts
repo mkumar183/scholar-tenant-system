@@ -79,11 +79,12 @@ export const useUserManagement = () => {
           id: data[0].id,
           name: newTeacher.name,
           email: newTeacher.email,
-          phone: newTeacher.phone || 'Not provided',
-          role: newTeacher.role as 'teacher' | 'staff' | 'school_admin',
+          phone: newTeacher.phone || '',
+          role: newTeacher.role,
           schoolId: newTeacher.schoolId,
           schoolName: schoolName,
           subjects: [],
+          tenantId: user?.tenantId || ''
         };
         
         setTeachers([...teachers, newTeacherData]);
@@ -209,15 +210,15 @@ export const useUserManagement = () => {
           id: userData.id,
           name: userData.name,
           email: newStudent.email,
-          phone: newStudent.phone,
+          phone: newStudent.phone || '',
           role: 'student',
           schoolId: userData.school_id,
           schoolName: schoolName,
-          guardianName: newStudent.guardianName,
           dateOfBirth: userData.date_of_birth,
           gradeId: newStudent.gradeId,
+          grade: 'Unknown',
           admissionStatus: 'active',
-          admittedBy: user?.id,
+          admittedBy: user?.id
         };
         
         setStudents([...students, newStudentData]);
@@ -238,6 +239,10 @@ export const useUserManagement = () => {
       console.error('Error adding student:', error);
       toast.error(`Failed to add student: ${error.message || 'Unknown error'}`);
     }
+  };
+
+  const createStudent = async (studentData: Omit<Student, 'id'>) => {
+    return await handleAddStudent();
   };
 
   return {
