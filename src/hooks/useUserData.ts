@@ -184,7 +184,7 @@ export const useUserData = (
         const enrollmentMap = new Map<string, { id: string; name: string }>();
         if (enrollmentsData) {
           enrollmentsData.forEach(enrollment => {
-            if (enrollment.section) {
+            if (enrollment.section && enrollment.section.length > 0) {
               enrollmentMap.set(enrollment.student_id, {
                 id: enrollment.section[0].id,
                 name: enrollment.section[0].name
