@@ -50,6 +50,24 @@ export type Database = {
           },
         ]
       }
+      conversations: {
+        Row: {
+          created_at: string | null
+          id: number
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          title?: string | null
+        }
+        Relationships: []
+      }
       grades: {
         Row: {
           created_at: string
@@ -119,6 +137,38 @@ export type Database = {
             columns: ["academic_session_id"]
             isOneToOne: false
             referencedRelation: "academic_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string | null
+          conversation_id: number | null
+          created_at: string | null
+          id: number
+          role: string | null
+        }
+        Insert: {
+          content?: string | null
+          conversation_id?: number | null
+          created_at?: string | null
+          id?: number
+          role?: string | null
+        }
+        Update: {
+          content?: string | null
+          conversation_id?: number | null
+          created_at?: string | null
+          id?: number
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]

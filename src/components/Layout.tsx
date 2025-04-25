@@ -14,6 +14,7 @@ import {
   CreditCard,
   Bus, // Add this import
 } from 'lucide-react';
+import { Bot } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;

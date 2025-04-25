@@ -27,6 +27,7 @@ import FeeCategories from "./micro-apps/fee-management/pages/FeeCategories";
 import FeeGroups from "./micro-apps/fee-management/pages/FeeGroups";
 import FeeAssignments from "./micro-apps/fee-management/pages/FeeAssignments";
 import TransportManagement from "./micro-apps/transport-management/pages/TransportManagement";
+import TeacherAssistant from "./pages/TeacherAssistant";
 
 const queryClient = new QueryClient();
 
@@ -168,6 +169,14 @@ const App = () => (
               </Layout>
             </ProtectedRoute>
           } />
+            
+            <Route path="/teacher-assistant" element={
+              <ProtectedRoute>
+                <Layout>
+                  <TeacherAssistant />
+                </Layout>
+              </ProtectedRoute>
+            } />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
