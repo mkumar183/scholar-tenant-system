@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -12,15 +13,11 @@ import {
   CalendarRange,
   GraduationCap,
   CreditCard,
-  Bus, // Add this import
+  Bus,
+  Bot // Adding Bot icon from lucide-react
 } from 'lucide-react';
-import { Bot } from 'lucide-react';
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-const Layout = ({ children }: LayoutProps) => {
+const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
