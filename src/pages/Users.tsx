@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Teacher, Student, School, Grade } from '@/types';
 
 // Import components
 import SearchBar from '@/components/users/SearchBar';
@@ -7,90 +8,50 @@ import AddUserDialog from '@/components/users/AddUserDialog';
 import TeachersList from '@/components/users/TeachersList';
 import StudentsList from '@/components/users/StudentsList';
 
-// Import mock data for subjects and grades
-import { SUBJECTS, GRADES } from '@/components/users/usersData';
-
-// Import custom hooks
-import { useTeachers } from '@/hooks/useTeachers';
-import { useStudents } from '@/hooks/useStudents';
-import { useSchools } from '@/hooks/useSchools';
+// Import hooks
+import { useUserManagement } from '@/hooks/useUserManagement';
+import { useUserData } from '@/hooks/useUserData';
+import { useUserSearch } from '@/hooks/useUserSearch';
+import { useGrades } from '@/hooks/useGrades';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Users = () => {
   const [activeTab, setActiveTab] = useState('teachers');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newTeacher, setNewTeacher] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    schoolId: '',
-    subjects: [''],
-    password: '',
-    role: 'teacher', // Added default role
-  });
-  const [newStudent, setNewStudent] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    schoolId: '',
-    grade: '',
-    guardianName: '',
-  });
+  const { user } = useAuth();
+  const {
+    teachers,
+    setTeachers,
+    students,
+    setStudents,
+    schools,
+    setSchools,
+    isLoading,
+    setIsLoading,
+    searchTerm,
+    setSearchTerm,
+    isAddDialogOpen,
+    setIsAddDialogOpen,
+    newTeacher,
+    setNewTeacher,
+    newStudent,
+    setNewStudent,
+    handleAddTeacher,
+    handleAddStudent,
+  } = useUserManagement();
 
-  const { teachers, isLoading: teachersLoading, addTeacher } = useTeachers();
-  const { students, isLoading: studentsLoading, addStudent } = useStudents();
-  const { schools, isLoading: schoolsLoading } = useSchools();
+  // Fetch grades for the tenant
+  const { grades, isLoading: gradesLoading } = useGrades(user?.tenantId || '');
 
-  // Filter data based on search
-  const filteredTeachers = teachers.filter(teacher => 
-    teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    teacher.schoolName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Initialize data fetching
+  useUserData(setTeachers, setStudents, setSchools, setIsLoading);
 
-  const filteredStudents = students.filter(student => 
-    student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.schoolName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Handle search
+  const { filteredTeachers, filteredStudents } = useUserSearch(searchTerm, teachers, students);
 
-  const handleAddTeacher = async () => {
-    console.log('Handling add teacher with data:', newTeacher);
-    const success = await addTeacher(newTeacher);
-    if (success) {
-      setNewTeacher({
-        name: '',
-        email: '',
-        phone: '',
-        schoolId: '',
-        subjects: [''],
-        password: '',
-        role: 'teacher',
-      });
-      setIsAddDialogOpen(false);
-    }
+  const handleEditStudent = (student: Student) => {
+    // TODO: Implement student editing functionality
+    console.log('Editing student:', student);
   };
-
-  const handleAddStudent = async () => {
-    const success = await addStudent(newStudent);
-    if (success) {
-      setNewStudent({
-        name: '',
-        email: '',
-        phone: '',
-        schoolId: '',
-        grade: '',
-        guardianName: '',
-      });
-      setIsAddDialogOpen(false);
-    }
-  };
-
-  const isLoading = teachersLoading || studentsLoading || schoolsLoading;
-
-  console.log('Users component - teachers:', teachers);
-  console.log('Users component - filtered teachers:', filteredTeachers);
-  console.log('Users component - loading state:', isLoading);
 
   return (
     <div className="space-y-6">
@@ -108,18 +69,17 @@ const Users = () => {
           handleAddTeacher={handleAddTeacher}
           handleAddStudent={handleAddStudent}
           schools={schools}
-          subjects={SUBJECTS}
-          grades={GRADES}
+          grades={grades}
         />
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2 mb-6 max-w-md">
-          <TabsTrigger value="teachers">Teachers</TabsTrigger>
+          <TabsTrigger value="teachers">Staff</TabsTrigger>
           <TabsTrigger value="students">Students</TabsTrigger>
         </TabsList>
         
-        {isLoading ? (
+        {isLoading || gradesLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
@@ -130,7 +90,10 @@ const Users = () => {
             </TabsContent>
             
             <TabsContent value="students">
-              <StudentsList students={filteredStudents} />
+              <StudentsList 
+                students={filteredStudents} 
+                onEdit={handleEditStudent}
+              />
             </TabsContent>
           </>
         )}
