@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -12,16 +13,15 @@ import {
   CalendarRange,
   GraduationCap,
   CreditCard,
-  Bus, // Add this import
+  Bus,
+  Bot // Adding Bot icon from lucide-react
 } from 'lucide-react';
+import TeacherAssistantModal from './TeacherAssistantModal';
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-const Layout = ({ children }: LayoutProps) => {
+const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
 
   if (!user) {
     return <>{children}</>;
@@ -181,6 +181,24 @@ const Layout = ({ children }: LayoutProps) => {
           {children}
         </div>
       </div>
+
+      {/* Floating Teacher Assistant Button */}
+      {user.role === 'teacher' && (
+        <>
+          <Button
+            variant="default"
+            size="icon"
+            className="fixed bottom-4 right-4 rounded-full h-12 w-12 shadow-lg"
+            onClick={() => setIsAssistantOpen(true)}
+          >
+            <Bot className="h-6 w-6" />
+          </Button>
+          <TeacherAssistantModal
+            isOpen={isAssistantOpen}
+            onClose={() => setIsAssistantOpen(false)}
+          />
+        </>
+      )}
     </div>
   );
 };

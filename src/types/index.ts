@@ -18,39 +18,34 @@ export type Grade = {
   updatedAt: string;
 };
 
-export type Student = {
-  id: string;
-  name: string;
-  email?: string;
-  role: 'student';
-  schoolId?: string;
-  schoolName?: string;
-  grade?: string;
-  gradeId?: string;
-  guardianName?: string;
-  dateOfBirth?: string;
-  tenant_id?: string;
-  school_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  admissionStatus?: string;
-  admittedBy?: string;
-};
-
-export type Teacher = {
+export interface Student {
   id: string;
   name: string;
   email: string;
   phone: string;
-  role: 'teacher' | 'staff' | 'school_admin';
+  role: 'student';
   schoolId: string;
   schoolName: string;
-  subjects: string[];
-  tenant_id?: string;
-  school_id?: string;
-  created_at?: string;
-  updated_at?: string;
-};
+  grade: string;
+  gradeId: string;
+  sectionId?: string;
+  sectionName?: string;
+  dateOfBirth: string;
+  admissionStatus: string;
+  admittedBy: string;
+}
+
+export interface Teacher {
+  id: string;
+  name: string;
+  role: string;
+  schoolId: string;
+  tenantId: string;
+  schoolName: string;
+  email: string;
+  phone?: string;
+  subjects?: string[];
+}
 
 export type School = {
   id: string;

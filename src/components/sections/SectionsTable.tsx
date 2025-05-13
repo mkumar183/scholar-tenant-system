@@ -115,7 +115,8 @@ const SectionsTable = ({
                   <TableCell colSpan={4} className="p-0 border-t-0">
                     <EnrolledStudentsList 
                       enrollments={enrollments} 
-                      isLoading={isLoading} 
+                      isLoading={isLoading}
+                      sectionId={section.id}
                     />
                   </TableCell>
                 </TableRow>

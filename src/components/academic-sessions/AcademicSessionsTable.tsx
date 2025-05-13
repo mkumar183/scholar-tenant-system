@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { Edit, Trash2, Check, Star, CalendarRange, Eye } from 'lucide-react';
@@ -78,13 +77,9 @@ export function AcademicSessionsTable({
                 <TableCell>{format(new Date(session.start_date), 'PP')}</TableCell>
                 <TableCell>{format(new Date(session.end_date), 'PP')}</TableCell>
                 <TableCell>
-                  {session.is_active ? (
-                    <Badge variant="success" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200">
-                      <Check size={12} className="mr-1" /> Active
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline">Inactive</Badge>
-                  )}
+                  <Badge variant={session.is_active ? "default" : "secondary"}>
+                    {session.is_active ? 'Active' : 'Inactive'}
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-right space-x-1">
                   {onSelect && (
